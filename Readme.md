@@ -2,10 +2,10 @@
 
 Laravel Image is an image manipulation package for Laravel 4 and 5 based on the [PHP Imagine library](https://github.com/avalanche123/Imagine). It is inspired by [Croppa](https://github.com/BKWLD/croppa) as it can use specially formatted urls to do the manipulations. It supports basic image manipulations such as resize, crop, rotation, flip and effects such as negative, grayscale, gamma, colorize and blur. You can also define custom filters for greater flexibility. This library works with the local filesystem and Laravel Filesystems (Amazon S3, etc...).
 
-[![Latest Stable Version](https://poser.pugx.org/folklore/image/v/stable.svg)](https://packagist.org/packages/folklore/image)  
+[![Latest Stable Version](https://poser.pugx.org/folklore/laravel-image/v/stable.svg)](https://packagist.org/packages/folklore/laravel-image)  
 [![Build Status](https://travis-ci.org/Folkloreatelier/laravel-image.png?branch=master)](https://travis-ci.org/Folkloreatelier/laravel-image)  
 [![Coverage Status](https://coveralls.io/repos/Folkloreatelier/laravel-image/badge.svg?branch=v1&service=github)](https://coveralls.io/github/Folkloreatelier/laravel-image?branch=v1)  
-[![Total Downloads](https://poser.pugx.org/folklore/image/downloads.svg)](https://packagist.org/packages/folklore/image)
+[![Total Downloads](https://poser.pugx.org/folklore/laravel-image/downloads.svg)](https://packagist.org/packages/folklore/laravel-image)
 
 ## Introduction
 
@@ -81,17 +81,12 @@ This package also provides some build-in filters ready to use \([more on Filters
 
 ##### Version Compatibility
 
-| Laravel Image | Laravel |
-| :--- | :--- |
-| `0.1.*` | `4.2.*` |
-| `0.2.*` | `5.0.*` |
-| `0.3.*` | `>= 5.1.*` |
-| `1.0.*` | `>= 5.1.*` |
+Laravel 7 and up
 
 #### Dependencies:
 
-* [Laravel 5.x](https://github.com/laravel/laravel)
-* [Imagine 0.6.x or 0.7.x](https://github.com/avalanche123/Imagine)
+* [Laravel 7.x|8.x](https://github.com/laravel/laravel)
+* [Imagine 1.x](https://github.com/avalanche123/Imagine)
 
 #### Server Requirements:
 
@@ -103,25 +98,25 @@ This package also provides some build-in filters ready to use \([more on Filters
 **1-** Require the package via Composer.
 
 ```json
-$ composer require folklore/image
+$ composer require folklore/laravel-image
 ```
 
 **2-** Add the service provider to your `app/config/app.php` file
 
 ```php
-Folklore\Image\ImageServiceProvider::class,
+Folklore\Image\ServiceProvider::class,
 ```
 
 **3-** Add the facade to your `app/config/app.php` file
 
 ```php
-'Image' => Folklore\Image\Facades\Image::class,
+'Image' => Folklore\Image\Facade::class,
 ```
 
 **4-** Publish the configuration file and public files
 
 ```bash
-$ php artisan vendor:publish --provider="Folklore\Image\ImageServiceProvider"
+$ php artisan vendor:publish --provider="Folklore\Image\ServiceProvider"
 ```
 
 **5-** Review the configuration file at `config/image.php`
