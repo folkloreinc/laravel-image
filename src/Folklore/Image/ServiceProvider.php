@@ -46,7 +46,6 @@ class ServiceProvider extends BaseServiceProvider
     {
         // Config file path
         $configFile = __DIR__ . '/../../config/image.php';
-        $publicFile = __DIR__ . '/../../../js/dist/';
         $routesFile = __DIR__ . '/../../routes/images.php';
 
         // Merge files
@@ -58,12 +57,7 @@ class ServiceProvider extends BaseServiceProvider
         ], 'config');
 
         $this->publishes([
-            $publicFile => public_path('vendor/folklore/image')
-        ], 'public');
-
-        $this->publishes([
-            $routesFile => is_dir(base_path('routes')) ?
-                base_path('routes/images.php') : app_path('Http/routesImages.php')
+            $routesFile => base_path('routes/images.php')
         ], 'routes');
     }
 
@@ -73,8 +67,8 @@ class ServiceProvider extends BaseServiceProvider
         $router = $this->app['router'];
 
         // Add a macro to the router for creating images route.
-        $router->macro('image', function ($path, $config) use ($router, $app) {
-            return $app['image.routes']->image($path, $config);
+        $router->macro('image', function ($path, $config) use ($app) {
+            return $app['image.router']->image($path, $config);
         });
 
         // Add default pattern to router
@@ -226,7 +220,7 @@ class ServiceProvider extends BaseServiceProvider
      */
     public function registerRouteRegistrar()
     {
-        $this->app->singleton('image.routes', function () {
+        $this->app->singleton('image.router', function () {
             $router = $this->app['router'];
             $config = $this->app['config'];
             $urlGenerator = $this->app->make(UrlGeneratorContract::class);
@@ -299,7 +293,7 @@ class ServiceProvider extends BaseServiceProvider
         return [
             'image',
             'image.url',
-            'image.routes',
+            'image.router',
             'image.imagine',
             'image.source',
             'image.middleware.cache'
