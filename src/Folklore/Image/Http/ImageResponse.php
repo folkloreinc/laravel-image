@@ -194,10 +194,15 @@ class ImageResponse extends StreamedResponse
      */
     public function setFormat($format)
     {
-        $this->format = $format;
+        // Get mime
+        $mime =
+            preg_match('/^image\/(.*)$/', $format, $matches) === 1
+                ? $format
+                : $this->getMimeFromFormat($format);
 
-        // Set mime
-        $mime = $this->getMimeFromFormat($format);
+        $this->format = isset($matches[1]) ? $matches[1] : $format;
+
+        // Set content-type
         $this->header('Content-type', $mime);
 
         return $this;
