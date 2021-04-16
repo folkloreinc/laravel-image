@@ -69,6 +69,7 @@ class FilesystemSource extends AbstractSource
         $cache = data_get($this->config, 'cache', false);
         $existsCache = $cache ? $this->existsOnCache($fullPath):false;
 
+        $stream = null;
         $content = null;
         $pathToOpen = null;
         if ($existsCache) {
@@ -80,13 +81,15 @@ class FilesystemSource extends AbstractSource
                 $content = app('cache')->get($cacheKey);
             }
         } else {
-            $content = $disk->get($fullPath);
+            $stream = $disk->readStream($fullPath);
             if ($cache) {
-                $this->saveToCache($fullPath, $content);
+                $this->saveToCache($fullPath, $stream);
             }
         }
 
-        if ($content) {
+        if ($stream) {
+            return $this->imagine->read($stream);
+        } else if ($content) {
             return $this->imagine->load($content);
         } else {
             return $this->imagine->open($pathToOpen);
