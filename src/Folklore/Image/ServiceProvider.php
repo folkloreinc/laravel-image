@@ -241,7 +241,7 @@ class ServiceProvider extends BaseServiceProvider
     {
         $this->app->bind(ImageHandler::class, function () {
             $filtersManager = $this->app->make(FiltersManagerContract::class);
-            $memoryLimit = $this->app['config']->get('image.memory_limit', '128MB');
+            $memoryLimit = $this->app['config']->get('image.memory_limit', '128M');
             return new ImageHandler($filtersManager, $memoryLimit);
         });
     }

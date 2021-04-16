@@ -23,7 +23,7 @@ class ImageHandler implements ImageHandlerContract
 
     protected $memoryLimit = null;
 
-    public function __construct(FiltersManagerContract $filters, $memoryLimit = '128MB')
+    public function __construct(FiltersManagerContract $filters, $memoryLimit = '128M')
     {
         $this->filters = $filters;
         $this->memoryLimit = $memoryLimit;

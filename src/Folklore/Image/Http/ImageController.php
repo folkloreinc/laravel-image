@@ -23,6 +23,9 @@ class ImageController extends BaseController
 
     public function serve(Request $request, $path)
     {
+        // Increase memory limit
+        ini_set('memory_limit', config('image.memory_limit', '128M'));
+
         // Make the image from the route and return the response
         try {
             return $this->routeResolver->resolveToResponse($request->route());
