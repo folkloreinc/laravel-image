@@ -22,7 +22,18 @@ class RouteResolver implements RouteResolverContract
     {
         $path = $this->getPathFromRoute($route);
         $config = $this->getConfigFromRoute($route);
-        return $this->getImageFromPathAndConfig($path, $config);
+        $urlConfig = data_get($config, 'pattern', []);
+        $routeFilters = data_get($config, 'filters', []);
+
+        // Parse the path
+        $parseData = $this->urlGenerator->parse($path, $urlConfig);
+        $path = $parseData['path'];
+        $pathFilters = $parseData['filters'];
+        $filters = array_merge($pathFilters, $routeFilters);
+
+        // Get the image
+        $handler = $this->image->source($source);
+        return $handler->make($path, $filters);
     }
 
     public function resolveToResponse(Route $route)
@@ -33,8 +44,18 @@ class RouteResolver implements RouteResolverContract
         $source = data_get($config, 'source');
         $quality = (float) data_get($config, 'quality', 100);
         $expires = data_get($config, 'expires', null);
+        $urlConfig = data_get($config, 'pattern', []);
+        $routeFilters = data_get($config, 'filters', []);
 
-        $image = $this->getImageFromPathAndConfig($path, $config);
+        // Parse the path
+        $parseData = $this->urlGenerator->parse($path, $urlConfig);
+        $path = $parseData['path'];
+        $pathFilters = $parseData['filters'];
+        $filters = array_merge($pathFilters, $routeFilters);
+
+        // Get the image
+        $handler = $this->image->source($source);
+        $image = $handler->make($path, $filters);
         $mime = !is_null($image) ? $image->metadata()['file.MimeType'] : null;
         $handler = $this->image->source($source);
 
@@ -53,22 +74,5 @@ class RouteResolver implements RouteResolverContract
     public function getConfigFromRoute(Route $route)
     {
         return data_get($route->getAction(), 'image', []);
-    }
-
-    protected function getImageFromPathAndConfig($path, $config)
-    {
-        $source = data_get($config, 'source');
-        $urlConfig = data_get($config, 'pattern', []);
-        $routeFilters = data_get($config, 'filters', []);
-
-        // Parse the path
-        $parseData = $this->urlGenerator->parse($path, $urlConfig);
-        $path = $parseData['path'];
-        $pathFilters = $parseData['filters'];
-        $filters = array_merge($pathFilters, $routeFilters);
-
-        // Get the image
-        $handler = $this->image->source($source);
-        return $handler->make($path, $filters);
     }
 }
