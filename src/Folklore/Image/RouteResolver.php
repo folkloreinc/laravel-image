@@ -30,16 +30,18 @@ class RouteResolver implements RouteResolverContract
         $path = $this->getPathFromRoute($route);
         $config = $this->getConfigFromRoute($route);
 
+        $source = data_get($config, 'source');
         $quality = (float) data_get($config, 'quality', 100);
         $expires = data_get($config, 'expires', null);
 
         $image = $this->getImageFromPathAndConfig($path, $config);
         $mime = !is_null($image) ? $image->metadata()['file.MimeType'] : null;
+        $handler = $this->image->source($source);
 
         return response()
             ->image($image)
             ->setQuality($quality)
-            ->setFormat(!is_null($mime) ? $mime : $handle->format($path))
+            ->setFormat(!is_null($mime) ? $mime : $handler->format($path))
             ->setExpiresIn($expires);
     }
 
