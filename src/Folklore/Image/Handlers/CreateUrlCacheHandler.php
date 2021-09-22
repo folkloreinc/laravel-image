@@ -66,6 +66,7 @@ class CreateUrlCacheHandler
         }
 
         $cachePath = !is_null($route) ? data_get($routeConfig, 'cache_path') : null;
-        $this->cacheManager->put($image, $finalUrl, $cachePath);
+        $cacheMode = !is_null($route) ? data_get($routeConfig, 'cache_mode') : null;
+        $this->cacheManager->put($image, $finalUrl, $cachePath, $cacheMode);
     }
 }

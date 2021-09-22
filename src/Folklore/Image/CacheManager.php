@@ -18,7 +18,7 @@ class CacheManager implements CacheManagerContract
         $this->dataHandler = $dataHandler;
     }
 
-    public function put(ImageInterface $image, $path, $directory = null)
+    public function put(ImageInterface $image, $path, $directory = null, $mode = null)
     {
         if (is_null($directory)) {
             $directory = public_path();
@@ -39,7 +39,7 @@ class CacheManager implements CacheManagerContract
             throw new \Exception('Destination is not writeable');
         }
         if (!$directoryExists) {
-            $this->filesystem->makeDirectory($directory, 0755, true, true);
+            $this->filesystem->makeDirectory($directory, $mode ?? 0755, true, true);
         }
 
         $this->dataHandler->save($image, $fullPath);

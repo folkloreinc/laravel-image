@@ -196,12 +196,13 @@ class FilesystemSource extends AbstractSource
     protected function saveToCache($path, $contents)
     {
         $cachePath = data_get($this->config, 'cache_path', null);
+        $cacheMode = data_get($this->config, 'cache_mode', 0755);
         if ($cachePath) {
             $filesystem = app('files');
             $fullPath = $this->getCacheFullPath($path);
             $directory = pathinfo($fullPath, PATHINFO_DIRNAME);
             if (!$filesystem->isDirectory($directory)) {
-                $filesystem->makeDirectory($directory, 0755, true, true);
+                $filesystem->makeDirectory($directory, $cacheMode, true, true);
             }
             $filesystem->put($fullPath, $contents);
         } else {

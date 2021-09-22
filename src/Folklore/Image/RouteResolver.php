@@ -22,6 +22,7 @@ class RouteResolver implements RouteResolverContract
     {
         $path = $this->getPathFromRoute($route);
         $config = $this->getConfigFromRoute($route);
+        $source = data_get($config, 'source');
         $urlConfig = data_get($config, 'pattern', []);
         $routeFilters = data_get($config, 'filters', []);
 

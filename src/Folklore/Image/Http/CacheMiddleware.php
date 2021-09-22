@@ -28,6 +28,7 @@ class CacheMiddleware
         $route = $request->route();
         $routeConfig = $route ? data_get($route->getAction(), 'image', []) : [];
         $cachePath = data_get($routeConfig, 'cache_path');
+        $cacheMode = data_get($routeConfig, 'cache_mode', 0755);
 
         // Get the response
         $response = $next($request);
@@ -41,7 +42,7 @@ class CacheMiddleware
         // Otherwise, ignore it.
         if ($response instanceof ImageResponse) {
             $image = $response->getImage();
-            $path = $this->cacheManager->put($image, $path, $cachePath);
+            $path = $this->cacheManager->put($image, $path, $cachePath, $cacheMode);
             $response->setImagePath($path);
         }
 
