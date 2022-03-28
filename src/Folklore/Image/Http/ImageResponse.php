@@ -113,7 +113,7 @@ class ImageResponse extends StreamedResponse
      *
      * @return string
      */
-    public function getContent()
+    public function getContent(): string|false
     {
         if ($this->imagePath) {
             return file_get_contents($this->imagePath);

@@ -7,18 +7,11 @@ cache:
     - ${TRAVIS_BUILD_DIR}/travis/extension-cache
 
 php:
-  - 7.2.5
-  - 7.4
   - 8.0
 
 env:
-  - ILLUMINATE_VERSION=^7.0
-  - ILLUMINATE_VERSION=^8.0 COVERAGE=true
-
-jobs:
-  exclude:
-    - php: 7.2.5
-      env: ILLUMINATE_VERSION=^8.0 COVERAGE=true
+  - ILLUMINATE_VERSION=^8.0
+  - ILLUMINATE_VERSION=^9.0 COVERAGE=true
 
 before_install:
   - cp ~/.phpenv/versions/$(phpenv version-name)/etc/conf.d/xdebug.ini ~/xdebug.ini
