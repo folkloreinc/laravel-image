@@ -84,6 +84,7 @@ class FilesystemSource extends AbstractSource
             $stream = $disk->readStream($fullPath);
             if ($cache) {
                 $this->saveToCache($fullPath, $stream);
+                rewind($stream);
             }
         }
 
