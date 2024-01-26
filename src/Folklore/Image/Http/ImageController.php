@@ -16,6 +16,8 @@ class ImageController extends BaseController
 {
     use DispatchesJobs, ValidatesRequests;
 
+    protected $routeResolver;
+
     public function __construct(RouteResolver $routeResolver)
     {
         $this->routeResolver = $routeResolver;

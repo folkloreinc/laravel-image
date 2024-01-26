@@ -19,6 +19,8 @@ class ImageResponse extends StreamedResponse
 
     protected $quality = 100;
 
+    protected $callback;
+
     /**
      * Constructor.
      *
@@ -78,7 +80,7 @@ class ImageResponse extends StreamedResponse
     protected function sendImageFromPath()
     {
         $file = fopen($this->imagePath, 'r');
-        while ($buffer = fread($file, 1024*1024)) {
+        while ($buffer = fread($file, 1024 * 1024)) {
             echo $buffer;
             flush();
         }
@@ -95,11 +97,11 @@ class ImageResponse extends StreamedResponse
         switch ($format) {
             case 'gif':
                 return 'image/gif';
-            break;
+                break;
             case 'jpg':
             case 'jpeg':
                 return 'image/jpeg';
-            break;
+                break;
             case 'png':
                 return 'image/png';
             case 'webp':
@@ -199,8 +201,8 @@ class ImageResponse extends StreamedResponse
         // Get mime
         $mime =
             preg_match('/^image\/(.*)$/', $format, $matches) === 1
-                ? $format
-                : $this->getMimeFromFormat($format);
+            ? $format
+            : $this->getMimeFromFormat($format);
 
         $this->format = isset($matches[1]) ? $matches[1] : $format;
 
@@ -282,5 +284,15 @@ class ImageResponse extends StreamedResponse
         $expiresDate->setTimestamp(time() + $expires);
         $this->setExpires($expiresDate);
         return $this;
+    }
+
+    /**
+     * Get the callback of the response.
+     *
+     * @return string|null
+     */
+    public function getCallback(): \Closure
+    {
+        return $this->callback ?? null;
     }
 }
