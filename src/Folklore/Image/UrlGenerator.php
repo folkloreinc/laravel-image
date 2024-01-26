@@ -28,7 +28,7 @@ class UrlGenerator implements UrlGeneratorContract
         'basename' => '([^\/\.]+?)',
         'filename' => '([^\/]+)',
         'extension' => '([^\.]+)',
-        'format_extension' => '(\.(jpeg|jpg|gif|png|webp))?',
+        'format_extension' => '(\.(jpeg|jpg|gif|png|webp|avif))?',
     ];
 
     public function __construct(BaseRouter $router, FiltersManagerContract $filters)
