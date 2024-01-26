@@ -125,6 +125,7 @@ class ImageResponse extends StreamedResponse
 
         return app(ImageDataHandler::class)->get($this->image, $this->format, [
             'jpeg_quality' => $this->quality,
+            'webp_quality' => $this->quality,
             'png_compression_level' => ($this->quality / 100) * 9,
         ]);
     }
