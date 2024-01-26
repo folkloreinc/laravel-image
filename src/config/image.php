@@ -89,7 +89,7 @@ return [
     'url' => [
         // The format of the url that will be generated. The `{filters}` placeholder
         // will be replaced by the filters according to the `filters_format`.
-        'format' => '{dirname}/{basename}{filters}.{extension}',
+        'format' => '{dirname}/{basename}{filters}.{extension}{format_extension}',
 
         // The format of the filters that will replace `{filters}` in the
         // url `format` above. The `{filter}` placeholder will be replaced by
@@ -112,6 +112,7 @@ return [
             'basename' => '([^\/\.]+?)',
             'filename' => '([^\/]+)',
             'extension' => '(jpeg|jpg|gif|png)',
+            'format_extension' => '(\.(jpeg|jpg|gif|png|webp))?',
         ]
     ],
 

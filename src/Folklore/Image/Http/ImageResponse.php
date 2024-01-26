@@ -102,6 +102,8 @@ class ImageResponse extends StreamedResponse
             break;
             case 'png':
                 return 'image/png';
+            case 'webp':
+                return 'image/webp';
             break;
         }
 

@@ -28,6 +28,7 @@ class UrlGenerator implements UrlGeneratorContract
         'basename' => '([^\/\.]+?)',
         'filename' => '([^\/]+)',
         'extension' => '([^\.]+)',
+        'format_extension' => '(\.(jpeg|jpg|gif|png|webp))?',
     ];
 
     public function __construct(BaseRouter $router, FiltersManagerContract $filters)
@@ -124,10 +125,13 @@ class UrlGenerator implements UrlGeneratorContract
             $config = array_merge($routeConfig, $config);
         }
 
+        $url = data_get($config, 'pattern.format', $this->getFormat());
+        $hasFormatExtension = preg_match('/\{\s*format_extension\s*\}/i', $url) === 1;
+
         // Create the url parameters from filters
         $filters = Arr::except($filters, $configKeys);
         $filterFormat = data_get($config, 'pattern.filter_format');
-        $urlParameters = $this->getParametersFromFilters($filters, $filterFormat);
+        $urlParameters = $this->getParametersFromFilters($hasFormatExtension ? Arr::except($filters, ['format']) : $filters, $filterFormat);
 
         // Create the parameter with filters
         $filtersFormat = data_get($config, 'pattern.filters_format');
@@ -142,9 +146,10 @@ class UrlGenerator implements UrlGeneratorContract
             'basename' => $srcParts['filename'],
             'filename' => $srcParts['filename'].'.'.$srcParts['extension'],
             'extension' => $srcParts['extension'],
+            'format_extension' => isset($filters['format']) ? '.'.$filters['format'] : null,
             'filters' => $filtersParameter
         ];
-        $url = data_get($config, 'pattern.format', $this->getFormat());
+        
         foreach ($placeholders as $key => $replace) {
             $url = preg_replace(
                 '/\{\s*'.$key.'\s*\}/i',
@@ -215,19 +220,33 @@ class UrlGenerator implements UrlGeneratorContract
         $patternAndMatches = $this->patternAndMatches($config);
         $pattern = data_get($patternAndMatches, 'pattern');
         $patternMatches = data_get($patternAndMatches, 'matches');
+        $format = null;
         if (preg_match('#'.$pattern.'#i', $path, $matches)) {
             //Remove the filters from the path
             $filtersPath = $matches[$patternMatches['filters']];
             $filtersFormat = data_get($config, 'filters_format', $this->getFiltersFormat());
             $filtersFormatPath = preg_replace('#\{\s*filter\s*\}#', $filtersPath, $filtersFormat);
             $path = preg_replace('#'.preg_quote($filtersFormatPath, '#').'\/?#', '', $path);
+
+            //Remove format extension
+            $formatExtension = isset($patternMatches['format_extension']) ? data_get($matches, $patternMatches['format_extension']) : null;
+            if (isset($formatExtension)) {
+                $path = preg_replace('#'.preg_quote($formatExtension, '#').'$#', '', $path);
+                $format = preg_replace('/^\./', '', $formatExtension);
+            }
+
             //Parse the filters
             $filters = $this->parseFilters($filtersPath, $config);
+            if (!isset($format) && isset($filters['format'])) {
+                $format = $filters['format'];
+                $filters = Arr::except($filters, ['format']);
+            }
         }
 
         return [
             'path' => $path,
-            'filters' => $filters
+            'filters' => $filters,
+            'format' => $format,
         ];
     }
 
@@ -259,22 +278,39 @@ class UrlGenerator implements UrlGeneratorContract
         }
         asort($positions);
         $keys = array_keys($positions);
-        $filtersPosition = array_search('filters', $keys);
+        // $filtersPosition = array_search('filters', $keys);
 
         // Build the pattern and get the matches position of each placeholder.
         $matches = [];
-        foreach ($placeholders as $key => $replace) {
-            $index = array_search($key, $keys);
-            if ($index === false) {
+        $index = 1;
+        foreach ($keys as $key) {
+            $replace = data_get($placeholders, $key);
+            if (is_null($replace)) {
                 continue;
             }
-            $index += 1;
             $pattern = preg_replace('#\\\{\s*'.$key.'\s*\\\}#', $replace, $pattern);
-            if ($key === 'filters' || ($filtersPosition !== false && $index > $filtersPosition)) {
-                $index += 1;
-            }
-            $matches[$key] = $index;
+            $matches[$key] = $key === 'filters' ? $index + 1 : $index;
+            $index += preg_match_all('/[(]/', $replace) - preg_match_all('/[\\\][(]/', $replace);
         }
+        // foreach ($placeholders as $key => $replace) {
+        //     $index = array_search($key, $keys);
+        //     if ($index === false) {
+        //         continue;
+        //     }
+        //     dump($replace, preg_match_all('/[(]/', $replace) , preg_match_all('/[\\\][(]/', $replace));
+        //     // $index += preg_match_all('/[(]/', $replace) - preg_match_all('/[\\\][(]/', $replace);
+        //     $pattern = preg_replace('#\\\{\s*'.$key.'\s*\\\}#', $replace, $pattern);
+        //     // if (($filtersPosition !== false && $index > $filtersPosition)) {
+        //     //     $index += 1;
+        //     // }
+        //     $matches[$key] = $index;
+        //     $index += preg_match_all('/[(]/', $replace) - preg_match_all('/[\\\][(]/', $replace);
+        //       if ($key === 'filters') {
+        //         // dd($filtersPosition);
+        //         $index += 1;
+        //     }
+        // }
+        // dd($pattern, $matches);
 
         return [
             'pattern' => '^'.$pattern.'$',

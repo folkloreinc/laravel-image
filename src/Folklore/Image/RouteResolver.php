@@ -63,7 +63,7 @@ class RouteResolver implements RouteResolverContract
         return response()
             ->image($image)
             ->setQuality($quality)
-            ->setFormat(!is_null($mime) ? $mime : $handler->format($path))
+            ->setFormat(data_get($parseData, 'format') ?? $mime ?? $handler->format($path))
             ->setExpiresIn($expires);
     }
 

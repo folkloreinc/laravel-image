@@ -75,4 +75,37 @@ class RoutesTest extends TestCase
         $response = $this->call('GET', $url);
         $this->assertEquals($response->headers->get('Content-type'), 'image/jpeg');
     }
+
+    /**
+     * Test routes with specific filters
+     *
+     * @test
+     */
+    public function testRoutesFiltersWithFormat()
+    {
+        $this->app['router']->image('thumbnail/{pattern}', [
+            'as' => 'image.thumbnail',
+            'filters' => [
+                'width' => 100,
+                'height' => 100,
+                'crop' => true,
+            ],
+        ]);
+
+        $url = image()->url('image.jpg', [
+            'route' => 'image.thumbnail',
+            'format' => 'png'
+        ]);
+        $this->assertEquals('http://localhost/thumbnail/image.jpg.png', $url);
+
+        $patterns = $this->app['router']->getPatterns();
+        if (method_exists($this, 'assertMatchesRegularExpression')) {
+            $this->assertMatchesRegularExpression('/'.$patterns['image_pattern'].'/', 'image.jpg.png');
+        } else {
+            $this->assertRegExp('/'.$patterns['image_pattern'].'/', 'image.jpg.png');
+        }
+
+        $response = $this->call('GET', $url);
+        $this->assertEquals($response->headers->get('Content-type'), 'image/png');
+    }
 }

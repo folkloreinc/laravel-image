@@ -136,6 +136,29 @@ class UrlGeneratorTest extends TestCase
     }
 
     /**
+     * Test parsing a path
+     * @test
+     * @covers ::parse
+     * @covers ::patternAndMatches
+     * @covers ::parseFilters
+     */
+    public function testParseWithFormatExtension()
+    {
+        $this->generator->setFormat('{dirname}/{filters}/{basename}.{extension}{format_extension}');
+        $this->generator->setFiltersFormat('image/{filter}');
+        $this->generator->setFilterFormat('{key}-{value}');
+        $this->generator->setFilterSeparator('/');
+
+        $path = 'uploads/image/300x300/rotate-90/negative/image.jpg.webp';
+        $return = $this->generator->parse($path);
+        $this->assertArrayHasKey('path', $return);
+        $this->assertArrayHasKey('filters', $return);
+        $this->assertEquals('uploads/image.jpg', $return['path']);
+        $this->assertEquals('webp', $return['format']);
+        $this->assertEquals($this->filters, $return['filters']);
+    }
+
+    /**
      * Test getting a pattern
      * @test
      * @covers ::pattern
@@ -182,6 +205,44 @@ class UrlGeneratorTest extends TestCase
 
         $url = '/uploads/image/300x300/rotate-90/negative/image.jpg';
         $return = $this->generator->make('uploads/image.jpg', $this->filters);
+        $this->assertEquals($url, $return);
+    }
+
+    /**
+     * Test making url
+     * @test
+     * @covers ::make
+     * @covers ::getParametersFromFilters
+     * @covers ::getFiltersParameter
+     */
+    public function testMakeWithFormatExtension()
+    {
+        $this->generator->setFormat('{dirname}/{filters}/{basename}.{extension}{format_extension}');
+        $this->generator->setFiltersFormat('image/{filter}');
+        $this->generator->setFilterFormat('{key}-{value}');
+        $this->generator->setFilterSeparator('/');
+
+        $url = '/uploads/image/300x300/rotate-90/negative/image.jpg.png';
+        $return = $this->generator->make('uploads/image.jpg', $this->filters + ['format' => 'png']);
+        $this->assertEquals($url, $return);
+    }
+
+    /**
+     * Test making url
+     * @test
+     * @covers ::make
+     * @covers ::getParametersFromFilters
+     * @covers ::getFiltersParameter
+     */
+    public function testMakeWithFormat()
+    {
+        $this->generator->setFormat('{dirname}/{filters}/{basename}.{extension}');
+        $this->generator->setFiltersFormat('image/{filter}');
+        $this->generator->setFilterFormat('{key}-{value}');
+        $this->generator->setFilterSeparator('/');
+
+        $url = '/uploads/image/300x300/rotate-90/negative/format-png/image.jpg';
+        $return = $this->generator->make('uploads/image.jpg', $this->filters + ['format' => 'png']);
         $this->assertEquals($url, $return);
     }
 
