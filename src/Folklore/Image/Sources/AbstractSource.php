@@ -58,6 +58,10 @@ abstract class AbstractSource implements Source
             break;
             case IMAGETYPE_PNG:
                 return 'png';
+            case 18:
+                return 'webp';
+            case 19:
+                return 'avif';
             break;
         }
 
