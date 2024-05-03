@@ -11,9 +11,6 @@ use Folklore\Image\Exception\FilterMissingException;
 use Folklore\Image\Exception\FormatException;
 use Folklore\Image\Filters\Resize;
 use Imagine\Image\ImageInterface;
-use Imagine\Image\ImagineInterface;
-use Imagine\Image\Box;
-use Imagine\Image\Point;
 
 class ImageHandler implements ImageHandlerContract
 {
