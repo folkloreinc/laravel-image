@@ -2,6 +2,7 @@
 
 use Folklore\Image\Contracts\ImagineManager as ImagineManagerContract;
 use Illuminate\Support\Manager;
+use Imagine\Image\ImagineInterface;
 
 class ImagineManager extends Manager implements ImagineManagerContract
 {
@@ -43,6 +44,11 @@ class ImagineManager extends Manager implements ImagineManagerContract
     protected function createGmagickDriver()
     {
         return new \Imagine\Gmagick\Imagine();
+    }
+
+    public function driver($driver = null): ImagineInterface
+    {
+        return parent::driver($driver);
     }
 
     /**
