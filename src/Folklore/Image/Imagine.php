@@ -1,6 +1,6 @@
 <?php namespace Folklore\Image;
 
-use App\Contracts\ImagineManager;
+use Folklore\Image\Contracts\ImagineManager;
 use Imagine\Factory\ClassFactoryInterface;
 use Imagine\Image\BoxInterface;
 use Imagine\Image\ImagineInterface;
