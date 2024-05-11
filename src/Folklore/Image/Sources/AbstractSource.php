@@ -65,6 +65,10 @@ abstract class AbstractSource implements Source
             break;
         }
 
+        if (preg_match('/\.svg$/', $format) === 1) {
+            return 'svg';
+        }
+
         return null;
     }
 }

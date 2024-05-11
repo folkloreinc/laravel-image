@@ -106,8 +106,10 @@ class ImageResponse extends StreamedResponse
                 return 'image/png';
             case 'webp':
                 return 'image/webp';
-                case 'avif':
-                    return 'image/avif';
+            case 'avif':
+                return 'image/avif';
+            case 'svg':
+                return 'image/svg+xml';
             break;
         }
 
