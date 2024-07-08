@@ -19,8 +19,6 @@ class ImageResponse extends StreamedResponse
 
     protected $quality = 100;
 
-    protected ?\Closure $callback = null;
-
     /**
      * Constructor.
      *
