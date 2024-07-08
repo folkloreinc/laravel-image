@@ -1,5 +1,6 @@
 <?php namespace Folklore\Image;
 
+use Folklore\Image\Contracts\ImagineManager as ImagineManagerContract;
 use Illuminate\Support\ServiceProvider as BaseServiceProvider;
 use Illuminate\Bus\Dispatcher;
 use Folklore\Image\Http\ImageResponse;
@@ -136,7 +137,7 @@ class ServiceProvider extends BaseServiceProvider
     {
         $this->registerImage();
 
-        $this->registerImagineManager();
+        $this->registerImagine();
 
         $this->registerSourceManager();
 
@@ -173,10 +174,14 @@ class ServiceProvider extends BaseServiceProvider
      *
      * @return void
      */
-    public function registerImagineManager()
+    public function registerImagine()
     {
-        $this->app->singleton('image.imagine', function () {
+        $this->app->singleton('image.imagine_manager', function () {
             return new ImagineManager($this->app);
+        });
+
+        $this->app->singleton('image.imagine', function () {
+            return new Imagine($this->app['image.imagine_manager']);
         });
     }
 
@@ -256,6 +261,7 @@ class ServiceProvider extends BaseServiceProvider
         $this->app->bind(ImageManagerContract::class, 'image');
         $this->app->bind(ImageHandlerFactoryContract::class, 'image');
         $this->app->bind(FiltersManagerContract::class, 'image');
+        $this->app->bind(ImagineManagerContract::class, 'image.imagine_manager');
         $this->app->bind(ImageHandlerContract::class, ImageHandler::class);
         $this->app->bind(ImageDataHandlerContract::class, ImageDataHandler::class);
         $this->app->bind(CacheManagerContract::class, CacheManager::class);

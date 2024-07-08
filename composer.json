@@ -21,7 +21,8 @@
         "php": "^8.0.2",
         "illuminate/support": "^7.0|^8.0|^9.0|^10.0|^11.0",
         "guzzlehttp/guzzle": "^6.3.1|^7.0.1",
-        "imagine/imagine": "^1.2.4"
+        "imagine/imagine": "^1.2.4",
+        "contao/imagine-svg": "^1.0"
     },
     "require-dev": {
         "fakerphp/faker": "^1.9.1",

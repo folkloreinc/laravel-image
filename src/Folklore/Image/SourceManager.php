@@ -18,7 +18,7 @@ class SourceManager extends Manager
      */
     protected function createLocalDriver($config)
     {
-        $imagine = $this->container['image.imagine']->driver();
+        $imagine = $this->container['image.imagine'];
         $urlGenerator = $this->container->make(UrlGeneratorContract::class);
         return new LocalSource($imagine, $urlGenerator, $config);
     }
@@ -30,7 +30,7 @@ class SourceManager extends Manager
      */
     protected function createFilesystemDriver($config)
     {
-        $imagine = $this->container['image.imagine']->driver();
+        $imagine = $this->container['image.imagine'];
         $urlGenerator = $this->container->make(UrlGeneratorContract::class);
         return new FilesystemSource($imagine, $urlGenerator, $config);
     }

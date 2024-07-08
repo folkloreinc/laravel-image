@@ -104,7 +104,13 @@ class ImageResponse extends StreamedResponse
                 break;
             case 'png':
                 return 'image/png';
-                break;
+            case 'webp':
+                return 'image/webp';
+            case 'avif':
+                return 'image/avif';
+            case 'svg':
+                return 'image/svg+xml';
+            break;
         }
 
         return null;
@@ -122,8 +128,7 @@ class ImageResponse extends StreamedResponse
         }
 
         return app(ImageDataHandler::class)->get($this->image, $this->format, [
-            'jpeg_quality' => $this->quality,
-            'png_compression_level' => ($this->quality / 100) * 9,
+            'quality' => $this->quality,
         ]);
     }
 
