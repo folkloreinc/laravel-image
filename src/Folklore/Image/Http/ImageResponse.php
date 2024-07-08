@@ -19,7 +19,7 @@ class ImageResponse extends StreamedResponse
 
     protected $quality = 100;
 
-    protected $callback;
+    protected ?\Closure $callback = null;
 
     /**
      * Constructor.
@@ -49,7 +49,7 @@ class ImageResponse extends StreamedResponse
      * @param int                   $status     The response status code
      * @param array                 $headers    An array of response headers
      *
-     * @return StreamedResponse
+     * @return 
      */
     public static function create($image = null, $status = 200, $headers = array())
     {
