@@ -11,6 +11,7 @@ use Folklore\Image\Contracts\RouteResolver;
 use Folklore\Image\Exception\Exception;
 use Folklore\Image\Exception\FileMissingException;
 use Folklore\Image\Exception\ParseException;
+use Imagine\Exception\RuntimeException;
 
 class ImageController extends BaseController
 {
@@ -35,6 +36,8 @@ class ImageController extends BaseController
         } catch (ParseException $e) {
             return abort(404);
         } catch (FileMissingException $e) {
+            return abort(404);
+        } catch (RuntimeException $e) {
             return abort(404);
         }
     }
