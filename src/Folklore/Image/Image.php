@@ -360,7 +360,7 @@ class Image implements
      */
     public function getImagineManager()
     {
-        return $this->container->make('image.imagine');
+        return $this->container->make('image.imagine_manager');
     }
 
     /**
@@ -370,8 +370,7 @@ class Image implements
      */
     public function getImagine()
     {
-        $manager = $this->getImagineManager();
-        return $manager->driver();
+        return $this->container->make('image.imagine');
     }
 
     /**

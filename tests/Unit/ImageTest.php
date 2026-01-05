@@ -289,7 +289,7 @@ class ImageTest extends TestCase
      */
     public function testGetImagineManager()
     {
-        $this->assertEquals(app('image.imagine'), $this->image->getImagineManager());
+        $this->assertEquals(app('image.imagine_manager'), $this->image->getImagineManager());
     }
 
     /**
