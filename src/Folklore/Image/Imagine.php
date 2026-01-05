@@ -27,7 +27,7 @@ class Imagine implements ImagineInterface
      *
      * @return \Imagine\Image\ImageInterface
      */
-    public function create(BoxInterface $size, ColorInterface $color = null)
+    public function create(BoxInterface $size, ?ColorInterface $color = null)
     {
         return $this->manager->driver()->create($size, $color);
     }
