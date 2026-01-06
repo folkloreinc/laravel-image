@@ -60,6 +60,23 @@ class Utils
         return $matches[1];
     }
 
+    public static function getMimeFromExtension($path): string
+    {
+        $isUrl = filter_var($path, FILTER_VALIDATE_URL);
+        $path = $isUrl ? parse_url($path, PHP_URL_PATH) ?? $path : $path;
+        $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION) ?? $path);
+        switch ($extension) {
+            case 'jpg':
+            case 'jpeg':
+                return 'image/jpeg';
+                break;
+            case 'svg':
+                return 'image/svg+xml';
+                break;
+        }
+        return 'image/' . $extension;
+    }
+
     public static function getFormatFromMime(string $mime)
     {
         if (preg_match('/image\/([a-z\-]+)/i', $mime, $matches) === 0) {
