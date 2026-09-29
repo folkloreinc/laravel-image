@@ -167,6 +167,14 @@ class ServiceProvider extends BaseServiceProvider
             $image->setRouteConfig($this->app['config']->get('image.routes', []));
             return $image;
         });
+
+        // Laravel 13 defers its own `image` service, which replaces this binding on first resolve.
+        // Deferred services are only set once all providers are registered, hence on booting.
+        $this->app->booting(function ($app) {
+            $services = $app->getDeferredServices();
+            unset($services['image']);
+            $app->setDeferredServices($services);
+        });
     }
 
     /**
