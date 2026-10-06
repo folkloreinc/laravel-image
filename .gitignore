@@ -12,3 +12,4 @@ package-lock.json
 /.phpunit.cache
 phpunit.xml
 .php-cs-fixer.cache
+/build

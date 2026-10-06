@@ -1,0 +1,205 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Offset 0 on non\-empty\-list\<string\> in isset\(\) always exists and is not nullable\.$#'
+			identifier: isset.offset
+			count: 1
+			path: src/Folklore/Image/Filters/Resize.php
+
+		-
+			message: '#^Method Folklore\\Image\\Http\\ImageResponse\:\:getMimeFromFormat\(\) should return string but returns null\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Folklore/Image/Http/ImageResponse.php
+
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$content$#'
+			identifier: parameter.notFound
+			count: 2
+			path: src/Folklore/Image/Http/ImageResponse.php
+
+		-
+			message: '#^PHPDoc tag @return with type string\|null is incompatible with native type Closure\.$#'
+			identifier: return.phpDocType
+			count: 1
+			path: src/Folklore/Image/Http/ImageResponse.php
+
+		-
+			message: '#^Parameter \#2 \$values of method Folklore\\Image\\Http\\ImageResponse\:\:header\(\) expects array\|string, int\<0, max\>\|false given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Folklore/Image/Http/ImageResponse.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between int and null will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: src/Folklore/Image/Http/ImageResponse.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 3
+			path: src/Folklore/Image/Http/ImageResponse.php
+
+		-
+			message: '#^Unsafe usage of new static\(\)\.$#'
+			identifier: new.static
+			count: 1
+			path: src/Folklore/Image/Http/ImageResponse.php
+
+		-
+			message: '#^Method Folklore\\Image\\Image\:\:getImagineManager\(\) has invalid return type Folklore\\Image\\getImagineManager\.$#'
+			identifier: class.notFound
+			count: 1
+			path: src/Folklore/Image/Image.php
+
+		-
+			message: '#^Method Folklore\\Image\\Image\:\:routes\(\) should return array but return statement is missing\.$#'
+			identifier: return.missing
+			count: 1
+			path: src/Folklore/Image/Image.php
+
+		-
+			message: '#^Method Folklore\\Image\\Image\:\:source\(\) has invalid return type Folklore\\Image\\Folklore\\Image\\Contracts\\ImageHandlerContract\.$#'
+			identifier: class.notFound
+			count: 1
+			path: src/Folklore/Image/Image.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between array\|object\|string and null will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: src/Folklore/Image/Image.php
+
+		-
+			message: '#^Calling the helper function ''with\(\)'' with only one argument simply returns the value itself\. If you want to chain methods on a construct, use ''\(new ClassName\(\)\)\-\>foo\(\)'' instead$#'
+			identifier: larastan.uselessConstructs.with
+			count: 1
+			path: src/Folklore/Image/ImageHandler.php
+
+		-
+			message: '#^Method Folklore\\Image\\ImagineManager\:\:createSvgDriver\(\) should return Imagine\\Gd\\Imagine but returns Contao\\ImagineSvg\\Imagine\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Folklore/Image/ImagineManager.php
+
+		-
+			message: '#^Method Folklore\\Image\\Jobs\\CreateUrlCache\:\:handle\(\) with return type void returns null but should not return anything\.$#'
+			identifier: return.void
+			count: 1
+			path: src/Folklore/Image/Jobs/CreateUrlCache.php
+
+		-
+			message: '#^Result of method Folklore\\Image\\Handlers\\CreateUrlCacheHandler\:\:handle\(\) \(void\) is used\.$#'
+			identifier: method.void
+			count: 1
+			path: src/Folklore/Image/Jobs/CreateUrlCache.php
+
+		-
+			message: '#^Class Folklore\\Image\\Image constructor invoked with 2 parameters, 1 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: src/Folklore/Image/ServiceProvider.php
+
+		-
+			message: '#^Method Folklore\\Image\\SourceManager\:\:createFilesystemDriver\(\) should return Imagine\\Imagick\\Imagine but returns Folklore\\Image\\Sources\\FilesystemSource\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Folklore/Image/SourceManager.php
+
+		-
+			message: '#^Method Folklore\\Image\\SourceManager\:\:createLocalDriver\(\) should return Imagine\\Gd\\Imagine but returns Folklore\\Image\\Sources\\LocalSource\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Folklore/Image/SourceManager.php
+
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$driver$#'
+			identifier: parameter.notFound
+			count: 1
+			path: src/Folklore/Image/SourceManager.php
+
+		-
+			message: '#^Parameter \#2 \$subject of function preg_match expects string, int\|false given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Folklore/Image/Sources/AbstractSource.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 3
+			path: src/Folklore/Image/Sources/AbstractSource.php
+
+		-
+			message: '#^Call to method getPathPrefix\(\) on an unknown class League\\Flysystem\\Adapter\\Local\.$#'
+			identifier: class.notFound
+			count: 3
+			path: src/Folklore/Image/Sources/FilesystemSource.php
+
+		-
+			message: '#^Class League\\Flysystem\\Adapter\\Local not found\.$#'
+			identifier: class.notFound
+			count: 3
+			path: src/Folklore/Image/Sources/FilesystemSource.php
+
+		-
+			message: '#^Method Folklore\\Image\\Sources\\FilesystemSource\:\:getCacheKey\(\) invoked with 0 parameters, 1 required\.$#'
+			identifier: arguments.count
+			count: 2
+			path: src/Folklore/Image/Sources/FilesystemSource.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 2
+			path: src/Folklore/Image/Sources/FilesystemSource.php
+
+		-
+			message: '#^Method Folklore\\Image\\UrlGenerator\:\:make\(\) should return string but empty return statement found\.$#'
+			identifier: return.empty
+			count: 1
+			path: src/Folklore/Image/UrlGenerator.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between int\<0, max\>\|false and true will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: src/Folklore/Image/UrlGenerator.php
+
+		-
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
+			count: 1
+			path: src/Folklore/Image/Utils.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 6
+			path: src/Folklore/Image/Utils.php
+
+		-
+			message: '#^Call to an undefined method Folklore\\Image\\Image\:\:make\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Folklore/Image/helpers.php
+
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$headers$#'
+			identifier: parameter.notFound
+			count: 1
+			path: src/Folklore/Image/helpers.php
+
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$message$#'
+			identifier: parameter.notFound
+			count: 1
+			path: src/Folklore/Image/helpers.php
+
+		-
+			message: '#^Variable \$router might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: src/routes/images.php
