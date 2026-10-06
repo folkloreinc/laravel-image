@@ -3,6 +3,7 @@
 namespace Folklore\Image\Sources;
 
 use Folklore\Image\Contracts\ImageDataHandler;
+use Folklore\Image\Exception\InvalidPathException;
 use Imagine\Image\ImageInterface;
 
 class LocalSource extends AbstractSource
@@ -19,8 +20,14 @@ class LocalSource extends AbstractSource
             return null;
         }
 
+        // Reject paths that leave the source root
+        $path = $this->normalizePath($path);
+        if ($path === null) {
+            return null;
+        }
+
         // Check if the path exists
-        $src = rtrim($dir, '/').'/'.ltrim($path, '/');
+        $src = rtrim($dir, '/').'/'.$path;
         if ($filesystem->exists($src)) {
             return $src;
         }
@@ -96,7 +103,11 @@ class LocalSource extends AbstractSource
     public function saveToPath(ImageInterface $image, $path)
     {
         $dir = isset($this->config['path']) ? $this->config['path'] : public_path();
-        $realPath = rtrim($dir, '/').'/'.ltrim($path, '/');
+        $normalizedPath = $this->normalizePath($path);
+        if ($normalizedPath === null) {
+            throw new InvalidPathException('Path ['.$path.'] is outside the source root.');
+        }
+        $realPath = rtrim($dir, '/').'/'.$normalizedPath;
 
         return app(ImageDataHandler::class)->save($image, $realPath);
     }
