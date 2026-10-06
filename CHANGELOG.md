@@ -20,6 +20,7 @@ All notable changes to `folklore/laravel-image` are documented in this file. The
 
 ### Fixed
 
+- `image.memory_limit` is now a minimum: processing an image no longer lowers a higher memory limit, and keeps an unlimited one (#8).
 - Image routes answer 415 for a source file that isn't a supported image and 404 for an unknown filter, instead of a 500 (#9).
 
 ### Removed
