@@ -2,9 +2,8 @@
 
 Laravel Image is an image manipulation package for Laravel 4 and 5 based on the [PHP Imagine library](https://github.com/avalanche123/Imagine). It is inspired by [Croppa](https://github.com/BKWLD/croppa) as it can use specially formatted urls to do the manipulations. It supports basic image manipulations such as resize, crop, rotation, flip and effects such as negative, grayscale, gamma, colorize and blur. You can also define custom filters for greater flexibility. This library works with the local filesystem and Laravel Filesystems (Amazon S3, etc...).
 
-[![Latest Stable Version](https://poser.pugx.org/folklore/laravel-image/v/stable.svg)](https://packagist.org/packages/folklore/laravel-image)  
-[![Build Status](https://travis-ci.org/Folkloreatelier/laravel-image.png?branch=master)](https://travis-ci.org/Folkloreatelier/laravel-image)  
-[![Coverage Status](https://coveralls.io/repos/Folkloreatelier/laravel-image/badge.svg?branch=v1&service=github)](https://coveralls.io/github/Folkloreatelier/laravel-image?branch=v1)  
+[![Latest Stable Version](https://poser.pugx.org/folklore/laravel-image/v/stable.svg)](https://packagist.org/packages/folklore/laravel-image)
+[![Tests](https://github.com/folkloreinc/laravel-image/actions/workflows/run-tests.yml/badge.svg?branch=v1.x)](https://github.com/folkloreinc/laravel-image/actions/workflows/run-tests.yml)
 [![Total Downloads](https://poser.pugx.org/folklore/laravel-image/downloads.svg)](https://packagist.org/packages/folklore/laravel-image)
 
 ## Introduction

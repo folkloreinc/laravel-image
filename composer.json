@@ -1,6 +1,6 @@
 {
     "name": "folklore/laravel-image",
-    "description": "Image manipulation library for Laravel 4 based on Imagine and inspired by Croppa for easy url based manipulation",
+    "description": "URL-based image manipulation for Laravel, built on Imagine",
     "keywords": [
         "laravel",
         "image",
@@ -11,7 +11,7 @@
         "gmagick",
         "thumbnail"
     ],
-    "homepage": "http://github.com/Folkloreatelier/laravel-image",
+    "homepage": "https://github.com/folkloreinc/laravel-image",
     "license": "MIT",
     "authors": [
         {
@@ -41,9 +41,9 @@
         "orchestra/testbench": "^7.0|^8.0|^9.0|^10.0|^11.0",
         "phpunit/phpunit": "^9.5.10|^10.5|^11.0|^12.0"
     },
-    "suggests": {
-        "ext-imagick": "*",
-        "ext-gd": "*"
+    "suggest": {
+        "ext-gd": "Required by the gd driver",
+        "ext-imagick": "Required by the imagick driver (better quality, more formats)"
     },
     "autoload": {
         "psr-0": {

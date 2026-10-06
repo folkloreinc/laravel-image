@@ -1,0 +1,34 @@
+name: phpstan
+
+on:
+  push:
+    branches: [v1.x]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  phpstan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          # The baseline is generated against the latest dependencies (Laravel 13, Larastan 3).
+          php-version: '8.4'
+          extensions: gd, imagick, exif, fileinfo
+          coverage: none
+
+      - name: Validate composer.json
+        run: composer validate --strict
+
+      - name: Install dependencies
+        run: composer update --prefer-stable --prefer-dist --no-interaction
+
+      - name: Run Larastan
+        run: vendor/bin/phpstan analyse --memory-limit=1G --error-format=github

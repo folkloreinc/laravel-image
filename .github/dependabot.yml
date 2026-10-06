@@ -1,0 +1,20 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: v1.x
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: composer
+    directory: /
+    target-branch: v1.x
+    schedule:
+      interval: weekly
+    versioning-strategy: widen
+
+  - package-ecosystem: npm
+    directory: /
+    target-branch: v1.x
+    schedule:
+      interval: weekly
