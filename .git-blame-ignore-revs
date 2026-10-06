@@ -3,3 +3,6 @@
 
 # Apply Laravel Pint formatting
 1cac6de3dbda363a225d1c6c9b4b5046066cf3c1
+
+# Apply Prettier formatting to the JS sources
+6b6b88dd8e41b5ecd055096152a3c989d83bcfcf
