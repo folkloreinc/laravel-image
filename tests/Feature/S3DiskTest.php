@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
- * Uses the `filesystem` source on an S3-compatible disk (MinIO in CI).
+ * Uses the `filesystem` source on an S3-compatible disk (moto in CI, MinIO or any S3 API locally).
  *
  * Skipped unless IMAGE_TEST_S3_ENDPOINT is set, for example:
  * IMAGE_TEST_S3_ENDPOINT=http://127.0.0.1:9000 vendor/bin/phpunit tests/Feature/S3DiskTest.php

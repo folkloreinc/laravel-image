@@ -9,7 +9,7 @@ All notable changes to `folklore/laravel-image` are documented in this file. The
 - GitHub Actions: tests on PHP 8.2–8.5 × Laravel 9–13 (`prefer-lowest` and `prefer-stable`), Pint, Larastan, and the JS suite and build.
 - Laravel Pint, Larastan (with a baseline) and the Composer scripts `test`, `test-coverage`, `analyse` and `format`.
 - URL fixtures shared by the PHP and JS suites, and feature tests that serve images through real routes.
-- Tests for the `filesystem` source on an S3-compatible disk, run against MinIO in CI.
+- Tests for the `filesystem` source on an S3-compatible disk, run against an S3-compatible server (moto) in CI.
 
 ### Changed
 
