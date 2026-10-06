@@ -107,3 +107,38 @@ jobs:
         with:
           name: coverage
           path: coverage/clover.xml
+
+  s3:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    name: S3-compatible disk (MinIO)
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Start MinIO
+        run: |
+          docker run -d --name minio -p 9000:9000 \
+            -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin \
+            minio/minio:latest server /data
+          for attempt in $(seq 1 30); do
+            curl -sf http://127.0.0.1:9000/minio/health/live && exit 0
+            sleep 1
+          done
+          docker logs minio
+          exit 1
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: gd, imagick, exif, fileinfo
+          coverage: none
+
+      - name: Install dependencies
+        run: composer update --prefer-stable --prefer-dist --no-interaction
+
+      - name: Run the S3 disk tests
+        env:
+          IMAGE_TEST_S3_ENDPOINT: http://127.0.0.1:9000
+        # Fail instead of silently skipping if MinIO is unreachable.
+        run: vendor/bin/phpunit tests/Feature/S3DiskTest.php --fail-on-skipped

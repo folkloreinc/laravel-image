@@ -21,6 +21,13 @@ npm test             # Jest
 npm run lint         # ESLint and Prettier
 ```
 
+The S3-compatible disk tests (`tests/Feature/S3DiskTest.php`) are skipped unless `IMAGE_TEST_S3_ENDPOINT` points to an S3-compatible server, such as MinIO:
+
+```bash
+docker run -d -p 9000:9000 minio/minio server /data
+IMAGE_TEST_S3_ENDPOINT=http://127.0.0.1:9000 vendor/bin/phpunit tests/Feature/S3DiskTest.php
+```
+
 A pull request is merged only when CI is green.
 
 ## Security
