@@ -206,6 +206,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Metadata and color profiles
+    |--------------------------------------------------------------------------
+    |
+    | Whether images made by `make()`, and so every image served by a route,
+    | are stripped of their metadata (EXIF, GPS coordinates, comments). With
+    | the imagick and gmagick drivers, colors are first converted to sRGB from
+    | the embedded profile, such as Display P3 or Adobe RGB. GD can't convert
+    | profiles: it always drops them, with the metadata.
+    |
+    | Turn it off only if you need to keep the metadata of the source.
+    |
+    */
+    'strip_metadata' => true,
+
+    /*
+    |--------------------------------------------------------------------------
     | Image Driver
     |--------------------------------------------------------------------------
     |

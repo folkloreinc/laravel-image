@@ -44,6 +44,9 @@ class ImageHandler implements ImageHandlerContract
      * ]);
      * ```
      *
+     * The resulting image is in sRGB and has no metadata, unless the
+     * `image.strip_metadata` config is false.
+     *
      * @param  string  $path  The path of the image
      * @param  array  $options  The manipulations to apply on the image
      * @return ImageInterface
@@ -95,6 +98,12 @@ class ImageHandler implements ImageHandlerContract
                 $arguments = array_merge([$image, $key], [$arguments]);
                 $image = call_user_func_array([$this, 'applyFilter'], $arguments);
             }
+        }
+
+        // Convert the colors to sRGB when the driver can, and remove the metadata
+        // (EXIF, GPS, comments), so derivatives don't leak where a photo was taken
+        if (config('image.strip_metadata', true)) {
+            $image->strip();
         }
 
         return $image;
