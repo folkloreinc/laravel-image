@@ -96,7 +96,7 @@ class ImageHandlerTest extends TestCase
         $returnImage = with(new RotateFilter())->apply($returnImage, 90);
 
         $rotateFilterMock = $this->getMockBuilder(RotateFilter::class)
-            ->setMethods(['apply'])
+            ->onlyMethods(['apply'])
             ->getMock();
 
         $rotateFilterMock->expects($this->once())
@@ -104,7 +104,7 @@ class ImageHandlerTest extends TestCase
             ->willReturn($returnImage);
 
         $resizeFilterMock = $this->getMockBuilder(ResizeFilter::class)
-            ->setMethods(['apply'])
+            ->onlyMethods(['apply'])
             ->getMock();
 
         $resizeFilterMock->expects($this->once())

@@ -9,3 +9,6 @@ package-lock.json
 /js/lib
 /_book
 .phpunit.result.cache
+/.phpunit.cache
+phpunit.xml
+.php-cs-fixer.cache

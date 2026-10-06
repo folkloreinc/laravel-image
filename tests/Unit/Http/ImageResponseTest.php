@@ -161,7 +161,7 @@ class ImageResponseTest extends TestCase
     public function testExpiresIn()
     {
         $responseMock = $this->getMockBuilder(ImageResponse::class)
-            ->setMethods(['setMaxAge', 'setExpires'])
+            ->onlyMethods(['setMaxAge', 'setExpires'])
             ->getMock();
 
         $expires = 3600;

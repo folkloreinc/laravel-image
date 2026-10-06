@@ -102,7 +102,7 @@ class ImageTest extends TestCase
 
         $sourceManager = $this->getMockBuilder(SourceManager::class)
             ->disableOriginalConstructor()
-            ->setMethods(['extend'])
+            ->onlyMethods(['extend'])
             ->getMock();
 
         $sourceManager->expects($this->once())
@@ -128,11 +128,11 @@ class ImageTest extends TestCase
 
         $imageHandler = $this->getMockBuilder(ImageHandler::class)
             ->disableOriginalConstructor()
-            ->setMethods(['testMethod', 'setSource'])
+            ->onlyMethods(['format', 'setSource'])
             ->getMock();
 
         $imageHandler->expects($this->once())
-            ->method('testMethod')
+            ->method('format')
             ->with($this->equalTo('test'));
 
         $imageHandler->expects($this->once())
@@ -143,7 +143,7 @@ class ImageTest extends TestCase
             return $imageHandler;
         });
 
-        $this->image->testMethod('test');
+        $this->image->format('test');
     }
 
     /**
@@ -220,6 +220,8 @@ class ImageTest extends TestCase
         $this->image->routes(public_path('routes.php'));
         $this->assertTrue($this->app['router']->getRoutes()->hasNamedRoute('image.test'));
 
+        // Start from an empty collection, so the route name is registered only once.
+        $this->app['router']->setRoutes(new \Illuminate\Routing\RouteCollection());
         $this->image->routes([
             'map' => public_path('routes.php'),
             'middleware' => ['test'],
@@ -300,7 +302,7 @@ class ImageTest extends TestCase
      */
     public function testGetImagine()
     {
-        $this->assertEquals(app('image.imagine')->driver(), $this->image->getImagine());
+        $this->assertEquals(app('image.imagine'), $this->image->getImagine());
     }
 
     /**

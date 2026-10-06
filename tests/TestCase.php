@@ -16,7 +16,11 @@ class TestCase extends BaseTestCase
      */
     protected function getEnvironmentSetUp($app)
     {
-        $app->instance('path.public', __DIR__.'/fixture');
+        if (method_exists($app, 'usePublicPath')) {
+            $app->usePublicPath(__DIR__.'/fixture');
+        } else {
+            $app->instance('path.public', __DIR__.'/fixture');
+        }
 
         $app['config']->set('image.source', 'local');
         $app['config']->set('image.sources', [
