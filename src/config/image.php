@@ -193,7 +193,8 @@ return [
     | Memory limit
     |--------------------------------------------------------------------------
     |
-    | When manipulating an image, the memory limit is increased to this value
+    | When manipulating an image, the memory limit is raised to at least this
+    | value. A higher limit (or -1, unlimited) is kept as is.
     |
     */
     'memory_limit' => '128M',

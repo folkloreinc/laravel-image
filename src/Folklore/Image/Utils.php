@@ -7,6 +7,30 @@ use Illuminate\Support\Str;
 
 class Utils
 {
+    /**
+     * Raise the memory limit to the given value, but never lower it.
+     *
+     * A current limit of -1 (unlimited) is kept as is.
+     *
+     * @param  string|int|null  $limit  A php.ini quantity such as "128M", or -1 for unlimited
+     */
+    public static function raiseMemoryLimit($limit): void
+    {
+        if ($limit === null || $limit === '') {
+            return;
+        }
+
+        $current = ini_parse_quantity((string) ini_get('memory_limit'));
+        if ($current === -1) {
+            return;
+        }
+
+        $requested = ini_parse_quantity((string) $limit);
+        if ($requested === -1 || $requested > $current) {
+            ini_set('memory_limit', (string) $limit);
+        }
+    }
+
     protected static function getBytes(string $path, int $offset, ?int $length = 1)
     {
         $isUrl = filter_var($path, FILTER_VALIDATE_URL);
