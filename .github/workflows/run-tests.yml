@@ -107,3 +107,40 @@ jobs:
         with:
           name: coverage
           path: coverage/clover.xml
+
+  s3:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    name: S3-compatible disk
+
+    steps:
+      - uses: actions/checkout@v5
+
+      # MinIO no longer publishes public Docker images, so CI uses moto's S3-compatible
+      # server. The test only relies on the S3 API, so it also runs against MinIO locally.
+      - name: Start an S3-compatible server (moto)
+        run: |
+          python3 -m venv "$RUNNER_TEMP/moto"
+          "$RUNNER_TEMP/moto/bin/pip" install --quiet "moto[server]==5.2.3"
+          "$RUNNER_TEMP/moto/bin/moto_server" -H 127.0.0.1 -p 9000 > "$RUNNER_TEMP/moto.log" 2>&1 &
+          for attempt in $(seq 1 30); do
+            curl -s -o /dev/null http://127.0.0.1:9000/ && exit 0
+            sleep 1
+          done
+          cat "$RUNNER_TEMP/moto.log"
+          exit 1
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: gd, imagick, exif, fileinfo
+          coverage: none
+
+      - name: Install dependencies
+        run: composer update --prefer-stable --prefer-dist --no-interaction
+
+      - name: Run the S3 disk tests
+        env:
+          IMAGE_TEST_S3_ENDPOINT: http://127.0.0.1:9000
+        # Fail instead of silently skipping if the server is unreachable.
+        run: vendor/bin/phpunit tests/Feature/S3DiskTest.php --fail-on-skipped

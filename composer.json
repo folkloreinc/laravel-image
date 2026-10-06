@@ -37,6 +37,7 @@
         "fakerphp/faker": "^1.23",
         "larastan/larastan": "^2.9|^3.0",
         "laravel/pint": "^1.13",
+        "league/flysystem-aws-s3-v3": "^3.0",
         "mockery/mockery": "^1.6",
         "orchestra/testbench": "^7.0|^8.0|^9.0|^10.0|^11.0",
         "phpunit/phpunit": "^9.5.10|^10.5|^11.0|^12.0"
