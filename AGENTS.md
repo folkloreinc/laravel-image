@@ -46,9 +46,19 @@ js/src/               JS URL generator (npm package)
 tests/                PHPUnit (Unit, Feature); fixtures in tests/fixture
 ```
 
+## Tests and CI
+
+Every change ships with automated tests:
+
+- A bug fix adds a **regression test that fails without the fix** and passes with it.
+- A new option or feature is tested in both states (enabled and disabled, allowed and denied), through a real HTTP route when it affects serving images.
+- A change to URL generation or parsing updates the URL fixtures shared by the PHP and JS suites, so both generators stay in sync.
+
+CI (GitHub Actions, set up in Phase 1, Step 1 of #3) runs the PHP suite on every supported PHP × Laravel combination, plus the JS suite and static analysis. A change merges only when CI is green. Until that step lands, work on CI and on fixing the existing tests comes before any other Phase 1 item.
+
 ## Checks
 
 - PHP: `composer install`, then `vendor/bin/phpunit`.
 - JS: `npm install`, then `npm test` (Jest).
-- Until phase 1 of #3 fixes the suite, some PHP tests already fail on `v1.x`. A change passes when it adds no new failure. Add or update tests for what you change.
+- Until Phase 1, Step 1 of #3 fixes the suite, some PHP tests already fail on `v1.x`. Meanwhile, a change passes when it adds no new failure and includes its own tests.
 - Style: PSR-2 (`phpcs.xml`), 4-space indentation (`.editorconfig`). Match the surrounding code.
