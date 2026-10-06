@@ -21,6 +21,41 @@ abstract class AbstractSource implements Source
         $this->config = $config;
     }
 
+    /**
+     * Normalize a path relative to the source root, resolving `.` and `..` segments.
+     *
+     * The check is lexical on purpose: symbolic links inside the root (such as the
+     * `public/storage` link from `php artisan storage:link`) keep working.
+     *
+     * @param  string  $path  The path requested from the source
+     * @return string|null The normalized relative path, or null if it leaves the root
+     */
+    protected function normalizePath($path)
+    {
+        $path = (string) $path;
+        if (str_contains($path, "\0")) {
+            return null;
+        }
+
+        $segments = [];
+        foreach (explode('/', $path) as $segment) {
+            if ($segment === '' || $segment === '.') {
+                continue;
+            }
+            if ($segment === '..') {
+                if (count($segments) === 0) {
+                    return null;
+                }
+                array_pop($segments);
+
+                continue;
+            }
+            $segments[] = $segment;
+        }
+
+        return implode('/', $segments);
+    }
+
     protected function getImagesFromFiles($files, $path = null)
     {
         $extension = pathinfo($path, PATHINFO_EXTENSION);
