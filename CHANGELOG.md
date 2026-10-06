@@ -18,6 +18,10 @@ All notable changes to `folklore/laravel-image` are documented in this file. The
 - JS tooling: Jest is installed, ESLint uses a flat config, and Babel helpers are bundled.
 - `composer.json`: `suggest` instead of the invalid `suggests` key, and an accurate description.
 
+### Fixed
+
+- Image routes answer 415 for a source file that isn't a supported image and 404 for an unknown filter, instead of a 500 (#9).
+
 ### Removed
 
 - Travis CI, Coveralls, `phpcs.xml` and the Prettier PHP plugin.

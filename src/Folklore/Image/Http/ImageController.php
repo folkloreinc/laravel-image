@@ -4,6 +4,8 @@ namespace Folklore\Image\Http;
 
 use Folklore\Image\Contracts\RouteResolver;
 use Folklore\Image\Exception\FileMissingException;
+use Folklore\Image\Exception\FilterMissingException;
+use Folklore\Image\Exception\FormatException;
 use Folklore\Image\Exception\ParseException;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
@@ -35,6 +37,10 @@ class ImageController extends BaseController
             return abort(404);
         } catch (FileMissingException $e) {
             return abort(404);
+        } catch (FilterMissingException $e) {
+            return abort(404);
+        } catch (FormatException $e) {
+            return abort(415);
         } catch (RuntimeException $e) {
             return abort(404);
         }
