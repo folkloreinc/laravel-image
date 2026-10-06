@@ -144,3 +144,21 @@ jobs:
           IMAGE_TEST_S3_ENDPOINT: http://127.0.0.1:9000
         # Fail instead of silently skipping if the server is unreachable.
         run: vendor/bin/phpunit tests/Feature/S3DiskTest.php --fail-on-skipped
+
+  # A single, stable check to require in branch protection, instead of every matrix job.
+  tests-passed:
+    if: always()
+    needs: [test, coverage, s3]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    name: Tests passed
+
+    steps:
+      - name: Check that every test job succeeded
+        run: |
+          echo "test: ${{ needs.test.result }}"
+          echo "coverage: ${{ needs.coverage.result }}"
+          echo "s3: ${{ needs.s3.result }}"
+          test "${{ needs.test.result }}" = success
+          test "${{ needs.coverage.result }}" = success
+          test "${{ needs.s3.result }}" = success

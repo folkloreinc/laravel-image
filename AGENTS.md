@@ -69,7 +69,7 @@ Every change ships with automated tests:
 
 CI (GitHub Actions, `.github/workflows`) runs:
 
-- `run-tests.yml`: the PHP suite on every supported PHP × Laravel combination, with `prefer-lowest` and `prefer-stable`, plus a coverage report;
+- `run-tests.yml`: the PHP suite on every supported PHP × Laravel combination, with `prefer-lowest` and `prefer-stable`, a coverage report, the S3-compatible disk tests, and a `Tests passed` job that succeeds only when all of them do;
 - `pint.yml` and `phpstan.yml`: code style, static analysis and `composer validate --strict`;
 - `js.yml`: lint, Jest and the Rollup build.
 
