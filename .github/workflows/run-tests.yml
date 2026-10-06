@@ -43,7 +43,7 @@ jobs:
     name: PHP ${{ matrix.php }} - Laravel ${{ matrix.laravel }} - ${{ matrix.stability }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: shivammathur/setup-php@v2
         with:
@@ -57,7 +57,10 @@ jobs:
           composer update --${{ matrix.stability }} --prefer-dist --no-interaction
 
       - name: List installed versions
-        run: composer show laravel/framework orchestra/testbench phpunit/phpunit
+        run: |
+          for package in laravel/framework orchestra/testbench phpunit/phpunit; do
+            composer show "$package" | grep -E '^(name|versions)'
+          done
 
       - name: Run tests
         run: vendor/bin/phpunit
@@ -68,7 +71,7 @@ jobs:
     name: Coverage
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: shivammathur/setup-php@v2
         with:
@@ -90,7 +93,7 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: coverage
           path: coverage/clover.xml
