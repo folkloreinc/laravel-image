@@ -1,0 +1,104 @@
+[
+    {
+        "description": "no filters",
+        "src": "path/to/image.jpg",
+        "width": null,
+        "height": null,
+        "filters": {},
+        "url": "/path/to/image.jpg",
+        "parsed": { "path": "/path/to/image.jpg", "filters": {} }
+    },
+    {
+        "description": "width and height",
+        "src": "path/to/image.jpg",
+        "width": 300,
+        "height": 300,
+        "filters": {},
+        "url": "/path/to/image-filters(300x300).jpg",
+        "parsed": { "path": "/path/to/image.jpg", "filters": { "width": 300, "height": 300 } }
+    },
+    {
+        "description": "width only",
+        "src": "path/to/image.jpg",
+        "width": 300,
+        "height": null,
+        "filters": {},
+        "url": "/path/to/image-filters(300x_).jpg",
+        "parsed": { "path": "/path/to/image.jpg", "filters": { "width": 300, "height": null } }
+    },
+    {
+        "description": "height only",
+        "src": "path/to/image.jpg",
+        "width": null,
+        "height": 200,
+        "filters": {},
+        "url": "/path/to/image-filters(_x200).jpg",
+        "parsed": { "path": "/path/to/image.jpg", "filters": { "width": null, "height": 200 } }
+    },
+    {
+        "description": "size with crop",
+        "src": "path/to/image.jpg",
+        "width": 300,
+        "height": 200,
+        "filters": { "crop": true },
+        "url": "/path/to/image-filters(300x200-crop).jpg",
+        "parsed": { "path": "/path/to/image.jpg", "filters": { "width": 300, "height": 200, "crop": true } }
+    },
+    {
+        "description": "filters with and without values",
+        "src": "path/to/image.jpg",
+        "width": null,
+        "height": null,
+        "filters": { "grayscale": true, "rotate": 90 },
+        "url": "/path/to/image-filters(grayscale-rotate(90)).jpg",
+        "parsed": { "path": "/path/to/image.jpg", "filters": { "grayscale": true, "rotate": "90" } }
+    },
+    {
+        "description": "size and filters",
+        "src": "path/to/image.jpg",
+        "width": 300,
+        "height": 300,
+        "filters": { "negative": true, "blur": 5 },
+        "url": "/path/to/image-filters(300x300-negative-blur(5)).jpg",
+        "parsed": {
+            "path": "/path/to/image.jpg",
+            "filters": { "width": 300, "height": 300, "negative": true, "blur": "5" }
+        }
+    },
+    {
+        "description": "list of filter names",
+        "src": "path/to/image.jpg",
+        "width": null,
+        "height": null,
+        "filters": ["small", "bw"],
+        "url": "/path/to/image-filters(small-bw).jpg",
+        "parsed": { "path": "/path/to/image.jpg", "filters": { "small": true, "bw": true } }
+    },
+    {
+        "description": "filter with a string value",
+        "src": "path/to/image.jpg",
+        "width": null,
+        "height": null,
+        "filters": { "colorize": "ff0000" },
+        "url": "/path/to/image-filters(colorize(ff0000)).jpg",
+        "parsed": { "path": "/path/to/image.jpg", "filters": { "colorize": "ff0000" } }
+    },
+    {
+        "description": "image at the root",
+        "src": "image.png",
+        "width": 100,
+        "height": 100,
+        "filters": {},
+        "url": "/image-filters(100x100).png",
+        "parsed": { "path": "/image.png", "filters": { "width": 100, "height": 100 } }
+    },
+    {
+        "description": "leading slash in the source",
+        "src": "/uploads/photo.jpeg",
+        "width": 640,
+        "height": null,
+        "filters": {},
+        "url": "/uploads/photo-filters(640x_).jpeg",
+        "parsed": { "path": "/uploads/photo.jpeg", "filters": { "width": 640, "height": null } }
+    }
+]
