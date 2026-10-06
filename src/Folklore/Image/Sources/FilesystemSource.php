@@ -4,6 +4,7 @@ namespace Folklore\Image\Sources;
 
 use finfo;
 use Folklore\Image\Contracts\ImageDataHandler;
+use Folklore\Image\Exception\InvalidPathException;
 use Imagine\Image\ImageInterface;
 use League\Flysystem\Adapter\Local;
 
@@ -11,7 +12,11 @@ class FilesystemSource extends AbstractSource
 {
     public function pathExists($path)
     {
-        $fullPath = $this->getFullPath($path);
+        try {
+            $fullPath = $this->getFullPath($path);
+        } catch (InvalidPathException $e) {
+            return false;
+        }
 
         return $this->existsOnDisk($fullPath);
     }
@@ -137,8 +142,12 @@ class FilesystemSource extends AbstractSource
     protected function getFullPath($path)
     {
         $prefixPath = data_get($this->config, 'path', '/');
+        $normalizedPath = $this->normalizePath($path);
+        if ($normalizedPath === null) {
+            throw new InvalidPathException('Path ['.$path.'] is outside the source root.');
+        }
 
-        return rtrim($prefixPath, '/').'/'.ltrim($path, '/');
+        return rtrim($prefixPath, '/').'/'.$normalizedPath;
     }
 
     protected function getCacheFullPath($path)

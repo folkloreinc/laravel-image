@@ -18,6 +18,10 @@ All notable changes to `folklore/laravel-image` are documented in this file. The
 - JS tooling: Jest is installed, ESLint uses a flat config, and Babel helpers are bundled.
 - `composer.json`: `suggest` instead of the invalid `suggests` key, and an accurate description.
 
+### Fixed
+
+- The `local` and `filesystem` sources reject paths that resolve outside their root, when reading (404) and when saving (`InvalidPathException`). The check is lexical, so symbolic links inside the root, such as `public/storage`, keep working (#10).
+
 ### Removed
 
 - Travis CI, Coveralls, `phpcs.xml` and the Prettier PHP plugin.
