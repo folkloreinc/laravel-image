@@ -3,7 +3,7 @@
 namespace Folklore\Image\Tests\Feature;
 
 use Folklore\Image\Tests\TestCase;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Log\Events\MessageLogged;
 
 /**
  * Route options (`allow_size`, `allow_filters`, `disallow_filters`, `headers`) and size
@@ -109,21 +109,20 @@ class RouteRestrictionsTest extends TestCase
 
     public function test_log_mode_reports_the_violation_and_still_serves_the_image()
     {
-        Log::spy();
+        $warnings = $this->recordWarnings();
         $this->route(['allow_size' => false, 'disallow_filters' => ['negative']], 'log');
 
         $this->get('/restricted/image-filters(100x100-negative).jpg')->assertOk();
 
-        Log::shouldHaveReceived('warning')->once()->withArgs(function ($message, $context) {
-            return str_contains($message, 'restrictions')
-                && $context['path'] === 'image-filters(100x100-negative).jpg'
-                && count($context['violations']) === 2;
-        });
+        $this->assertCount(1, $warnings);
+        $this->assertStringContainsString('restrictions', $warnings[0]->message);
+        $this->assertEquals('image-filters(100x100-negative).jpg', $warnings[0]->context['path']);
+        $this->assertCount(2, $warnings[0]->context['violations']);
     }
 
     public function test_log_mode_is_the_default_and_logs_nothing_for_allowed_requests()
     {
-        Log::spy();
+        $warnings = $this->recordWarnings();
         $this->app['router']->image('default/{pattern}', [
             'as' => 'image.default',
             'cache' => false,
@@ -131,10 +130,26 @@ class RouteRestrictionsTest extends TestCase
         ]);
 
         $this->get('/default/image-filters(grayscale).jpg')->assertOk();
-        Log::shouldNotHaveReceived('warning');
+        $this->assertCount(0, $warnings);
 
         $this->get('/default/image-filters(100x100).jpg')->assertOk();
-        Log::shouldHaveReceived('warning')->once();
+        $this->assertCount(1, $warnings);
+    }
+
+    /**
+     * Collect the warnings logged by the package. Spying on the Log facade would also
+     * catch Laravel's deprecation logging, which breaks on some dependency versions.
+     */
+    protected function recordWarnings(): \ArrayObject
+    {
+        $warnings = new \ArrayObject;
+        $this->app['events']->listen(MessageLogged::class, function (MessageLogged $event) use ($warnings) {
+            if ($event->level === 'warning' && str_contains($event->message, 'Image request')) {
+                $warnings->append($event);
+            }
+        });
+
+        return $warnings;
     }
 
     public function test_route_headers_are_added_to_the_response()
