@@ -6,6 +6,7 @@ use Folklore\Image\Contracts\ImageHandlerFactory as ImageHandlerFactoryContract;
 use Folklore\Image\Contracts\RouteResolver as RouteResolverContract;
 use Folklore\Image\Contracts\UrlGenerator as UrlGeneratorContract;
 use Illuminate\Routing\Route;
+use Illuminate\Support\Arr;
 
 class RouteResolver implements RouteResolverContract
 {
@@ -31,7 +32,7 @@ class RouteResolver implements RouteResolverContract
         $parseData = $this->urlGenerator->parse($path, $urlConfig);
         $path = $parseData['path'];
         $pathFilters = $parseData['filters'];
-        $filters = array_merge($pathFilters, $routeFilters);
+        $filters = $this->mergeFilters($config, $pathFilters, $routeFilters);
 
         // Get the image
         $handler = $this->image->source($source);
@@ -54,7 +55,7 @@ class RouteResolver implements RouteResolverContract
         $parseData = $this->urlGenerator->parse($path, $urlConfig);
         $path = $parseData['path'];
         $pathFilters = $parseData['filters'];
-        $filters = array_merge($pathFilters, $routeFilters);
+        $filters = $this->mergeFilters($config, $pathFilters, $routeFilters);
 
         // Get the image
         $handler = $this->image->source($source);
@@ -67,6 +68,21 @@ class RouteResolver implements RouteResolverContract
             ->setQuality($quality)
             ->setFormat(data_get($parseData, 'format') ?? $mime ?? $handler->format($path))
             ->setExpiresIn($expires);
+    }
+
+    /**
+     * Merge the filters from the URL with the route's own filters and options.
+     *
+     * Only the route decides on upscaling: an `upscale` filter in the URL is ignored.
+     */
+    protected function mergeFilters(array $config, array $pathFilters, array $routeFilters): array
+    {
+        $filters = array_merge(Arr::except($pathFilters, ['upscale']), $routeFilters);
+        if (data_get($config, 'upscale') !== null) {
+            $filters['upscale'] = $config['upscale'];
+        }
+
+        return $filters;
     }
 
     public function getPathFromRoute(Route $route)

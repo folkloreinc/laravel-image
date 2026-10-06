@@ -15,14 +15,14 @@ class Resize implements FilterWithValueContract
             $width = data_get($value, 'width', null);
             $height = data_get($value, 'height', null);
             $crop = data_get($value, 'crop', false);
-            $upscale = data_get($value, 'upscale', false);
+            $upscale = $this->normalizeUpscale(data_get($value, 'upscale'));
         } else {
             $values = explode(',', $value);
             [$width, $height] = $values;
             $width = isset($values[0]) ? $values[0] : null;
             $height = isset($values[1]) ? $values[1] : null;
             $crop = isset($values[2]) ? $values[2] : true;
-            $upscale = isset($values[3]) ? $values[3] : false;
+            $upscale = $this->normalizeUpscale(isset($values[3]) ? $values[3] : null);
         }
 
         // Get new size
@@ -48,6 +48,15 @@ class Resize implements FilterWithValueContract
         }
 
         if ($crop && $crop !== 'false') {
+            // Without upscaling, keep the requested ratio at the largest size the source allows.
+            if ($upscale === false && $ratio > 1) {
+                $size = new Box(
+                    max(1, (int) round($size->getWidth() / $ratio)),
+                    max(1, (int) round($size->getHeight() / $ratio))
+                );
+                $ratio = 1;
+            }
+
             $imageSize = $thumbnail->getSize()->scale($ratio);
             $thumbnail->resize($imageSize);
 
@@ -85,6 +94,27 @@ class Resize implements FilterWithValueContract
         }
 
         return $thumbnail;
+    }
+
+    /**
+     * Normalize the upscale option.
+     *
+     * - null (default): v1 behaviour, crops upscale and plain resizes don't;
+     * - true: always upscale;
+     * - false: never upscale.
+     *
+     * @return bool|null
+     */
+    protected function normalizeUpscale($upscale)
+    {
+        if ($upscale === null || $upscale === '') {
+            return null;
+        }
+        if (is_string($upscale)) {
+            return ! in_array(strtolower($upscale), ['false', '0', 'no', 'off'], true);
+        }
+
+        return (bool) $upscale;
     }
 
     /**

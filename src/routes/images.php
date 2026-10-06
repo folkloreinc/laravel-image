@@ -27,6 +27,10 @@ $router->image('{pattern}', [
     // Disallow some filters. Can be set to an array of filters.
     'disallow_filters' => false,
 
+    // Whether sizes larger than the source enlarge it: null keeps the global
+    // `image.upscale` setting, true always upscales, false never does.
+    'upscale' => null,
+
     // Any pattern options you want to override.
     'pattern' => [],
 

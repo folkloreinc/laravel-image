@@ -219,8 +219,8 @@ class ImageHandler implements ImageHandlerContract
         }
         $filters = $newFilters;
 
-        // Convert width, height, crop options to resize filter
-        $sizeKeys = ['width', 'height', 'crop'];
+        // Convert width, height, crop and upscale options to resize filter
+        $sizeKeys = ['width', 'height', 'crop', 'upscale'];
         $width = data_get($filters, 'width', null);
         $height = data_get($filters, 'height', null);
         if ($width !== null || $height !== null) {
@@ -229,6 +229,7 @@ class ImageHandler implements ImageHandlerContract
                 'width' => $width,
                 'height' => $height,
                 'crop' => $crop,
+                'upscale' => data_get($filters, 'upscale') ?? config('image.upscale'),
             ];
         }
         $filters = Arr::except($filters, array_merge($sizeKeys));

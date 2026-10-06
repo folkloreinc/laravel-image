@@ -10,6 +10,7 @@ All notable changes to `folklore/laravel-image` are documented in this file. The
 - Laravel Pint, Larastan (with a baseline) and the Composer scripts `test`, `test-coverage`, `analyse` and `format`.
 - URL fixtures shared by the PHP and JS suites, and feature tests that serve images through real routes.
 - Tests for the `filesystem` source on an S3-compatible disk, run against an S3-compatible server (moto) in CI.
+- An `upscale` option (`image.upscale`, per route, or in `make()`): `false` never enlarges the source, even for crops, which then keep the requested ratio at the largest size the source allows. The default, `null`, keeps the v1 behaviour (#12).
 
 ### Changed
 
