@@ -54,11 +54,33 @@ Every change ships with automated tests:
 - A new option or feature is tested in both states (enabled and disabled, allowed and denied), through a real HTTP route when it affects serving images.
 - A change to URL generation or parsing updates the URL fixtures shared by the PHP and JS suites, so both generators stay in sync.
 
-CI (GitHub Actions, set up in Phase 1, Step 1 of #3) runs the PHP suite on every supported PHP × Laravel combination, plus the JS suite and static analysis. A change merges only when CI is green. Until that step lands, work on CI and on fixing the existing tests comes before any other Phase 1 item.
+CI (GitHub Actions, set up in Phase 1, Step 1 of #3) runs:
+
+- the PHP suite on every supported PHP × Laravel combination;
+- the JS suite;
+- code style and static analysis.
+
+A change merges only when CI is green. Until that step lands, work on tooling, CI and the existing tests comes before any other Phase 1 item.
+
+## Tooling
+
+This package uses the tools Laravel packages usually use, so contributors find familiar commands (Phase 1, Step 1 of #3 sets them up):
+
+| Concern         | Tool                                                         | Command                                 |
+| --------------- | ------------------------------------------------------------ | --------------------------------------- |
+| PHP tests       | PHPUnit with Orchestra Testbench                             | `composer test`, `composer test-coverage` |
+| PHP style       | Laravel Pint (`laravel` preset, `pint.json`)                 | `composer format`                       |
+| PHP analysis    | Larastan (`phpstan.neon.dist`)                               | `composer analyse`                      |
+| JS tests        | Jest                                                         | `npm test`                              |
+| JS style        | ESLint and Prettier (JS only)                                | `npm run lint`                          |
+| CI              | GitHub Actions (`.github/workflows`)                         |                                         |
+
+Don't add other formatters or linters for PHP, such as `phpcs` or the Prettier PHP plugin.
 
 ## Checks
 
-- PHP: `composer install`, then `vendor/bin/phpunit`.
-- JS: `npm install`, then `npm test` (Jest).
-- Until Phase 1, Step 1 of #3 fixes the suite, some PHP tests already fail on `v1.x`. Meanwhile, a change passes when it adds no new failure and includes its own tests.
-- Style: PSR-2 (`phpcs.xml`), 4-space indentation (`.editorconfig`). Match the surrounding code.
+Until Step 1 lands, the commands in the table don't exist yet. Use these:
+
+- PHP: `composer install`, then `vendor/bin/phpunit`. Some tests already fail on `v1.x`. A change passes when it adds no new failure and includes its own tests.
+- JS: Jest is not installed yet and the ESLint config fails to load. Step 1 fixes both.
+- Style: match the surrounding code (PSR-2, 4-space indentation). Don't reformat code you aren't changing. Pint will reformat the whole codebase in one formatting-only commit.
