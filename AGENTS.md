@@ -19,6 +19,7 @@ The plan lives in [#3](https://github.com/folkloreinc/laravel-image/issues/3): p
 
 ## Branches and releases
 
+- `v1.x` supports **PHP 8.2–8.5 and Laravel 9–13**: active client projects still run PHP 8.2 and Laravel 9. CI tests every supported combination; don't drop a version within `v1.x`.
 - `v1.x` is the maintained branch. `main` and `develop` are stale; don't base work on them.
 - Follow semver and tag releases (`v1.1.0`, …). Consumers should be able to require `^1.x` instead of `v1.x-dev`.
 
@@ -54,17 +55,17 @@ Every change ships with automated tests:
 - A new option or feature is tested in both states (enabled and disabled, allowed and denied), through a real HTTP route when it affects serving images.
 - A change to URL generation or parsing updates the URL fixtures shared by the PHP and JS suites, so both generators stay in sync.
 
-CI (GitHub Actions, set up in Phase 1, Step 1 of #3) runs:
+CI (GitHub Actions, `.github/workflows`) runs:
 
-- the PHP suite on every supported PHP × Laravel combination;
-- the JS suite;
-- code style and static analysis.
+- `run-tests.yml`: the PHP suite on every supported PHP × Laravel combination, with `prefer-lowest` and `prefer-stable`, plus a coverage report;
+- `pint.yml` and `phpstan.yml`: code style, static analysis and `composer validate --strict`;
+- `js.yml`: lint, Jest and the Rollup build.
 
-A change merges only when CI is green. Until that step lands, work on tooling, CI and the existing tests comes before any other Phase 1 item.
+A change merges only when CI is green.
 
 ## Tooling
 
-This package uses the tools Laravel packages usually use, so contributors find familiar commands (Phase 1, Step 1 of #3 sets them up):
+This package uses the tools Laravel packages usually use, so contributors find familiar commands:
 
 | Concern         | Tool                                                         | Command                                 |
 | --------------- | ------------------------------------------------------------ | --------------------------------------- |
@@ -79,8 +80,9 @@ Don't add other formatters or linters for PHP, such as `phpcs` or the Prettier P
 
 ## Checks
 
-Until Step 1 lands, the commands in the table don't exist yet. Use these:
+Before committing, run what applies to your change:
 
-- PHP: `composer install`, then `vendor/bin/phpunit`. Some tests already fail on `v1.x`. A change passes when it adds no new failure and includes its own tests.
-- JS: Jest is not installed yet and the ESLint config fails to load. Step 1 fixes both.
-- Style: match the surrounding code (PSR-2, 4-space indentation). Don't reformat code you aren't changing. Pint will reformat the whole codebase in one formatting-only commit.
+- `composer test`, `composer analyse` and `composer format`.
+- `npm test` and `npm run lint` when you touch `js/`.
+- **Larastan baseline:** `phpstan-baseline.neon` lists known errors. Fixing one removes its entry (regenerate with `vendor/bin/phpstan analyse --generate-baseline`). Never add new code to the baseline: fix the error instead.
+- **Formatting-only commits** (for example a new Pint rule) go in their own commit, listed in `.git-blame-ignore-revs`.
