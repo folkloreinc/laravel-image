@@ -14,18 +14,23 @@ $router->image('{pattern}', [
     // it will use the default source.
     'source' => null,
 
-    // Allow to specify a size as filter
+    // Allow a size (width, height, crop) in the URL.
     'allow_size' => true,
 
-    // Allow to specify filters in url. You can also set this to
-    // an array of specific filters to restrict this route to those
-    // filters.
+    // Allow filters in the URL: true for any filter, false for none, or an
+    // array to accept only those filters.
     //
     // Example: ["negative"]
     'allow_filters' => true,
 
-    // Disallow some filters. Can be set to an array of filters.
+    // Reject some filters in the URL. Can be set to an array of filters.
     'disallow_filters' => false,
+
+    // Override the global `image.restrictions` settings for this route,
+    // for example the mode ("log" or "enforce") or the size limits.
+    //
+    // Example: ['mode' => 'enforce', 'max_width' => 2000]
+    'restrictions' => [],
 
     // Any pattern options you want to override.
     'pattern' => [],
@@ -39,7 +44,7 @@ $router->image('{pattern}', [
     // Expires header in seconds
     'expires' => 3600 * 24 * 31,
 
-    // Any headers you want to add on the image
+    // Headers added to every image response of this route.
     'headers' => [],
 
     // Cache the file on local machine

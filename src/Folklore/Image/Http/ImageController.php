@@ -5,6 +5,7 @@ namespace Folklore\Image\Http;
 use Folklore\Image\Contracts\RouteResolver;
 use Folklore\Image\Exception\FileMissingException;
 use Folklore\Image\Exception\ParseException;
+use Folklore\Image\Exception\RestrictionException;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Http\Request;
@@ -32,6 +33,8 @@ class ImageController extends BaseController
         try {
             return $this->routeResolver->resolveToResponse($request->route());
         } catch (ParseException $e) {
+            return abort(404);
+        } catch (RestrictionException $e) {
             return abort(404);
         } catch (FileMissingException $e) {
             return abort(404);

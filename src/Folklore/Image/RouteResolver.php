@@ -5,7 +5,9 @@ namespace Folklore\Image;
 use Folklore\Image\Contracts\ImageHandlerFactory as ImageHandlerFactoryContract;
 use Folklore\Image\Contracts\RouteResolver as RouteResolverContract;
 use Folklore\Image\Contracts\UrlGenerator as UrlGeneratorContract;
+use Folklore\Image\Exception\RestrictionException;
 use Illuminate\Routing\Route;
+use Illuminate\Support\Facades\Log;
 
 class RouteResolver implements RouteResolverContract
 {
@@ -13,10 +15,16 @@ class RouteResolver implements RouteResolverContract
 
     protected $urlGenerator;
 
-    public function __construct(ImageHandlerFactoryContract $image, UrlGeneratorContract $urlGenerator)
-    {
+    protected $restrictions;
+
+    public function __construct(
+        ImageHandlerFactoryContract $image,
+        UrlGeneratorContract $urlGenerator,
+        ?RouteRestrictions $restrictions = null
+    ) {
         $this->image = $image;
         $this->urlGenerator = $urlGenerator;
+        $this->restrictions = $restrictions ?? app(RouteRestrictions::class);
     }
 
     public function resolveToImage(Route $route)
@@ -51,10 +59,14 @@ class RouteResolver implements RouteResolverContract
         $routeFilters = data_get($config, 'filters', []);
 
         // Parse the path
+        $requestPath = $path;
         $parseData = $this->urlGenerator->parse($path, $urlConfig);
         $path = $parseData['path'];
         $pathFilters = $parseData['filters'];
         $filters = array_merge($pathFilters, $routeFilters);
+
+        // Check the filters from the URL against the route restrictions
+        $this->checkRestrictions($route, $config, $requestPath, $pathFilters);
 
         // Get the image
         $handler = $this->image->source($source);
@@ -62,11 +74,41 @@ class RouteResolver implements RouteResolverContract
         $mime = ! is_null($image) ? $image->metadata()['file.MimeType'] : null;
         $handler = $this->image->source($source);
 
-        return response()
+        $response = response()
             ->image($image)
             ->setQuality($quality)
             ->setFormat(data_get($parseData, 'format') ?? $mime ?? $handler->format($path))
             ->setExpiresIn($expires);
+
+        $headers = data_get($config, 'headers', []);
+        if (is_array($headers) && count($headers) > 0) {
+            $response->withHeaders($headers);
+        }
+
+        return $response;
+    }
+
+    /**
+     * Log or reject a request that breaks the route restrictions.
+     *
+     * @throws RestrictionException When the restrictions are enforced
+     */
+    protected function checkRestrictions(Route $route, array $config, string $path, array $filters): void
+    {
+        $violations = $this->restrictions->violations($config, $filters);
+        if (count($violations) === 0) {
+            return;
+        }
+
+        if ($this->restrictions->isEnforced($config)) {
+            throw new RestrictionException(implode(' ', $violations));
+        }
+
+        Log::warning('Image request does not satisfy the route restrictions; serving it because the restrictions mode is "log".', [
+            'route' => $route->getName(),
+            'path' => $path,
+            'violations' => $violations,
+        ]);
     }
 
     public function getPathFromRoute(Route $route)
