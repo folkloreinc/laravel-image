@@ -80,11 +80,11 @@ This package also provides some build-in filters ready to use \([more on Filters
 
 ##### Version Compatibility
 
-Laravel 7 and up
+PHP 8.2–8.5 and Laravel 9–13
 
 #### Dependencies:
 
-* [Laravel 7.x|8.x](https://github.com/laravel/laravel)
+* [Laravel 9.x–13.x](https://github.com/laravel/laravel)
 * [Imagine 1.x](https://github.com/avalanche123/Imagine)
 
 #### Server Requirements:

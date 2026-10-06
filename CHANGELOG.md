@@ -12,6 +12,7 @@ All notable changes to `folklore/laravel-image` are documented in this file. The
 
 ### Changed
 
+- **Requires PHP 8.2 and Laravel 9 or later** (`illuminate/support` ^9.0 to ^13.0). Projects on older versions that require `v1.x-dev` can no longer update the package: they keep the commit locked in their `composer.lock`.
 - The test suite runs on Testbench 7–11 and PHPUnit 9.5–12.
 - JS tooling: Jest is installed, ESLint uses a flat config, and Babel helpers are bundled.
 - `composer.json`: `suggest` instead of the invalid `suggests` key, and an accurate description.
