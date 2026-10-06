@@ -7,7 +7,4 @@ const urlGenerator = new UrlGenerator({
 
 const url = (...args) => urlGenerator.make(...args);
 
-export {
-    UrlGenerator,
-    url,
-};
+export { UrlGenerator, url };

@@ -29,7 +29,7 @@ class UrlGenerator {
         }
 
         // Extract the path from a URL if a URL was provided instead of a path
-        const src = (new URL(path)).pathname;
+        const src = new URL(path).pathname;
         const options = {
             ...this.options,
             ...(isObject(width) && !isArray(width) ? width : null),
@@ -47,7 +47,13 @@ class UrlGenerator {
         }
 
         // Separate config from filters
-        const configKeys = ['route', 'format', 'filters_format', 'filter_format', 'filter_separator'];
+        const configKeys = [
+            'route',
+            'format',
+            'filters_format',
+            'filter_format',
+            'filter_separator',
+        ];
         const config = pick(options, configKeys);
         const filters = omit(options, configKeys);
         const filterFormat = get(config, 'filter_format');
@@ -79,9 +85,11 @@ class UrlGenerator {
             filters: filtersParameter,
         };
 
-        const url = Object.keys(placeholders).reduce((fullUrl, key) => (
-            fullUrl.replace(new RegExp(`{\\s*${key}\\s*}`, 'gi'), placeholders[key])
-        ), get(config, 'format'));
+        const url = Object.keys(placeholders).reduce(
+            (fullUrl, key) =>
+                fullUrl.replace(new RegExp(`{\\s*${key}\\s*}`, 'gi'), placeholders[key]),
+            get(config, 'format'),
+        );
 
         return `/${trimStart(url, '/')}`;
     }
@@ -106,7 +114,8 @@ class UrlGenerator {
                 parameters.push(key);
             } else if (val !== false) {
                 const strVal = isArray(val) ? val.join(',') : val;
-                const parameter = format.replace(/\{\s*key\s*\}/i, key)
+                const parameter = format
+                    .replace(/\{\s*key\s*\}/i, key)
                     .replace(/\{\s*value\s*\}/i, strVal);
                 parameters.push(parameter);
             }
