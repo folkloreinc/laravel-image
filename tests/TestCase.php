@@ -32,6 +32,7 @@ class TestCase extends BaseTestCase
                     public_path('cache'),
                     public_path('filesystem'),
                     public_path('custom'),
+                    public_path('orientation'),
                 ],
             ],
             'filesystem' => [

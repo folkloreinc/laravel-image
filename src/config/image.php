@@ -206,6 +206,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Orientation
+    |--------------------------------------------------------------------------
+    |
+    | Whether images are rotated and flipped according to their EXIF
+    | orientation before any filter, as phone cameras store most photos
+    | sideways. Requires the exif extension.
+    |
+    | A route can override it with its own `auto_orient` option. The URL can't.
+    |
+    */
+    'auto_orient' => true,
+
+    /*
+    |--------------------------------------------------------------------------
     | Image Driver
     |--------------------------------------------------------------------------
     |
