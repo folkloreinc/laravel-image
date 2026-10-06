@@ -43,7 +43,7 @@ jobs:
     name: PHP ${{ matrix.php }} - Laravel ${{ matrix.laravel }} - ${{ matrix.stability }}
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - uses: shivammathur/setup-php@v2
         with:
@@ -81,7 +81,7 @@ jobs:
     name: Coverage
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - uses: shivammathur/setup-php@v2
         with:
@@ -114,7 +114,7 @@ jobs:
     name: S3-compatible disk
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       # MinIO no longer publishes public Docker images, so CI uses moto's S3-compatible
       # server. The test only relies on the S3 API, so it also runs against MinIO locally.
