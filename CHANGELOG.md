@@ -20,6 +20,7 @@ All notable changes to `folklore/laravel-image` are documented in this file. The
 
 ### Fixed
 
+- `image.memory_limit` is now a minimum: processing an image no longer lowers a higher memory limit, and keeps an unlimited one (#8).
 - `Utils::convertImage()` deletes its temporary files, including on failure, and only fetches `http` and `https` URLs. The new `image.utils.allowed_hosts` option restricts the hosts it fetches from (#13).
 
 ### Removed
