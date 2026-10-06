@@ -23,6 +23,18 @@ The plan lives in [#3](https://github.com/folkloreinc/laravel-image/issues/3): p
 - `v1.x` is the maintained branch. `main` and `develop` are stale; don't base work on them.
 - Follow semver and tag releases (`v1.1.0`, …). Consumers should be able to require `^1.x` instead of `v1.x-dev`.
 
+## Pull requests
+
+Client sites install `v1.x-dev` directly, so every push to `v1.x` reaches production on their next `composer update`. **Every change goes through a pull request; never push to `v1.x` directly.**
+
+1. Start from an issue (a sub-issue of #3, or a new issue). Read it and its comments first.
+2. Branch from an up-to-date `v1.x`, named `<type>/<issue>-<slug>`: `feature/12-named-presets`, `fix/15-svg-detection`, `docs/…`, `ci/…`, `refactor/…`.
+3. Commit as you go, then push the branch and open a pull request against `v1.x`, with `Closes #<issue>` (or `Part of #<issue>`) in its body. Write the title and body in English, and list the checks you ran.
+4. Merge only when CI is green and the pull request is reviewed. Prefer a merge commit, so formatting-only commits keep their hash in `.git-blame-ignore-revs`.
+5. Delete the branch after merging. An issue closes when its pull request merges, not when code is pushed.
+
+Something out of scope noticed along the way becomes a new issue, not part of the current pull request.
+
 ## Compatibility rules
 
 Many sites run this package in production, so within `v1.x`:
