@@ -273,6 +273,10 @@ class ServiceProvider extends BaseServiceProvider
      */
     public function registerContracts()
     {
+        $this->app->bind(RouteRestrictions::class, function () {
+            return new RouteRestrictions($this->app['config']->get('image.restrictions', []));
+        });
+
         $this->app->bind(ImageManagerContract::class, 'image');
         $this->app->bind(ImageHandlerFactoryContract::class, 'image');
         $this->app->bind(FiltersManagerContract::class, 'image');

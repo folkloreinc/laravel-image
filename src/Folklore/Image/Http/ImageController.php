@@ -7,6 +7,7 @@ use Folklore\Image\Exception\FileMissingException;
 use Folklore\Image\Exception\FilterMissingException;
 use Folklore\Image\Exception\FormatException;
 use Folklore\Image\Exception\ParseException;
+use Folklore\Image\Exception\RestrictionException;
 use Folklore\Image\Utils;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
@@ -35,6 +36,8 @@ class ImageController extends BaseController
         try {
             return $this->routeResolver->resolveToResponse($request->route());
         } catch (ParseException $e) {
+            return abort(404);
+        } catch (RestrictionException $e) {
             return abort(404);
         } catch (FileMissingException $e) {
             return abort(404);
