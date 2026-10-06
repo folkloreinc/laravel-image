@@ -28,6 +28,7 @@ All notable changes to `folklore/laravel-image` are documented in this file. The
 - `image.memory_limit` is now a minimum: processing an image no longer lowers a higher memory limit, and keeps an unlimited one (#8).
 - Image routes answer 415 for a source file that isn't a supported image and 404 for an unknown filter, instead of a 500 (#9).
 - The `local` and `filesystem` sources reject paths that resolve outside their root, when reading (404) and when saving (`InvalidPathException`). The check is lexical, so symbolic links inside the root, such as `public/storage`, keep working (#10).
+- A `memory_limit` filter in an image URL is ignored: it could raise PHP's memory limit for that request above `image.memory_limit`. `make()` options and a route's `filters` can still set it (#26).
 - `Utils::convertImage()` deletes its temporary files, including on failure, and only fetches `http` and `https` URLs. The new `image.utils.allowed_hosts` option restricts the hosts it fetches from (#13).
 
 ### Removed

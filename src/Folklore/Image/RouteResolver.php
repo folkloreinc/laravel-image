@@ -12,6 +12,11 @@ use Illuminate\Support\Facades\Log;
 
 class RouteResolver implements RouteResolverContract
 {
+    /**
+     * Options a URL can't set: only the route (or the config) decides on them.
+     */
+    protected const ROUTE_ONLY_OPTIONS = ['upscale', 'memory_limit'];
+
     protected $image;
 
     protected $urlGenerator;
@@ -67,8 +72,8 @@ class RouteResolver implements RouteResolverContract
         $filters = $this->mergeFilters($config, $pathFilters, $routeFilters);
 
         // Check the filters from the URL against the route restrictions
-        // (an `upscale` filter in the URL is ignored, so it isn't checked either)
-        $this->checkRestrictions($route, $config, $requestPath, Arr::except($pathFilters, ['upscale']));
+        // (options a URL can't set are ignored, so they aren't checked either)
+        $this->checkRestrictions($route, $config, $requestPath, Arr::except($pathFilters, self::ROUTE_ONLY_OPTIONS));
 
         // Get the image
         $handler = $this->image->source($source);
@@ -116,11 +121,12 @@ class RouteResolver implements RouteResolverContract
     /**
      * Merge the filters from the URL with the route's own filters and options.
      *
-     * Only the route decides on upscaling: an `upscale` filter in the URL is ignored.
+     * Only the route decides on upscaling and memory: `upscale` and `memory_limit`
+     * filters in the URL are ignored.
      */
     protected function mergeFilters(array $config, array $pathFilters, array $routeFilters): array
     {
-        $filters = array_merge(Arr::except($pathFilters, ['upscale']), $routeFilters);
+        $filters = array_merge(Arr::except($pathFilters, self::ROUTE_ONLY_OPTIONS), $routeFilters);
         if (data_get($config, 'upscale') !== null) {
             $filters['upscale'] = $config['upscale'];
         }
