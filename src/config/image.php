@@ -159,6 +159,35 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Route restrictions
+    |--------------------------------------------------------------------------
+    |
+    | Limits on what an image URL can request, checked on every image route
+    | together with the route options `allow_size`, `allow_filters` and
+    | `disallow_filters`. A route can override any of these settings with its
+    | own `restrictions` array.
+    |
+    | Modes:
+    | - "log": a request that breaks a restriction is logged as a warning and
+    |   still served. Use it to find out what your sites request before
+    |   enforcing anything.
+    | - "enforce": such a request answers 404.
+    |
+    | Width and height count in pixels, `max_pixels` is width × height when both
+    | are requested, and `max_filters` doesn't count the size (width, height,
+    | crop). Set a limit to null to disable it.
+    |
+    */
+    'restrictions' => [
+        'mode' => 'log',
+        'max_width' => 5000,
+        'max_height' => 5000,
+        'max_pixels' => 25000000,
+        'max_filters' => 10,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Upscaling
     |--------------------------------------------------------------------------
     |
@@ -198,5 +227,20 @@ return [
     |
     */
     'memory_limit' => '128M',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Utilities
+    |--------------------------------------------------------------------------
+    |
+    | Remote images fetched by `Folklore\Image\Utils` (for example by
+    | `Utils::convertImage()`). Only http and https URLs are fetched. Set
+    | `allowed_hosts` to a list of hosts to fetch only from those hosts; with a
+    | list, redirects aren't followed.
+    |
+    */
+    'utils' => [
+        'allowed_hosts' => null,
+    ],
 
 ];

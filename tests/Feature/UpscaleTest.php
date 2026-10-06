@@ -90,6 +90,18 @@ class UpscaleTest extends TestCase
         $this->assertResponseSize(300, 150, $this->get('/inherit/image-filters(600x300-crop).jpg'));
     }
 
+    public function test_an_upscale_filter_in_the_url_does_not_count_against_the_restrictions()
+    {
+        $this->app['router']->image('strict/{pattern}', [
+            'as' => 'image.strict',
+            'cache' => false,
+            'allow_filters' => false,
+            'restrictions' => ['mode' => 'enforce'],
+        ]);
+
+        $this->assertResponseSize(600, 300, $this->get('/strict/image-filters(600x300-crop-upscale).jpg'));
+    }
+
     protected function assertSize(int $width, int $height, $image): void
     {
         $this->assertEquals([$width, $height], [$image->getSize()->getWidth(), $image->getSize()->getHeight()]);
