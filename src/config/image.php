@@ -181,4 +181,19 @@ return [
     */
     'memory_limit' => '128M',
 
+    /*
+    |--------------------------------------------------------------------------
+    | Utilities
+    |--------------------------------------------------------------------------
+    |
+    | Remote images fetched by `Folklore\Image\Utils` (for example by
+    | `Utils::convertImage()`). Only http and https URLs are fetched. Set
+    | `allowed_hosts` to a list of hosts to fetch only from those hosts; with a
+    | list, redirects aren't followed.
+    |
+    */
+    'utils' => [
+        'allowed_hosts' => null,
+    ],
+
 ];
