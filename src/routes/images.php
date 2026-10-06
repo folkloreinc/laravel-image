@@ -32,6 +32,10 @@ $router->image('{pattern}', [
     // Example: ['mode' => 'enforce', 'max_width' => 2000]
     'restrictions' => [],
 
+    // Whether sizes larger than the source enlarge it: null keeps the global
+    // `image.upscale` setting, true always upscales, false never does.
+    'upscale' => null,
+
     // Any pattern options you want to override.
     'pattern' => [],
 

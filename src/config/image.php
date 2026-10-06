@@ -188,6 +188,24 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Upscaling
+    |--------------------------------------------------------------------------
+    |
+    | Whether a requested size larger than the source image enlarges it.
+    |
+    | - null: v1 behaviour. Crops upscale to the exact requested size; plain
+    |   resizes don't.
+    | - true: always upscale.
+    | - false: never upscale. A crop keeps the requested ratio at the largest
+    |   size the source allows.
+    |
+    | A route can override it with its own `upscale` option. The URL can't.
+    |
+    */
+    'upscale' => null,
+
+    /*
+    |--------------------------------------------------------------------------
     | Image Driver
     |--------------------------------------------------------------------------
     |

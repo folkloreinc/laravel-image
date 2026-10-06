@@ -7,6 +7,7 @@ use Folklore\Image\Contracts\RouteResolver as RouteResolverContract;
 use Folklore\Image\Contracts\UrlGenerator as UrlGeneratorContract;
 use Folklore\Image\Exception\RestrictionException;
 use Illuminate\Routing\Route;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 
 class RouteResolver implements RouteResolverContract
@@ -39,7 +40,7 @@ class RouteResolver implements RouteResolverContract
         $parseData = $this->urlGenerator->parse($path, $urlConfig);
         $path = $parseData['path'];
         $pathFilters = $parseData['filters'];
-        $filters = array_merge($pathFilters, $routeFilters);
+        $filters = $this->mergeFilters($config, $pathFilters, $routeFilters);
 
         // Get the image
         $handler = $this->image->source($source);
@@ -63,10 +64,11 @@ class RouteResolver implements RouteResolverContract
         $parseData = $this->urlGenerator->parse($path, $urlConfig);
         $path = $parseData['path'];
         $pathFilters = $parseData['filters'];
-        $filters = array_merge($pathFilters, $routeFilters);
+        $filters = $this->mergeFilters($config, $pathFilters, $routeFilters);
 
         // Check the filters from the URL against the route restrictions
-        $this->checkRestrictions($route, $config, $requestPath, $pathFilters);
+        // (an `upscale` filter in the URL is ignored, so it isn't checked either)
+        $this->checkRestrictions($route, $config, $requestPath, Arr::except($pathFilters, ['upscale']));
 
         // Get the image
         $handler = $this->image->source($source);
@@ -109,6 +111,21 @@ class RouteResolver implements RouteResolverContract
             'path' => $path,
             'violations' => $violations,
         ]);
+    }
+
+    /**
+     * Merge the filters from the URL with the route's own filters and options.
+     *
+     * Only the route decides on upscaling: an `upscale` filter in the URL is ignored.
+     */
+    protected function mergeFilters(array $config, array $pathFilters, array $routeFilters): array
+    {
+        $filters = array_merge(Arr::except($pathFilters, ['upscale']), $routeFilters);
+        if (data_get($config, 'upscale') !== null) {
+            $filters['upscale'] = $config['upscale'];
+        }
+
+        return $filters;
     }
 
     public function getPathFromRoute(Route $route)
