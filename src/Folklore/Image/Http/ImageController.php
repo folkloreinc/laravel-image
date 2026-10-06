@@ -5,6 +5,7 @@ namespace Folklore\Image\Http;
 use Folklore\Image\Contracts\RouteResolver;
 use Folklore\Image\Exception\FileMissingException;
 use Folklore\Image\Exception\ParseException;
+use Folklore\Image\Utils;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Http\Request;
@@ -25,7 +26,7 @@ class ImageController extends BaseController
     public function serve(Request $request, $path)
     {
         // Increase memory limit and time limit
-        ini_set('memory_limit', config('image.memory_limit', '128M'));
+        Utils::raiseMemoryLimit(config('image.memory_limit', '128M'));
         set_time_limit(60);
 
         // Make the image from the route and return the response

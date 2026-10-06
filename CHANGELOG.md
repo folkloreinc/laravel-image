@@ -20,6 +20,7 @@ All notable changes to `folklore/laravel-image` are documented in this file. The
 
 ### Fixed
 
+- `image.memory_limit` is now a minimum: processing an image no longer lowers a higher memory limit, and keeps an unlimited one (#8).
 - The `local` and `filesystem` sources reject paths that resolve outside their root, when reading (404) and when saving (`InvalidPathException`). The check is lexical, so symbolic links inside the root, such as `public/storage`, keep working (#10).
 
 ### Removed

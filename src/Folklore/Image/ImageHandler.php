@@ -82,7 +82,7 @@ class ImageHandler implements ImageHandlerContract
 
         // Increase memory limit, because some images require a lot
         if (isset($config['memory_limit']) && ! empty($config['memory_limit'])) {
-            ini_set('memory_limit', $config['memory_limit']);
+            Utils::raiseMemoryLimit($config['memory_limit']);
         }
 
         // Open the image
