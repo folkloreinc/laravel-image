@@ -54,7 +54,7 @@ class RouteResolver implements RouteResolverContract
         $config = $this->getConfigFromRoute($route);
 
         $source = data_get($config, 'source');
-        $quality = (float) data_get($config, 'quality', 100);
+        $quality = data_get($config, 'quality');
         $expires = data_get($config, 'expires', null);
         $urlConfig = data_get($config, 'pattern', []);
         $routeFilters = data_get($config, 'filters', []);
@@ -78,7 +78,7 @@ class RouteResolver implements RouteResolverContract
 
         $response = response()
             ->image($image)
-            ->setQuality($quality)
+            ->setQuality($quality !== null ? (int) $quality : null)
             ->setFormat(data_get($parseData, 'format') ?? $mime ?? $handler->format($path))
             ->setExpiresIn($expires);
 

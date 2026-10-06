@@ -19,7 +19,14 @@ class CacheManager implements CacheManagerContract
         $this->dataHandler = $dataHandler;
     }
 
-    public function put(ImageInterface $image, $path, $directory = null, $mode = null)
+    /**
+     * Save the image in the cache directory, unless it is already there.
+     *
+     * @param  array  $options  Encoding options, such as a route's `quality`. Not part of
+     *                          the contract, so custom cache managers keep working without it.
+     * @return string The full path of the cached file
+     */
+    public function put(ImageInterface $image, $path, $directory = null, $mode = null, array $options = [])
     {
         if (is_null($directory)) {
             $directory = public_path();
@@ -43,7 +50,7 @@ class CacheManager implements CacheManagerContract
             $this->filesystem->makeDirectory($directory, $mode ?? 0755, true, true);
         }
 
-        $this->dataHandler->save($image, $fullPath);
+        $this->dataHandler->save($image, $fullPath, $options);
 
         return $fullPath;
     }
