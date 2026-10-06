@@ -11,7 +11,10 @@ class Utils
     {
         $isUrl = filter_var($path, FILTER_VALIDATE_URL);
         if ($isUrl) {
-            $response = Http::withHeaders([
+            if (! self::isAllowedUrl($path)) {
+                return null;
+            }
+            $response = self::http()->withHeaders([
                 'Range' => 'bytes='.$offset.'-'.($offset + ($length - 1)),
             ])->get($path);
             if (! $response->successful()) {
@@ -113,26 +116,83 @@ class Utils
 
     public static function convertImage(string $path, $mime = 'image/jpeg', $destPath = null, $opts = []): ?string
     {
+        $isUrl = filter_var($path, FILTER_VALIDATE_URL) !== false;
+        if ($isUrl && ! self::isAllowedUrl($path)) {
+            return null;
+        }
+
+        $downloadPath = null;
+        $destinationBase = null;
+        $converted = false;
+
         try {
-            $isUrl = filter_var($path, FILTER_VALIDATE_URL);
-            $localPath = $isUrl ? tempnam(sys_get_temp_dir(), 'imgconv_') : $path;
+            $localPath = $path;
             if ($isUrl) {
-                Http::sink($localPath)->get($path);
+                $response = self::http()->get($path);
+                if (! $response->successful()) {
+                    return null;
+                }
+                $downloadPath = tempnam(sys_get_temp_dir(), 'imgconv_');
+                file_put_contents($downloadPath, $response->body());
+                $localPath = $downloadPath;
             }
+
             if (empty($destPath)) {
-                $extension = self::getExtensionFromMime($mime);
-                $destPath = tempnam(sys_get_temp_dir(), 'imgconv_').'.'.$extension;
+                // tempnam() creates the file; the result gets its own name with the extension.
+                $destinationBase = tempnam(sys_get_temp_dir(), 'imgconv_');
+                $destPath = $destinationBase.'.'.self::getExtensionFromMime($mime);
             }
+
             $format = self::getFormatFromMime($mime);
             $image = app('image')->getImagine()->open($localPath);
             $image->save($destPath, array_merge(['format' => $format], $opts));
-            if ($isUrl) {
-                unset($localPath);
-            }
+            $converted = true;
 
             return $destPath;
         } catch (\Exception $e) {
             return null;
+        } finally {
+            if ($downloadPath !== null) {
+                @unlink($downloadPath);
+            }
+            if ($destinationBase !== null) {
+                @unlink($destinationBase);
+                if (! $converted) {
+                    @unlink($destPath);
+                }
+            }
         }
+    }
+
+    /**
+     * Whether a remote URL may be fetched: only http and https, and only the hosts in
+     * `image.utils.allowed_hosts` when that list is set.
+     */
+    public static function isAllowedUrl(string $url): bool
+    {
+        $scheme = strtolower((string) parse_url($url, PHP_URL_SCHEME));
+        if (! in_array($scheme, ['http', 'https'], true)) {
+            return false;
+        }
+
+        $allowedHosts = config('image.utils.allowed_hosts');
+        if (empty($allowedHosts)) {
+            return true;
+        }
+
+        $host = strtolower((string) parse_url($url, PHP_URL_HOST));
+
+        return in_array($host, array_map('strtolower', (array) $allowedHosts), true);
+    }
+
+    /**
+     * The HTTP client for remote images. With an allow-list, redirects aren't followed,
+     * so they can't lead to another host.
+     */
+    protected static function http()
+    {
+        $request = Http::timeout(30);
+
+        return empty(config('image.utils.allowed_hosts')) ? $request : $request->withoutRedirecting();
     }
 }
