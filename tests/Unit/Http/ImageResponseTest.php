@@ -2,8 +2,8 @@
 
 namespace Folklore\Image\Tests\Unit\Http;
 
-use Folklore\Image\Tests\TestCase;
 use Folklore\Image\Http\ImageResponse;
+use Folklore\Image\Tests\TestCase;
 
 /**
  * @coversDefaultClass Folklore\Image\Http\ImageResponse
@@ -16,19 +16,21 @@ class ImageResponseTest extends TestCase
     {
         parent::setUp();
 
-        $this->response = new ImageResponse();
+        $this->response = new ImageResponse;
     }
 
     /**
      * Test sending the image from an Image class
+     *
      * @test
+     *
      * @covers ::create
      */
-    public function testCreate()
+    public function test_create()
     {
         $image = app('image')->open('image.jpg');
         $response = ImageResponse::create($image, 200, [
-            'Content-Type' => 'image/png'
+            'Content-Type' => 'image/png',
         ]);
         $this->assertEquals($image, $response->getImage());
         $this->assertEquals(200, $response->status());
@@ -37,15 +39,17 @@ class ImageResponseTest extends TestCase
 
     /**
      * Test sending the image from an Image class
+     *
      * @test
+     *
      * @covers ::sendImage
      * @covers ::getContent
      */
-    public function testSendContentImage()
+    public function test_send_content_image()
     {
         $image = app('image')->open('image.jpg');
         $originalContent = $image->get($this->response->getFormat(), [
-            'jpeg_quality' => $this->response->getQuality()
+            'jpeg_quality' => $this->response->getQuality(),
         ]);
         $this->response->setImage($image);
         ob_start();
@@ -56,12 +60,14 @@ class ImageResponseTest extends TestCase
 
     /**
      * Test sending the image from an image path
+     *
      * @test
+     *
      * @covers ::sendImage
      * @covers ::sendImageFromPath
      * @covers ::getContent
      */
-    public function testSendContentImagePath()
+    public function test_send_content_image_path()
     {
         $path = public_path('image.jpg');
         $originalContent = file_get_contents($path);
@@ -74,14 +80,16 @@ class ImageResponseTest extends TestCase
 
     /**
      * Test getting the content fo the image
+     *
      * @test
+     *
      * @covers ::getContent
      */
-    public function testGetContent()
+    public function test_get_content()
     {
         $image = app('image')->open('image.jpg');
         $content = $image->get($this->response->getFormat(), [
-            'jpeg_quality' => $this->response->getQuality()
+            'jpeg_quality' => $this->response->getQuality(),
         ]);
         $this->response->setImage($image);
         $this->assertEquals($content, $this->response->getContent());
@@ -89,11 +97,13 @@ class ImageResponseTest extends TestCase
 
     /**
      * Test get and set image
+     *
      * @test
+     *
      * @covers ::setImage
      * @covers ::getImage
      */
-    public function testGetImage()
+    public function test_get_image()
     {
         $value = app('image')->open('image.jpg');
         $this->response->setImage($value);
@@ -102,11 +112,13 @@ class ImageResponseTest extends TestCase
 
     /**
      * Test get and set image path
+     *
      * @test
+     *
      * @covers ::setImagePath
      * @covers ::getImagePath
      */
-    public function testGetImagePath()
+    public function test_get_image_path()
     {
         $value = public_path('image.jpg');
         $this->response->setImagePath($value);
@@ -115,13 +127,15 @@ class ImageResponseTest extends TestCase
 
     /**
      * Test get and set format
+     *
      * @test
+     *
      * @covers ::format
      * @covers ::setFormat
      * @covers ::getFormat
      * @covers ::getMimeFromFormat
      */
-    public function testGetFormat()
+    public function test_get_format()
     {
         $value = 'jpg';
         $this->response->setFormat($value);
@@ -136,12 +150,14 @@ class ImageResponseTest extends TestCase
 
     /**
      * Test get and set quality
+     *
      * @test
+     *
      * @covers ::quality
      * @covers ::setQuality
      * @covers ::getQuality
      */
-    public function testGetQuality()
+    public function test_get_quality()
     {
         $value = 90;
         $this->response->setQuality($value);
@@ -154,18 +170,20 @@ class ImageResponseTest extends TestCase
 
     /**
      * Test setting expires in
+     *
      * @test
+     *
      * @covers ::expiresIn
      * @covers ::setExpiresIn
      */
-    public function testExpiresIn()
+    public function test_expires_in()
     {
         $responseMock = $this->getMockBuilder(ImageResponse::class)
             ->onlyMethods(['setMaxAge', 'setExpires'])
             ->getMock();
 
         $expires = 3600;
-        $expiresDate = new \DateTime();
+        $expiresDate = new \DateTime;
         $expiresDate->setTimestamp(time() + $expires);
         $responseMock->expects($this->exactly(2))
             ->method('setMaxAge')

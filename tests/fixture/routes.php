@@ -1,5 +1,5 @@
 <?php
 
 $router->image('test/{pattern}', [
-    'as' => 'image.test'
+    'as' => 'image.test',
 ]);

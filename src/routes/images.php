@@ -48,6 +48,6 @@ $router->image('{pattern}', [
     // The path where the images are cached. It is defined to public
     // path, so the cached files would be accessible at the path they were
     // requested and they can be served statically on next requests.
-    'cache_path' => public_path()
+    'cache_path' => public_path(),
 
 ]);

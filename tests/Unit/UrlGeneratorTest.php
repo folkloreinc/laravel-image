@@ -2,9 +2,9 @@
 
 namespace Folklore\Image\Tests\Unit;
 
+use Folklore\Image\Contracts\FiltersManager;
 use Folklore\Image\Tests\TestCase;
 use Folklore\Image\UrlGenerator;
-use Folklore\Image\Contracts\FiltersManager;
 
 /**
  * @coversDefaultClass Folklore\Image\UrlGenerator
@@ -28,25 +28,27 @@ class UrlGeneratorTest extends TestCase
                 'format' => '{dirname}/{basename}{filters}.{extension}',
                 'filters_format' => '-filters({filter})',
                 'filter_format' => '{key}({value})',
-                'filter_separator' => '-'
-            ]
+                'filter_separator' => '-',
+            ],
         ];
 
         $this->filters = [
             'width' => 300,
             'height' => 300,
             'rotate' => 90,
-            'negative' => true
+            'negative' => true,
         ];
     }
 
     /**
      * Test get and set format
+     *
      * @test
+     *
      * @covers ::getFormat
      * @covers ::setFormat
      */
-    public function testGetFormat()
+    public function test_get_format()
     {
         $this->assertEquals('{dirname}/{basename}{filters}.{extension}', $this->generator->getFormat());
         $value = '{dirname}/{filters}/{basename}.{extension}';
@@ -56,11 +58,13 @@ class UrlGeneratorTest extends TestCase
 
     /**
      * Test get and set filters format
+     *
      * @test
+     *
      * @covers ::getFiltersFormat
      * @covers ::setFiltersFormat
      */
-    public function testGetFiltersFormat()
+    public function test_get_filters_format()
     {
         $this->assertEquals('-filters({filter})', $this->generator->getFiltersFormat());
         $value = 'image/{filter}';
@@ -70,11 +74,13 @@ class UrlGeneratorTest extends TestCase
 
     /**
      * Test get and set filter format
+     *
      * @test
+     *
      * @covers ::getFilterFormat
      * @covers ::setFilterFormat
      */
-    public function testGetFilterFormat()
+    public function test_get_filter_format()
     {
         $this->assertEquals('{key}({value})', $this->generator->getFilterFormat());
         $value = '{key}-{value}';
@@ -84,11 +90,13 @@ class UrlGeneratorTest extends TestCase
 
     /**
      * Test get and set filter separator
+     *
      * @test
+     *
      * @covers ::getFilterSeparator
      * @covers ::setFilterSeparator
      */
-    public function testGetFilterSeparator()
+    public function test_get_filter_separator()
     {
         $this->assertEquals('-', $this->generator->getFilterSeparator());
         $value = '/';
@@ -98,12 +106,14 @@ class UrlGeneratorTest extends TestCase
 
     /**
      * Test parsing a path
+     *
      * @test
+     *
      * @covers ::parse
      * @covers ::patternAndMatches
      * @covers ::parseFilters
      */
-    public function testParse()
+    public function test_parse()
     {
         $this->generator->setFormat('{dirname}/{filters}/{basename}.{extension}');
         $this->generator->setFiltersFormat('image/{filter}');
@@ -120,12 +130,14 @@ class UrlGeneratorTest extends TestCase
 
     /**
      * Test parsing a path with config
+     *
      * @test
+     *
      * @covers ::parse
      * @covers ::patternAndMatches
      * @covers ::parseFilters
      */
-    public function testParseWithConfig()
+    public function test_parse_with_config()
     {
         $path = 'uploads/image-filters(300x300-rotate(90)-negative).jpg';
         $return = $this->generator->parse($path, $this->config);
@@ -137,12 +149,14 @@ class UrlGeneratorTest extends TestCase
 
     /**
      * Test parsing a path
+     *
      * @test
+     *
      * @covers ::parse
      * @covers ::patternAndMatches
      * @covers ::parseFilters
      */
-    public function testParseWithFormatExtension()
+    public function test_parse_with_format_extension()
     {
         $this->generator->setFormat('{dirname}/{filters}/{basename}.{extension}{format_extension}');
         $this->generator->setFiltersFormat('image/{filter}');
@@ -160,11 +174,13 @@ class UrlGeneratorTest extends TestCase
 
     /**
      * Test getting a pattern
+     *
      * @test
+     *
      * @covers ::pattern
      * @covers ::patternAndMatches
      */
-    public function testPattern()
+    public function test_pattern()
     {
         $this->generator->setFormat('{dirname}/{filters}/{basename}.{extension}');
         $this->generator->setFiltersFormat('image/{filter}');
@@ -178,11 +194,13 @@ class UrlGeneratorTest extends TestCase
 
     /**
      * Test getting a pattern with config
+     *
      * @test
+     *
      * @covers ::pattern
      * @covers ::patternAndMatches
      */
-    public function testPatternWithConfig()
+    public function test_pattern_with_config()
     {
         $pattern = '^(.*?)?\/?([^\/\.]+?)(\-filters\((.*?)\))?\.([^\.]+)$';
         $return = $this->generator->pattern($this->config);
@@ -191,12 +209,14 @@ class UrlGeneratorTest extends TestCase
 
     /**
      * Test making url
+     *
      * @test
+     *
      * @covers ::make
      * @covers ::getParametersFromFilters
      * @covers ::getFiltersParameter
      */
-    public function testMake()
+    public function test_make()
     {
         $this->generator->setFormat('{dirname}/{filters}/{basename}.{extension}');
         $this->generator->setFiltersFormat('image/{filter}');
@@ -210,12 +230,14 @@ class UrlGeneratorTest extends TestCase
 
     /**
      * Test making url
+     *
      * @test
+     *
      * @covers ::make
      * @covers ::getParametersFromFilters
      * @covers ::getFiltersParameter
      */
-    public function testMakeWithFormatExtension()
+    public function test_make_with_format_extension()
     {
         $this->generator->setFormat('{dirname}/{filters}/{basename}.{extension}{format_extension}');
         $this->generator->setFiltersFormat('image/{filter}');
@@ -229,12 +251,14 @@ class UrlGeneratorTest extends TestCase
 
     /**
      * Test making url
+     *
      * @test
+     *
      * @covers ::make
      * @covers ::getParametersFromFilters
      * @covers ::getFiltersParameter
      */
-    public function testMakeWithFormat()
+    public function test_make_with_format()
     {
         $this->generator->setFormat('{dirname}/{filters}/{basename}.{extension}');
         $this->generator->setFiltersFormat('image/{filter}');
@@ -248,12 +272,14 @@ class UrlGeneratorTest extends TestCase
 
     /**
      * Test making url with an domain
+     *
      * @test
+     *
      * @covers ::make
      * @covers ::getParametersFromFilters
      * @covers ::getFiltersParameter
      */
-    public function testMakeWithDomain()
+    public function test_make_with_domain()
     {
         $this->generator->setFormat('{dirname}/{filters}/{basename}.{extension}');
         $this->generator->setFiltersFormat('image/{filter}');
@@ -269,19 +295,21 @@ class UrlGeneratorTest extends TestCase
         $return = $this->generator->make('uploads/image.jpg', [
             'width' => 300,
             'height' => 300,
-            'host' => 'cdn.example.com'
+            'host' => 'cdn.example.com',
         ]);
         $this->assertEquals($url, $return);
     }
 
     /**
      * Test making with size
+     *
      * @test
+     *
      * @covers ::make
      * @covers ::getParametersFromFilters
      * @covers ::getFiltersParameter
      */
-    public function testMakeWithSize()
+    public function test_make_with_size()
     {
         $this->generator->setFormat('{dirname}/{filters}/{basename}.{extension}');
         $this->generator->setFiltersFormat('image/{filter}');
@@ -303,12 +331,14 @@ class UrlGeneratorTest extends TestCase
 
     /**
      * Test making url with config
+     *
      * @test
+     *
      * @covers ::make
      * @covers ::getParametersFromFilters
      * @covers ::getFiltersParameter
      */
-    public function testMakeWithConfig()
+    public function test_make_with_config()
     {
         $url = '/uploads/image-filters(300x300-rotate(90)-negative).jpg';
         $filters = array_merge($this->filters, $this->config);
@@ -318,12 +348,14 @@ class UrlGeneratorTest extends TestCase
 
     /**
      * Test making url with route
+     *
      * @test
+     *
      * @covers ::make
      * @covers ::getParametersFromFilters
      * @covers ::getFiltersParameter
      */
-    public function testMakeWithRoute()
+    public function test_make_with_route()
     {
         app('router')->image('medias/{pattern}', [
             'as' => 'image.test',
@@ -332,13 +364,13 @@ class UrlGeneratorTest extends TestCase
                 'format' => '{dirname}/{filters}/{basename}.{extension}',
                 'filters_format' => 'image/{filter}',
                 'filter_format' => '{key}-{value}',
-                'filter_separator' => '/'
-            ]
+                'filter_separator' => '/',
+            ],
         ]);
 
         $url = 'http://example.com/medias/uploads/image/300x300/rotate-90/negative/image.jpg';
         $filters = array_merge([
-            'route' => 'image.test'
+            'route' => 'image.test',
         ], $this->filters);
         $return = $this->generator->make('uploads/image.jpg', $filters);
         $this->assertEquals($url, $return);

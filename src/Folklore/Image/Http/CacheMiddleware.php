@@ -2,9 +2,9 @@
 
 namespace Folklore\Image\Http;
 
-use Folklore\Image\Http\ImageResponse;
-use Folklore\Image\Contracts\CacheManager;
 use Closure;
+use Folklore\Image\Contracts\CacheManager;
+use Illuminate\Http\Request;
 
 class CacheMiddleware
 {
@@ -18,8 +18,7 @@ class CacheMiddleware
     /**
      * Handle an incoming request.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure  $next
+     * @param  Request  $request
      * @return mixed
      */
     public function handle($request, Closure $next)

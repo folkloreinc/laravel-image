@@ -10,6 +10,7 @@ class Negative implements FilterContract
     public function apply(ImageInterface $image)
     {
         $image->effects()->negative();
+
         return $image;
     }
 }

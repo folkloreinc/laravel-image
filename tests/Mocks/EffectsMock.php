@@ -5,6 +5,7 @@ namespace Folklore\Image\Tests\Mocks;
 class EffectsMock
 {
     public $called = null;
+
     public $callValue = null;
 
     public function blur($value)

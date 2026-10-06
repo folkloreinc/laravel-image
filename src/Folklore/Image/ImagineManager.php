@@ -1,7 +1,10 @@
-<?php namespace Folklore\Image;
+<?php
+
+namespace Folklore\Image;
 
 use Folklore\Image\Contracts\ImagineManager as ImagineManagerContract;
 use Illuminate\Support\Manager;
+use Imagine\Gd\Imagine;
 use Imagine\Image\ImagineInterface;
 
 class ImagineManager extends Manager implements ImagineManagerContract
@@ -9,21 +12,21 @@ class ImagineManager extends Manager implements ImagineManagerContract
     /**
      * Create an instance of the Imagine Gd driver.
      *
-     * @return \Imagine\Gd\Imagine
+     * @return Imagine
      */
     protected function createGdDriver()
     {
-        return new \Imagine\Gd\Imagine();
+        return new Imagine;
     }
 
     /**
      * Create an instance of the Imagine Gd driver.
      *
-     * @return \Imagine\Gd\Imagine
+     * @return Imagine
      */
     protected function createSvgDriver()
     {
-        return new \Contao\ImagineSvg\Imagine();
+        return new \Contao\ImagineSvg\Imagine;
     }
 
     /**
@@ -33,7 +36,7 @@ class ImagineManager extends Manager implements ImagineManagerContract
      */
     protected function createImagickDriver()
     {
-        return new \Imagine\Imagick\Imagine();
+        return new \Imagine\Imagick\Imagine;
     }
 
     /**
@@ -43,7 +46,7 @@ class ImagineManager extends Manager implements ImagineManagerContract
      */
     protected function createGmagickDriver()
     {
-        return new \Imagine\Gmagick\Imagine();
+        return new \Imagine\Gmagick\Imagine;
     }
 
     public function driver($driver = null): ImagineInterface

@@ -2,15 +2,13 @@
 
 namespace Folklore\Image\Http;
 
-use Illuminate\Http\Request;
-use Illuminate\Foundation\Bus\DispatchesJobs;
-use Illuminate\Routing\Controller as BaseController;
-use Illuminate\Foundation\Validation\ValidatesRequests;
-
 use Folklore\Image\Contracts\RouteResolver;
-use Folklore\Image\Exception\Exception;
 use Folklore\Image\Exception\FileMissingException;
 use Folklore\Image\Exception\ParseException;
+use Illuminate\Foundation\Bus\DispatchesJobs;
+use Illuminate\Foundation\Validation\ValidatesRequests;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Controller as BaseController;
 use Imagine\Exception\RuntimeException;
 
 class ImageController extends BaseController

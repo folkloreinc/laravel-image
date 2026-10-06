@@ -1,15 +1,16 @@
-<?php namespace Folklore\Image;
+<?php
 
-use Illuminate\Foundation\Application;
-use Illuminate\Support\Arr;
+namespace Folklore\Image;
+
 use Folklore\Image\Contracts\FiltersManager as FiltersManagerContract;
+use Folklore\Image\Contracts\FilterWithValue as FilterWithValueContract;
 use Folklore\Image\Contracts\ImageHandler as ImageHandlerContract;
 use Folklore\Image\Contracts\Source as SourceContract;
-use Folklore\Image\Contracts\FilterWithValue as FilterWithValueContract;
 use Folklore\Image\Exception\FileMissingException;
 use Folklore\Image\Exception\FilterMissingException;
 use Folklore\Image\Exception\FormatException;
 use Folklore\Image\Filters\Resize;
+use Illuminate\Support\Arr;
 use Imagine\Image\ImageInterface;
 
 class ImageHandler implements ImageHandlerContract
@@ -43,28 +44,28 @@ class ImageHandler implements ImageHandlerContract
      * ]);
      * ```
      *
-     * @param  string    $path The path of the image
-     * @param  array    $options The manipulations to apply on the image
+     * @param  string  $path  The path of the image
+     * @param  array  $options  The manipulations to apply on the image
      * @return ImageInterface
      */
     public function make($path, $options = [])
     {
         $configKeys = ['memory_limit'];
 
-        //Get config
+        // Get config
         $configOptions = Arr::only($options, $configKeys);
         $config = array_merge([
-            'memory_limit' => $this->memoryLimit
+            'memory_limit' => $this->memoryLimit,
         ], $configOptions);
 
         // See if the referenced file exists and is an image
-        if (!$this->source->pathExists($path)) {
+        if (! $this->source->pathExists($path)) {
             throw new FileMissingException('Image ['.$path.'] not found.');
         }
 
         // Check image format
         $format = $this->source->getFormatFromPath($path);
-        if (!$format) {
+        if (! $format) {
             throw new FormatException('Image format is not supported');
         }
 
@@ -74,25 +75,25 @@ class ImageHandler implements ImageHandlerContract
 
         // Check if all filters exists
         foreach ($filters as $key => $value) {
-            if (!$this->filters->hasFilter($key)) {
+            if (! $this->filters->hasFilter($key)) {
                 throw new FilterMissingException('Filter "'.$key.'" doesn\'t exists.');
             }
         }
 
         // Increase memory limit, because some images require a lot
-        if (isset($config['memory_limit']) && !empty($config['memory_limit'])) {
+        if (isset($config['memory_limit']) && ! empty($config['memory_limit'])) {
             ini_set('memory_limit', $config['memory_limit']);
         }
 
-        //Open the image
+        // Open the image
         $image = $this->source->openFromPath($path);
 
         // Apply the custom filter on the image and replace the
         // current image with the return value.
-        if (sizeof($filters)) {
+        if (count($filters)) {
             foreach ($filters as $key => $arguments) {
                 $arguments = array_merge([$image, $key], [$arguments]);
-                $image = call_user_func_array(array($this,'applyFilter'), $arguments);
+                $image = call_user_func_array([$this, 'applyFilter'], $arguments);
             }
         }
 
@@ -110,7 +111,7 @@ class ImageHandler implements ImageHandlerContract
      * $image = $handler->open('path/to/image.jpg');
      * ```
      *
-     * @param  string    $path The path of the image
+     * @param  string  $path  The path of the image
      * @return ImageInterface
      */
     public function open($path)
@@ -145,8 +146,8 @@ class ImageHandler implements ImageHandlerContract
      * Image::source('cloud')->save($image, 'path/to/image-resized.jpg');
      * ```
      *
-     * @param  ImageInterface $image The image to save
-     * @param  string $path The path where you want to save the image
+     * @param  ImageInterface  $image  The image to save
+     * @param  string  $path  The path where you want to save the image
      * @return string
      */
     public function save(ImageInterface $image, $path)
@@ -165,7 +166,7 @@ class ImageHandler implements ImageHandlerContract
      * $format = $handler->format('path/to/image.jpg');
      * // $format = 'jpg';
      *
-     * @param  string $path The path of the image
+     * @param  string  $path  The path of the image
      * @return string The format fo the image
      */
     public function format($path)
@@ -176,32 +177,32 @@ class ImageHandler implements ImageHandlerContract
     /**
      * Create a thumbnail from an image
      *
-     * @param  ImageInterface|string $image An image instance or the path to an image
-     * @param  int $width The maximum width of the thumbnail
-     * @param  int $height The maximum height of the thumbnail
-     * @param  boolean|string $crop If this is set to `true`, it match the exact
-     * size provided. You can also set a position for the cropped image (ex: 'top left')
+     * @param  ImageInterface|string  $image  An image instance or the path to an image
+     * @param  int  $width  The maximum width of the thumbnail
+     * @param  int  $height  The maximum height of the thumbnail
+     * @param  bool|string  $crop  If this is set to `true`, it match the exact
+     *                             size provided. You can also set a position for the cropped image (ex: 'top left')
      * @return ImageInterface
      */
     public function thumbnail($image, $width = null, $height = null, $crop = true)
     {
-        //If $image is a path, open it
+        // If $image is a path, open it
         if (is_string($image)) {
             $image = $this->source->openFromPath($image);
         }
 
-        //Create the thumbnail
-        return with(new Resize())->apply($image, [
+        // Create the thumbnail
+        return with(new Resize)->apply($image, [
             'width' => $width,
             'height' => $height,
-            'crop' => $crop
+            'crop' => $crop,
         ]);
     }
 
     /**
      * Get filters from options
      *
-     * @param  array $options Options
+     * @param  array  $options  Options
      * @return array $filters
      */
     protected function getFiltersFromOptions($options)
@@ -227,7 +228,7 @@ class ImageHandler implements ImageHandlerContract
             $filters['resize'] = [
                 'width' => $width,
                 'height' => $height,
-                'crop' => $crop
+                'crop' => $crop,
             ];
         }
         $filters = Arr::except($filters, array_merge($sizeKeys));
@@ -238,8 +239,8 @@ class ImageHandler implements ImageHandlerContract
     /**
      * Apply a custom filter or an image
      *
-     * @param  ImageInterface    $image An image instance
-     * @param  string            $name The filter name
+     * @param  ImageInterface  $image  An image instance
+     * @param  string  $name  The filter name
      * @return ImageInterface|array
      */
     protected function applyFilter(ImageInterface $image, $name)
@@ -254,7 +255,7 @@ class ImageHandler implements ImageHandlerContract
         if (is_callable($filter)) {
             $return = call_user_func_array($filter, $arguments);
         } else {
-            $filter = is_string($filter) ? app($filter):$filter;
+            $filter = is_string($filter) ? app($filter) : $filter;
             if ($filter instanceof FilterWithValueContract) {
                 $return = call_user_func_array([$filter, 'apply'], $arguments);
             } else {
@@ -293,7 +294,7 @@ class ImageHandler implements ImageHandlerContract
      * $handler->setSource($source);
      * ```
      *
-     * @param SourceContract $source The source of the factory
+     * @param  SourceContract  $source  The source of the factory
      * @return $this
      */
     public function setSource(SourceContract $source)
@@ -316,7 +317,7 @@ class ImageHandler implements ImageHandlerContract
     /**
      * Set the memory limit
      *
-     * @param  string   $limit The memory limit
+     * @param  string  $limit  The memory limit
      * @return $this
      */
     public function setMemoryLimit($limit)

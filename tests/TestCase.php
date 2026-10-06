@@ -2,8 +2,9 @@
 
 namespace Folklore\Image\Tests;
 
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Folklore\Image\Exception\FormatException;
+use Folklore\Image\Facade;
+use Folklore\Image\ServiceProvider;
+use Illuminate\Foundation\Application;
 use Orchestra\Testbench\TestCase as BaseTestCase;
 
 class TestCase extends BaseTestCase
@@ -11,7 +12,7 @@ class TestCase extends BaseTestCase
     /**
      * Define environment setup.
      *
-     * @param  \Illuminate\Foundation\Application  $app
+     * @param  Application  $app
      * @return void
      */
     protected function getEnvironmentSetUp($app)
@@ -30,16 +31,16 @@ class TestCase extends BaseTestCase
                 'ignore' => [
                     public_path('cache'),
                     public_path('filesystem'),
-                    public_path('custom')
-                ]
+                    public_path('custom'),
+                ],
             ],
             'filesystem' => [
                 'driver' => 'filesystem',
                 'disk' => 'local',
                 'path' => null,
                 'cache' => true,
-                'cache_path' => public_path('cache')
-            ]
+                'cache_path' => public_path('cache'),
+            ],
         ]);
 
         $app['config']->set('filesystems.disks.local.root', public_path('filesystem'));
@@ -48,14 +49,14 @@ class TestCase extends BaseTestCase
     protected function getPackageProviders($app)
     {
         return [
-            \Folklore\Image\ServiceProvider::class
+            ServiceProvider::class,
         ];
     }
 
     protected function getPackageAliases($app)
     {
         return [
-            'Image' => \Folklore\Image\Facade::class
+            'Image' => Facade::class,
         ];
     }
 }

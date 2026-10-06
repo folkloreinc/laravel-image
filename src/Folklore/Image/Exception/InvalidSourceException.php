@@ -1,6 +1,5 @@
-<?php namespace Folklore\Image\Exception;
+<?php
 
-class InvalidSourceException extends Exception
-{
+namespace Folklore\Image\Exception;
 
-}
+class InvalidSourceException extends Exception {}

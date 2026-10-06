@@ -2,9 +2,8 @@
 
 namespace Folklore\Image\Tests\Unit\Sources;
 
-use Folklore\Image\Tests\TestCase;
 use Folklore\Image\Sources\LocalSource;
-use Folklore\Image\ImagineManager;
+use Folklore\Image\Tests\TestCase;
 
 /**
  * @coversDefaultClass Folklore\Image\Sources\LocalSource
@@ -36,11 +35,13 @@ class LocalSourceTest extends TestCase
 
     /**
      * Test getting the full path
+     *
      * @test
+     *
      * @covers ::__construct
      * @covers ::getFullPath
      */
-    public function testGetFullPath()
+    public function test_get_full_path()
     {
         $path = 'image.jpg';
         $this->assertEquals(public_path($path), $this->source->getFullPath($path));
@@ -50,10 +51,12 @@ class LocalSourceTest extends TestCase
 
     /**
      * Test that path exists
+     *
      * @test
+     *
      * @covers ::pathExists
      */
-    public function testPathExists()
+    public function test_path_exists()
     {
         $this->assertTrue($this->source->pathExists('image.jpg'));
         $this->assertFalse($this->source->pathExists('not-found.jpg'));
@@ -61,10 +64,12 @@ class LocalSourceTest extends TestCase
 
     /**
      * Test getting format from path
+     *
      * @test
+     *
      * @covers ::getFormatFromPath
      */
-    public function testGetFormatFromPath()
+    public function test_get_format_from_path()
     {
         $this->assertEquals('jpeg', $this->source->getFormatFromPath('image.jpg'));
         $this->assertEquals('png', $this->source->getFormatFromPath('image.png'));
@@ -72,10 +77,12 @@ class LocalSourceTest extends TestCase
 
     /**
      * Test opening a path
+     *
      * @test
+     *
      * @covers ::openFromPath
      */
-    public function testOpenFromPath()
+    public function test_open_from_path()
     {
         $originalImage = app('image.imagine')->open(public_path('image.jpg'));
         $image = $this->source->openFromPath('image.jpg');
@@ -84,12 +91,14 @@ class LocalSourceTest extends TestCase
 
     /**
      * Test gettingFilesFromPath
+     *
      * @test
+     *
      * @covers ::getFilesFromPath
      */
-    public function testGetFilesFromPath()
+    public function test_get_files_from_path()
     {
-        if (!file_exists(public_path('image-filters(300x300).jpg'))) {
+        if (! file_exists(public_path('image-filters(300x300).jpg'))) {
             copy(public_path('image.jpg'), public_path('image-filters(300x300).jpg'));
         }
 
@@ -98,7 +107,7 @@ class LocalSourceTest extends TestCase
             public_path('image.jpg'),
             public_path('image.png'),
             public_path('image_small.jpg'),
-            public_path('wrong.jpg')
+            public_path('wrong.jpg'),
         ];
         $files = $this->source->getFilesFromPath('/');
         sort($originalFiles);
@@ -107,7 +116,7 @@ class LocalSourceTest extends TestCase
 
         $originalFiles = [
             public_path('image-filters(300x300).jpg'),
-            public_path('image.jpg')
+            public_path('image.jpg'),
         ];
         $files = $this->source->getFilesFromPath('image.jpg');
         sort($originalFiles);
@@ -120,10 +129,12 @@ class LocalSourceTest extends TestCase
 
     /**
      * Test saving to a path
+     *
      * @test
+     *
      * @covers ::saveToPath
      */
-    public function testSaveToPath()
+    public function test_save_to_path()
     {
         $originalImage = app('image.imagine')->open(public_path('image.jpg'));
         $this->source->saveToPath($originalImage, 'image-test.jpg');

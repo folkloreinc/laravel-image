@@ -1,10 +1,11 @@
 <?php
+
 namespace Folklore\Image;
 
-use Illuminate\Routing\Route;
 use Folklore\Image\Contracts\ImageHandlerFactory as ImageHandlerFactoryContract;
-use Folklore\Image\Contracts\UrlGenerator as UrlGeneratorContract;
 use Folklore\Image\Contracts\RouteResolver as RouteResolverContract;
+use Folklore\Image\Contracts\UrlGenerator as UrlGeneratorContract;
+use Illuminate\Routing\Route;
 
 class RouteResolver implements RouteResolverContract
 {
@@ -34,6 +35,7 @@ class RouteResolver implements RouteResolverContract
 
         // Get the image
         $handler = $this->image->source($source);
+
         return $handler->make($path, $filters);
     }
 
@@ -57,7 +59,7 @@ class RouteResolver implements RouteResolverContract
         // Get the image
         $handler = $this->image->source($source);
         $image = $handler->make($path, $filters);
-        $mime = !is_null($image) ? $image->metadata()['file.MimeType'] : null;
+        $mime = ! is_null($image) ? $image->metadata()['file.MimeType'] : null;
         $handler = $this->image->source($source);
 
         return response()

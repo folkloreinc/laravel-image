@@ -1,5 +1,14 @@
 <?php
 
+use Folklore\Image\Filters\Blur;
+use Folklore\Image\Filters\Colorize;
+use Folklore\Image\Filters\Gamma;
+use Folklore\Image\Filters\Grayscale;
+use Folklore\Image\Filters\Interlace;
+use Folklore\Image\Filters\Negative;
+use Folklore\Image\Filters\Resize;
+use Folklore\Image\Filters\Rotate;
+
 return [
 
     /*
@@ -14,14 +23,14 @@ return [
     |
     */
     'filters' => [
-        'blur' => \Folklore\Image\Filters\Blur::class,
-        'colorize' => \Folklore\Image\Filters\Colorize::class,
-        'gamma' => \Folklore\Image\Filters\Gamma::class,
-        'grayscale' => \Folklore\Image\Filters\Grayscale::class,
-        'interlace' => \Folklore\Image\Filters\Interlace::class,
-        'negative' => \Folklore\Image\Filters\Negative::class,
-        'rotate' => \Folklore\Image\Filters\Rotate::class,
-        'resize' => \Folklore\Image\Filters\Resize::class
+        'blur' => Blur::class,
+        'colorize' => Colorize::class,
+        'gamma' => Gamma::class,
+        'grayscale' => Grayscale::class,
+        'interlace' => Interlace::class,
+        'negative' => Negative::class,
+        'rotate' => Rotate::class,
+        'resize' => Resize::class,
     ],
 
     /*
@@ -52,7 +61,7 @@ return [
             'driver' => 'local',
 
             // The path where the images are stored.
-            'path' => public_path()
+            'path' => public_path(),
         ],
 
         'cloud' => [
@@ -70,8 +79,8 @@ return [
             'cache' => true,
 
             // The path where you want to put cached files
-            'cache_path' => storage_path('image/cache')
-        ]
+            'cache_path' => storage_path('image/cache'),
+        ],
 
     ],
 
@@ -113,7 +122,7 @@ return [
             'filename' => '([^\/]+)',
             'extension' => '(jpeg|jpg|gif|png|webp|avif|bmp|heic)',
             'format_extension' => '(\.(jpeg|jpg|gif|png|webp|avif))?',
-        ]
+        ],
     ],
 
     /*
@@ -145,7 +154,7 @@ return [
         'pattern_name' => 'image_pattern',
 
         // The middleware used when a route as `cache` enabled
-        'cache_middleware' => 'image.middleware.cache'
+        'cache_middleware' => 'image.middleware.cache',
     ],
 
     /*

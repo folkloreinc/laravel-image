@@ -3,7 +3,6 @@
 namespace Folklore\Image\Tests\Unit\Console;
 
 use Folklore\Image\Tests\TestCase;
-use Folklore\Image\Filters\CreateUrlCacheCommand;
 
 /**
  * @coversDefaultClass Folklore\Image\Console\CreateUrlCacheCommand
@@ -25,9 +24,10 @@ class CreateUrlCacheCommandTest extends TestCase
      * Test the apply method
      *
      * @test
+     *
      * @covers ::handle
      */
-    public function testRun()
+    public function test_run()
     {
         if (method_exists($this, 'withoutMockingConsoleOutput')) {
             $this->withoutMockingConsoleOutput();
@@ -35,7 +35,7 @@ class CreateUrlCacheCommandTest extends TestCase
 
         $returnCode = $this->artisan('image:create_url_cache', [
             'url' => '/image.jpg',
-            '--filters' => ['negative']
+            '--filters' => ['negative'],
         ]);
         $this->assertEquals(0, $returnCode);
 

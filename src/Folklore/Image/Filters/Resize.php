@@ -3,8 +3,8 @@
 namespace Folklore\Image\Filters;
 
 use Folklore\Image\Contracts\FilterWithValue as FilterWithValueContract;
-use Imagine\Image\ImageInterface;
 use Imagine\Image\Box;
+use Imagine\Image\ImageInterface;
 use Imagine\Image\Point;
 
 class Resize implements FilterWithValueContract
@@ -18,30 +18,30 @@ class Resize implements FilterWithValueContract
             $upscale = data_get($value, 'upscale', false);
         } else {
             $values = explode(',', $value);
-            list($width, $height) = $values;
-            $width = isset($values[0]) ? $values[0]:null;
-            $height = isset($values[1]) ? $values[1]:null;
-            $crop = isset($values[2]) ? $values[2]:true;
-            $upscale = isset($values[3]) ? $values[3]:false;
+            [$width, $height] = $values;
+            $width = isset($values[0]) ? $values[0] : null;
+            $height = isset($values[1]) ? $values[1] : null;
+            $crop = isset($values[2]) ? $values[2] : true;
+            $upscale = isset($values[3]) ? $values[3] : false;
         }
 
-        //Get new size
+        // Get new size
         $imageSize = $image->getSize();
-        $newWidth = $width === null ? $imageSize->getWidth():$width;
-        $newHeight = $height === null ? $imageSize->getHeight():$height;
+        $newWidth = $width === null ? $imageSize->getWidth() : $width;
+        $newHeight = $height === null ? $imageSize->getHeight() : $height;
         $size = new Box($newWidth, $newHeight);
 
-        $ratios = array(
+        $ratios = [
             $size->getWidth() / $imageSize->getWidth(),
-            $size->getHeight() / $imageSize->getHeight()
-        );
+            $size->getHeight() / $imageSize->getHeight(),
+        ];
 
         $thumbnail = $image->copy();
 
         $thumbnail->usePalette($image->palette());
         $thumbnail->strip();
 
-        if (!$crop) {
+        if (! $crop) {
             $ratio = min($ratios);
         } else {
             $ratio = max($ratios);
@@ -73,7 +73,7 @@ class Resize implements FilterWithValueContract
             $thumbnail->crop($point, $size);
         } else {
             if ($imageSize->getWidth() < $size->getWidth() && $imageSize->getHeight() < $size->getHeight()) {
-                if (!$upscale) {
+                if (! $upscale) {
                     return $thumbnail;
                 }
                 $imageSize = $imageSize->scale($ratio);
@@ -94,10 +94,10 @@ class Resize implements FilterWithValueContract
      */
     protected function getCropPositions($crop)
     {
-        $crop = $crop === true || $crop === 'true' ? 'center':$crop;
+        $crop = $crop === true || $crop === 'true' ? 'center' : $crop;
 
         $cropPositions = explode('_', $crop);
-        if (sizeof($cropPositions) === 1) {
+        if (count($cropPositions) === 1) {
             if ($cropPositions[0] === 'top' || $cropPositions[0] === 'bottom' || $cropPositions[0] === 'center') {
                 $cropPositions[] = 'center';
             } elseif ($cropPositions[0] === 'left' || $cropPositions[0] === 'right') {

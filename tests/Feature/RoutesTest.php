@@ -3,16 +3,14 @@
 namespace Folklore\Image\Tests\Feature;
 
 use Folklore\Image\Tests\TestCase;
+use Illuminate\Foundation\Application;
 
-/**
- *
- */
 class RoutesTest extends TestCase
 {
     /**
      * Define environment setup.
      *
-     * @param  \Illuminate\Foundation\Application  $app
+     * @param  Application  $app
      * @return void
      */
     protected function getEnvironmentSetUp($app)
@@ -40,7 +38,7 @@ class RoutesTest extends TestCase
             'pattern_name' => 'image_pattern',
 
             // The middleware used when a route as cache enabled
-            'cache_middleware' => 'image.middleware.cache'
+            'cache_middleware' => 'image.middleware.cache',
         ]);
     }
 
@@ -49,7 +47,7 @@ class RoutesTest extends TestCase
      *
      * @test
      */
-    public function testRoutesFilters()
+    public function test_routes_filters()
     {
         $this->app['router']->image('thumbnail/{pattern}', [
             'as' => 'image.thumbnail',
@@ -61,7 +59,7 @@ class RoutesTest extends TestCase
         ]);
 
         $url = image()->url('image.jpg', [
-            'route' => 'image.thumbnail'
+            'route' => 'image.thumbnail',
         ]);
         $this->assertEquals('http://localhost/thumbnail/image.jpg', $url);
 
@@ -81,7 +79,7 @@ class RoutesTest extends TestCase
      *
      * @test
      */
-    public function testRoutesFiltersWithFormat()
+    public function test_routes_filters_with_format()
     {
         $this->app['router']->image('thumbnail/{pattern}', [
             'as' => 'image.thumbnail',
@@ -94,7 +92,7 @@ class RoutesTest extends TestCase
 
         $url = image()->url('image.jpg', [
             'route' => 'image.thumbnail',
-            'format' => 'png'
+            'format' => 'png',
         ]);
         $this->assertEquals('http://localhost/thumbnail/image.jpg.png', $url);
 

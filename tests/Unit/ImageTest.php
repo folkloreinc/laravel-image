@@ -2,13 +2,15 @@
 
 namespace Folklore\Image\Tests\Unit;
 
-use Folklore\Image\Tests\TestCase;
 use Folklore\Image\Contracts\ImageHandler as ImageHandlerContract;
-use Folklore\Image\Sources\LocalSource;
-use Folklore\Image\Sources\FilesystemSource;
-use Folklore\Image\SourceManager;
+use Folklore\Image\Exception\InvalidSourceException;
 use Folklore\Image\Image;
 use Folklore\Image\ImageHandler;
+use Folklore\Image\SourceManager;
+use Folklore\Image\Sources\FilesystemSource;
+use Folklore\Image\Sources\LocalSource;
+use Folklore\Image\Tests\TestCase;
+use Illuminate\Routing\RouteCollection;
 
 /**
  * @coversDefaultClass Folklore\Image\Image
@@ -28,9 +30,10 @@ class ImageTest extends TestCase
      * Test the constructor
      *
      * @test
+     *
      * @covers ::__construct
      */
-    public function testConstructor()
+    public function test_constructor()
     {
         $image = new Image(app(), app('router'));
         $this->assertInstanceOf(Image::class, $image);
@@ -40,9 +43,10 @@ class ImageTest extends TestCase
      * Test source method without a name
      *
      * @test
+     *
      * @covers ::source
      */
-    public function testSourceWithoutName()
+    public function test_source_without_name()
     {
         $factory = $this->image->source();
         $this->assertInstanceOf(ImageHandlerContract::class, $factory);
@@ -53,9 +57,10 @@ class ImageTest extends TestCase
      * Test source method with a name
      *
      * @test
+     *
      * @covers ::source
      */
-    public function testSourceWithName()
+    public function test_source_with_name()
     {
         $factory = $this->image->source('filesystem');
         $this->assertInstanceOf(ImageHandlerContract::class, $factory);
@@ -66,11 +71,12 @@ class ImageTest extends TestCase
      * Test source method with an invalid name
      *
      * @test
+     *
      * @covers ::source
      */
-    public function testSourceWithInvalidName()
+    public function test_source_with_invalid_name()
     {
-        $this->expectException(\Folklore\Image\Exception\InvalidSourceException::class);
+        $this->expectException(InvalidSourceException::class);
         $factory = $this->image->source('invalid');
     }
 
@@ -78,9 +84,10 @@ class ImageTest extends TestCase
      * Test that source method keeps factory instance
      *
      * @test
+     *
      * @covers ::source
      */
-    public function testSourceKeepHandlerInstance()
+    public function test_source_keep_handler_instance()
     {
         $factory = $this->image->source();
         $factorySecond = $this->image->source();
@@ -91,9 +98,10 @@ class ImageTest extends TestCase
      * Test that extend call the same method on source manager
      *
      * @test
+     *
      * @covers ::extend
      */
-    public function testExtendCallSourceManager()
+    public function test_extend_call_source_manager()
     {
         $driver = 'test';
         $callback = function () {
@@ -120,10 +128,11 @@ class ImageTest extends TestCase
      * Test calling source
      *
      * @test
+     *
      * @covers ::extend
      * @covers ::__call
      */
-    public function testCallingSource()
+    public function test_calling_source()
     {
 
         $imageHandler = $this->getMockBuilder(ImageHandler::class)
@@ -150,9 +159,10 @@ class ImageTest extends TestCase
      * Test the url method
      *
      * @test
+     *
      * @covers ::url
      */
-    public function testUrl()
+    public function test_url()
     {
         $urlGenerator = app('image.url');
 
@@ -164,7 +174,7 @@ class ImageTest extends TestCase
             'format' => '{dirname}/{filters}/{basename}.{extension}',
             'filters_format' => 'image/{filter}',
             'filter_format' => '{key}-{value}',
-            'filter_separator' => '/'
+            'filter_separator' => '/',
         ];
         $this->assertEquals($this->image->url($path, $config), $urlGenerator->make($path, $config));
         $this->assertEquals($this->image->url($path, 300, 300, $config), $urlGenerator->make($path, 300, 300, $config));
@@ -174,9 +184,10 @@ class ImageTest extends TestCase
      * Test the pattern method
      *
      * @test
+     *
      * @covers ::pattern
      */
-    public function testPattern()
+    public function test_pattern()
     {
         $urlGenerator = app('image.url');
 
@@ -184,7 +195,7 @@ class ImageTest extends TestCase
             'format' => '{dirname}/{filters}/{basename}.{extension}',
             'filters_format' => 'image/{filter}',
             'filter_format' => '{key}-{value}',
-            'filter_separator' => '/'
+            'filter_separator' => '/',
         ];
         $this->assertEquals($this->image->pattern($config), $urlGenerator->pattern($config));
     }
@@ -193,9 +204,10 @@ class ImageTest extends TestCase
      * Test the pattern method
      *
      * @test
+     *
      * @covers ::parse
      */
-    public function testParse()
+    public function test_parse()
     {
         $urlGenerator = app('image.url');
 
@@ -204,7 +216,7 @@ class ImageTest extends TestCase
             'format' => '{dirname}/{filters}/{basename}.{extension}',
             'filters_format' => 'image/{filter}',
             'filter_format' => '{key}-{value}',
-            'filter_separator' => '/'
+            'filter_separator' => '/',
         ];
         $this->assertEquals($this->image->parse($url, $config), $urlGenerator->parse($url, $config));
     }
@@ -213,15 +225,16 @@ class ImageTest extends TestCase
      * Test the routes method
      *
      * @test
+     *
      * @covers ::routes
      */
-    public function testRoutes()
+    public function test_routes()
     {
         $this->image->routes(public_path('routes.php'));
         $this->assertTrue($this->app['router']->getRoutes()->hasNamedRoute('image.test'));
 
         // Start from an empty collection, so the route name is registered only once.
-        $this->app['router']->setRoutes(new \Illuminate\Routing\RouteCollection());
+        $this->app['router']->setRoutes(new RouteCollection);
         $this->image->routes([
             'map' => public_path('routes.php'),
             'middleware' => ['test'],
@@ -236,16 +249,17 @@ class ImageTest extends TestCase
      * Test the filter method
      *
      * @test
+     *
      * @covers ::filter
      * @covers ::hasFilter
      * @covers ::getFilter
      */
-    public function testFilter()
+    public function test_filter()
     {
         $filter = [
             'width' => 70,
             'height' => 80,
-            'crop' => true
+            'crop' => true,
         ];
         $this->image->filter('test', $filter);
         $this->assertTrue($this->image->hasFilter('test'));
@@ -256,17 +270,18 @@ class ImageTest extends TestCase
      * Test the filter method
      *
      * @test
+     *
      * @covers ::getFilters
      * @covers ::setFilters
      */
-    public function testGetFilters()
+    public function test_get_filters()
     {
         $filters = [
             'test' => [
                 'width' => 70,
                 'height' => 80,
-                'crop' => true
-            ]
+                'crop' => true,
+            ],
         ];
         $this->image->setFilters($filters);
         $this->assertEquals($filters, $this->image->getFilters());
@@ -276,9 +291,10 @@ class ImageTest extends TestCase
      * Test the source manager
      *
      * @test
+     *
      * @covers ::getSourceManager
      */
-    public function testGetSourceManager()
+    public function test_get_source_manager()
     {
         $this->assertEquals(app('image.source'), $this->image->getSourceManager());
     }
@@ -287,9 +303,10 @@ class ImageTest extends TestCase
      * Test the imagine manager
      *
      * @test
+     *
      * @covers ::getImagineManager
      */
-    public function testGetImagineManager()
+    public function test_get_imagine_manager()
     {
         $this->assertEquals(app('image.imagine_manager'), $this->image->getImagineManager());
     }
@@ -298,9 +315,10 @@ class ImageTest extends TestCase
      * Test an imagine instance
      *
      * @test
+     *
      * @covers ::getImagine
      */
-    public function testGetImagine()
+    public function test_get_imagine()
     {
         $this->assertEquals(app('image.imagine'), $this->image->getImagine());
     }
@@ -309,9 +327,10 @@ class ImageTest extends TestCase
      * Test the url generator
      *
      * @test
+     *
      * @covers ::getUrlGenerator
      */
-    public function testGetUrlGenerator()
+    public function test_get_url_generator()
     {
         $this->assertEquals(app('image.url'), $this->image->getUrlGenerator());
     }

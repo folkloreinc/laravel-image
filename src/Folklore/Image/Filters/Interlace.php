@@ -10,6 +10,7 @@ class Interlace implements FilterContract
     public function apply(ImageInterface $image)
     {
         $image->interlace(ImageInterface::INTERLACE_LINE);
+
         return $image;
     }
 }

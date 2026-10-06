@@ -2,9 +2,8 @@
 
 namespace Folklore\Image\Sources;
 
-use Folklore\Image\ImagineManager;
-use Imagine\Image\ImageInterface;
 use Folklore\Image\Contracts\ImageDataHandler;
+use Imagine\Image\ImageInterface;
 
 class LocalSource extends AbstractSource
 {
@@ -12,11 +11,11 @@ class LocalSource extends AbstractSource
     {
         $filesystem = app('files');
 
-        //Get path
-        $dir = isset($this->config['path']) ? $this->config['path']:'';
+        // Get path
+        $dir = isset($this->config['path']) ? $this->config['path'] : '';
 
         // Check that directory exists
-        if (!$filesystem->isDirectory($dir)) {
+        if (! $filesystem->isDirectory($dir)) {
             return null;
         }
 
@@ -33,27 +32,29 @@ class LocalSource extends AbstractSource
     public function pathExists($path)
     {
         $realPath = $this->getFullPath($path);
-        return $realPath ? app('files')->exists($realPath):false;
+
+        return $realPath ? app('files')->exists($realPath) : false;
     }
 
     public function getFormatFromPath($path)
     {
         $path = $this->getFullPath($path);
+
         return parent::getFormatFromPath($path);
     }
 
     public function getFilesFromPath($path)
     {
-        //Check path
+        // Check path
         $path = urldecode($path);
-        if (!$path = $this->getFullPath($path)) {
+        if (! $path = $this->getFullPath($path)) {
             return [];
         }
 
         $filesystem = app('files');
         $isFile = $filesystem->isFile($path);
-        $basename = $isFile ? pathinfo($path, PATHINFO_BASENAME):null;
-        $directory = $isFile ? pathinfo($path, PATHINFO_DIRNAME):$path;
+        $basename = $isFile ? pathinfo($path, PATHINFO_BASENAME) : null;
+        $directory = $isFile ? pathinfo($path, PATHINFO_DIRNAME) : $path;
 
         $files = $filesystem->allFiles($directory);
         $relativeFiles = [];
@@ -62,24 +63,24 @@ class LocalSource extends AbstractSource
         }
         $images = $this->getImagesFromFiles($relativeFiles, $path);
 
-        $ignore = isset($this->config['ignore']) ? (array)$this->config['ignore']:[];
-        if (sizeof($ignore)) {
+        $ignore = isset($this->config['ignore']) ? (array) $this->config['ignore'] : [];
+        if (count($ignore)) {
             $newImages = [];
             foreach ($images as $image) {
                 $ignored = false;
                 foreach ($ignore as $ignorePath) {
                     if (preg_match('#'.trim($ignorePath, '/').'#', $image)) {
                         $ignored = true;
+
                         continue;
                     }
                 }
-                if (!$ignored) {
+                if (! $ignored) {
                     $newImages[] = $image;
                 }
             }
             $images = $newImages;
         }
-
 
         // Return the list
         return $images;
@@ -88,13 +89,15 @@ class LocalSource extends AbstractSource
     public function openFromPath($path)
     {
         $realPath = $this->getFullPath($path);
+
         return $this->imagine->open($realPath);
     }
 
     public function saveToPath(ImageInterface $image, $path)
     {
-        $dir = isset($this->config['path']) ? $this->config['path']:public_path();
+        $dir = isset($this->config['path']) ? $this->config['path'] : public_path();
         $realPath = rtrim($dir, '/').'/'.ltrim($path, '/');
+
         return app(ImageDataHandler::class)->save($image, $realPath);
     }
 }

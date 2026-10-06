@@ -2,14 +2,16 @@
 
 namespace Folklore\Image\Sources;
 
-use Imagine\Image\ImagineInterface;
-use Folklore\Image\Contracts\UrlGenerator;
 use Folklore\Image\Contracts\Source;
+use Folklore\Image\Contracts\UrlGenerator;
+use Imagine\Image\ImagineInterface;
 
 abstract class AbstractSource implements Source
 {
     protected $imagine;
+
     protected $urlGenerator;
+
     protected $config;
 
     public function __construct(ImagineInterface $imagine, UrlGenerator $urlGenerator, $config)
@@ -22,12 +24,12 @@ abstract class AbstractSource implements Source
     protected function getImagesFromFiles($files, $path = null)
     {
         $extension = pathinfo($path, PATHINFO_EXTENSION);
-        $isFile = !empty($extension);
-        $basename = $isFile ? pathinfo($path, PATHINFO_BASENAME):null;
-        $directory = $isFile ? pathinfo($path, PATHINFO_DIRNAME):$path;
+        $isFile = ! empty($extension);
+        $basename = $isFile ? pathinfo($path, PATHINFO_BASENAME) : null;
+        $directory = $isFile ? pathinfo($path, PATHINFO_DIRNAME) : $path;
         $images = [];
         foreach ($files as $file) {
-            if (!preg_match('#'.$this->urlGenerator->pattern().'#', $file)) {
+            if (! preg_match('#'.$this->urlGenerator->pattern().'#', $file)) {
                 continue;
             }
             $parsedPath = $this->urlGenerator->parse($file);
@@ -43,7 +45,7 @@ abstract class AbstractSource implements Source
     /**
      * Get the format of an image
      *
-     * @param  string    $path The path to an image
+     * @param  string  $path  The path to an image
      * @return string|null
      */
     public function getFormatFromPath($path)
@@ -52,17 +54,17 @@ abstract class AbstractSource implements Source
         switch ($format) {
             case IMAGETYPE_GIF:
                 return 'gif';
-            break;
+                break;
             case IMAGETYPE_JPEG:
                 return 'jpeg';
-            break;
+                break;
             case IMAGETYPE_PNG:
                 return 'png';
             case 18:
                 return 'webp';
             case 19:
                 return 'avif';
-            break;
+                break;
         }
 
         if (preg_match('/\.svg$/', $format) === 1) {

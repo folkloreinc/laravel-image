@@ -2,10 +2,8 @@
 
 namespace Folklore\Image\Tests\Unit;
 
-use Folklore\Image\Tests\TestCase;
 use Folklore\Image\RouteRegistrar;
-use Folklore\Image\Sources\LocalSource;
-use Folklore\Image\Sources\FilesystemSource;
+use Folklore\Image\Tests\TestCase;
 
 /**
  * @coversDefaultClass Folklore\Image\RouteRegistrar
@@ -26,13 +24,15 @@ class RouteRegistrarTest extends TestCase
 
     /**
      * Test adding a normal route
+     *
      * @test
+     *
      * @covers ::image
      */
-    public function testAddNormalRoute()
+    public function test_add_normal_route()
     {
         $this->registrar->image('{pattern}', [
-            'as' => 'image.test'
+            'as' => 'image.test',
         ]);
 
         $route = app('router')->getRoutes()->getByName('image.test');
@@ -47,10 +47,12 @@ class RouteRegistrarTest extends TestCase
 
     /**
      * Test adding a route with config
+     *
      * @test
+     *
      * @covers ::image
      */
-    public function testAddRouteWithConfig()
+    public function test_add_route_with_config()
     {
         $this->registrar->image('{pattern}', [
             'as' => 'image.test',
@@ -68,10 +70,12 @@ class RouteRegistrarTest extends TestCase
 
     /**
      * Test adding a route with cache
+     *
      * @test
+     *
      * @covers ::image
      */
-    public function testAddRouteWithCache()
+    public function test_add_route_with_cache()
     {
         $this->registrar->image('{pattern}', [
             'as' => 'image.test',
@@ -81,22 +85,24 @@ class RouteRegistrarTest extends TestCase
         $route = app('router')->getRoutes()->getByName('image.test');
         $action = $route->getAction();
         $this->assertEquals($action['middleware'], [
-            config('image.routes.cache_middleware')
+            config('image.routes.cache_middleware'),
         ]);
     }
 
     /**
      * Test adding a route with url config
+     *
      * @test
+     *
      * @covers ::image
      */
-    public function testAddRouteWithUrlConfig()
+    public function test_add_route_with_url_config()
     {
         $urlConfig = [
             'format' => '{dirname}/{basename}{filters}.{extension}',
             'filters_format' => '-image({filter})',
             'filter_format' => '{key}({value})',
-            'filter_separator' => '-'
+            'filter_separator' => '-',
         ];
         $this->registrar->image('{pattern}', [
             'as' => 'image.test',
@@ -111,11 +117,13 @@ class RouteRegistrarTest extends TestCase
 
     /**
      * Test setting/getting pattern name
+     *
      * @test
+     *
      * @covers ::getPatternName
      * @covers ::setPatternName
      */
-    public function testPatternName()
+    public function test_pattern_name()
     {
         $this->registrar->setPatternName('test');
         $this->assertEquals('test', $this->registrar->getPatternName());
@@ -123,11 +131,13 @@ class RouteRegistrarTest extends TestCase
 
     /**
      * Test setting/getting cache middleware
+     *
      * @test
+     *
      * @covers ::getCacheMiddleware
      * @covers ::setCacheMiddleware
      */
-    public function testCacheMiddleware()
+    public function test_cache_middleware()
     {
         $this->registrar->setCacheMiddleware('test');
         $this->assertEquals('test', $this->registrar->getCacheMiddleware());
@@ -135,11 +145,13 @@ class RouteRegistrarTest extends TestCase
 
     /**
      * Test setting/getting controller
+     *
      * @test
+     *
      * @covers ::getController
      * @covers ::setController
      */
-    public function testController()
+    public function test_controller()
     {
         $this->registrar->setController('test');
         $this->assertEquals('test', $this->registrar->getController());

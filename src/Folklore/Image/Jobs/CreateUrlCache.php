@@ -2,14 +2,16 @@
 
 namespace Folklore\Image\Jobs;
 
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Contracts\Container\Container;
 use Folklore\Image\Handlers\CreateUrlCacheHandler;
+use Illuminate\Contracts\Container\Container;
+use Illuminate\Contracts\Queue\ShouldQueue;
 
 class CreateUrlCache implements ShouldQueue
 {
     public $url;
+
     public $filters = [];
+
     public $route = null;
 
     /**
@@ -30,7 +32,6 @@ class CreateUrlCache implements ShouldQueue
     /**
      * Handle the job with the handler
      *
-     * @param  Container  $container
      * @return void
      */
     public function handle(Container $container)

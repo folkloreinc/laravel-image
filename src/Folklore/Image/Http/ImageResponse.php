@@ -3,9 +3,9 @@
 namespace Folklore\Image\Http;
 
 use Folklore\Image\Contracts\ImageDataHandler;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 use Illuminate\Http\ResponseTrait;
 use Imagine\Image\ImageInterface;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ImageResponse extends StreamedResponse
 {
@@ -22,11 +22,11 @@ class ImageResponse extends StreamedResponse
     /**
      * Constructor.
      *
-     * @param ImageInterface|null   $image      An imagine image object or null to set it later
-     * @param int                   $status     The response status code
-     * @param array                 $headers    An array of response headers
+     * @param  ImageInterface|null  $image  An imagine image object or null to set it later
+     * @param  int  $status  The response status code
+     * @param  array  $headers  An array of response headers
      */
-    public function __construct($image = null, $status = 200, $headers = array())
+    public function __construct($image = null, $status = 200, $headers = [])
     {
         // Set the default stream callback to call sendImage method
         $callback = function () {
@@ -35,7 +35,7 @@ class ImageResponse extends StreamedResponse
 
         parent::__construct($callback, $status, $headers);
 
-        if (null !== $image) {
+        if ($image !== null) {
             $this->setImage($image);
         }
     }
@@ -43,13 +43,11 @@ class ImageResponse extends StreamedResponse
     /**
      * Factory method for chainability.
      *
-     * @param ImageInterface|null   $image      An imagine image object or null to set it later
-     * @param int                   $status     The response status code
-     * @param array                 $headers    An array of response headers
-     *
-     * @return 
+     * @param  ImageInterface|null  $image  An imagine image object or null to set it later
+     * @param  int  $status  The response status code
+     * @param  array  $headers  An array of response headers
      */
-    public static function create($image = null, $status = 200, $headers = array())
+    public static function create($image = null, $status = 200, $headers = [])
     {
         return new static($image, $status, $headers);
     }
@@ -63,11 +61,12 @@ class ImageResponse extends StreamedResponse
     {
         if ($this->imagePath) {
             $this->sendImageFromPath();
+
             return;
         }
 
         echo $this->getContent();
-        return;
+
     }
 
     /**
@@ -108,7 +107,7 @@ class ImageResponse extends StreamedResponse
                 return 'image/avif';
             case 'svg':
                 return 'image/svg+xml';
-            break;
+                break;
         }
 
         return null;
@@ -162,7 +161,7 @@ class ImageResponse extends StreamedResponse
     public function setImagePath($path)
     {
         $this->imagePath = $path;
-        if (!is_null($path)) {
+        if (! is_null($path)) {
             $size = filesize($path);
             $this->header('Content-length', $size);
         }
@@ -279,11 +278,12 @@ class ImageResponse extends StreamedResponse
         if ($expires === null) {
             return $this;
         }
-        $expires = (int)$expires;
+        $expires = (int) $expires;
         $this->setMaxAge($expires);
-        $expiresDate = new \DateTime();
+        $expiresDate = new \DateTime;
         $expiresDate->setTimestamp(time() + $expires);
         $this->setExpires($expiresDate);
+
         return $this;
     }
 

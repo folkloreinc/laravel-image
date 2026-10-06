@@ -2,9 +2,9 @@
 
 namespace Folklore\Image\Tests\Unit\Filters;
 
-use Folklore\Image\Tests\TestCase;
-use Folklore\Image\Filters\Resize as ResizeFilter;
 use Folklore\Image\Facade as Image;
+use Folklore\Image\Filters\Resize as ResizeFilter;
+use Folklore\Image\Tests\TestCase;
 
 /**
  * @coversDefaultClass Folklore\Image\Filters\Resize
@@ -17,22 +17,23 @@ class ResizeTest extends TestCase
     {
         parent::setUp();
 
-        $this->filter = new ResizeFilter();
+        $this->filter = new ResizeFilter;
     }
 
     /**
      * Test the apply method
      *
      * @test
+     *
      * @covers ::apply
      */
-    public function testApply()
+    public function test_apply()
     {
         $image = Image::open('image.jpg');
 
         $thumbnail = $this->filter->apply($image, [
             'width' => 100,
-            'height' => 150
+            'height' => 150,
         ]);
         $size = $thumbnail->getSize();
         $this->assertEquals(100, $size->getWidth());
@@ -43,9 +44,10 @@ class ResizeTest extends TestCase
      * Test the apply method with crop
      *
      * @test
+     *
      * @covers ::apply
      */
-    public function testApplyWithCrop()
+    public function test_apply_with_crop()
     {
         $image = Image::open('image.jpg');
 

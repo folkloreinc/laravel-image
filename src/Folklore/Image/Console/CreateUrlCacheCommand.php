@@ -2,15 +2,14 @@
 
 namespace Folklore\Image\Console;
 
+use Folklore\Image\Contracts\RouteResolver;
+use Folklore\Image\Contracts\UrlGenerator;
+use Folklore\Image\Jobs\CreateUrlCache;
 use Illuminate\Console\Command;
-use Symfony\Component\Console\Input\InputOption;
-use Symfony\Component\Console\Input\InputArgument;
 use Illuminate\Contracts\Bus\Dispatcher;
 use Illuminate\Routing\Router;
-use Illuminate\Http\Request;
-use Folklore\Image\Contracts\UrlGenerator;
-use Folklore\Image\Contracts\RouteResolver;
-use Folklore\Image\Jobs\CreateUrlCache;
+use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputOption;
 
 class CreateUrlCacheCommand extends Command
 {
@@ -29,8 +28,11 @@ class CreateUrlCacheCommand extends Command
     protected $description = 'Create a cache for a specific url and filters';
 
     protected $router;
+
     protected $urlGenerator;
+
     protected $routeResolver;
+
     protected $dispatcher;
 
     public function __construct(
@@ -65,10 +67,10 @@ class CreateUrlCacheCommand extends Command
             $this->dispatcher->dispatchNow(new CreateUrlCache($url, $filters, $routeName));
         }
 
-        $route = !empty($routeName) ? $this->router->getRoutes()->getByName($routeName) : null;
-        $routeConfig = !is_null($route) ? $this->routeResolver->getConfigFromRoute($route) : [];
-        $finalUrl = $this->urlGenerator->make($url, array_merge($filters, !empty($route) ? [
-            'pattern' => data_get($routeConfig, 'pattern', [])
+        $route = ! empty($routeName) ? $this->router->getRoutes()->getByName($routeName) : null;
+        $routeConfig = ! is_null($route) ? $this->routeResolver->getConfigFromRoute($route) : [];
+        $finalUrl = $this->urlGenerator->make($url, array_merge($filters, ! empty($route) ? [
+            'pattern' => data_get($routeConfig, 'pattern', []),
         ] : []));
 
         $this->line('<info>Created:</info> '.$finalUrl.' for image '.$url);

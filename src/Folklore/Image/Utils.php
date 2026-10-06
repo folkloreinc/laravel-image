@@ -2,8 +2,8 @@
 
 namespace Folklore\Image;
 
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 
 class Utils
 {
@@ -12,12 +12,13 @@ class Utils
         $isUrl = filter_var($path, FILTER_VALIDATE_URL);
         if ($isUrl) {
             $response = Http::withHeaders([
-                'Range' => 'bytes=' . $offset . '-' . ($offset + ($length - 1)),
+                'Range' => 'bytes='.$offset.'-'.($offset + ($length - 1)),
             ])->get($path);
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 return null;
             }
             $body = $response->body();
+
             return $response->status() === 206 || strlen($body) === $length
                 ? $body
                 : substr($body, $offset, $length);
@@ -35,9 +36,10 @@ class Utils
     {
         $isUrl = filter_var($url, FILTER_VALIDATE_URL);
         $path = $isUrl ? parse_url($url, PHP_URL_PATH) ?? '' : $url;
-        if (!Str::endsWith(strtolower($path), '.png') && !self::isPngBySignature($url)) {
+        if (! Str::endsWith(strtolower($path), '.png') && ! self::isPngBySignature($url)) {
             return false;
         }
+
         return true;
     }
 
@@ -74,7 +76,8 @@ class Utils
                 return 'image/svg+xml';
                 break;
         }
-        return 'image/' . $extension;
+
+        return 'image/'.$extension;
     }
 
     public static function getFormatFromMime(string $mime)
@@ -100,9 +103,11 @@ class Utils
     {
         if (self::isPng($path)) {
             $colorByte = self::getBytes($path, 25, 1);
-            $colorType = !empty($colorByte) ? ord($colorByte[0]) : null;
+            $colorType = ! empty($colorByte) ? ord($colorByte[0]) : null;
+
             return $colorType === 4 || $colorType === 6;
         }
+
         return false;
     }
 
@@ -116,7 +121,7 @@ class Utils
             }
             if (empty($destPath)) {
                 $extension = self::getExtensionFromMime($mime);
-                $destPath = tempnam(sys_get_temp_dir(), 'imgconv_').'.' . $extension;
+                $destPath = tempnam(sys_get_temp_dir(), 'imgconv_').'.'.$extension;
             }
             $format = self::getFormatFromMime($mime);
             $image = app('image')->getImagine()->open($localPath);
@@ -124,6 +129,7 @@ class Utils
             if ($isUrl) {
                 unset($localPath);
             }
+
             return $destPath;
         } catch (\Exception $e) {
             return null;

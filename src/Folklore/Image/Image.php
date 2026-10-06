@@ -1,18 +1,20 @@
-<?php namespace Folklore\Image;
+<?php
 
+namespace Folklore\Image;
+
+use Closure;
+use Folklore\Image\Contracts\FiltersManager;
+use Folklore\Image\Contracts\FiltersManager as FiltersManagerContract;
+use Folklore\Image\Contracts\ImageHandler as ImageHandlerContract;
+use Folklore\Image\Contracts\ImageHandlerFactory as ImageHandlerFactoryContract;
+use Folklore\Image\Contracts\ImageManager as ImageManagerContract;
+use Folklore\Image\Contracts\UrlGenerator;
+use Folklore\Image\Contracts\UrlGenerator as UrlGeneratorContract;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Support\Arr;
-use Folklore\Image\Contracts\ImageHandlerFactory as ImageHandlerFactoryContract;
-use Folklore\Image\Contracts\ImageHandler as ImageHandlerContract;
-use Folklore\Image\Contracts\FiltersManager as FiltersManagerContract;
-use Folklore\Image\Contracts\ImageManager as ImageManagerContract;
-use Folklore\Image\Contracts\UrlGenerator as UrlGeneratorContract;
-use Closure;
+use Imagine\Image\ImagineInterface;
 
-class Image implements
-    ImageHandlerFactoryContract,
-    FiltersManagerContract,
-    ImageManagerContract
+class Image implements FiltersManagerContract, ImageHandlerFactoryContract, ImageManagerContract
 {
     protected $container;
 
@@ -36,7 +38,6 @@ class Image implements
      * @var array
      */
     protected $routeConfig = [];
-
 
     public function __construct(Container $container)
     {
@@ -72,29 +73,30 @@ class Image implements
      * `config/image.php` file or by passing the same options in the filters
      * array. (see [Url Generator](url-generator.md) for available options)
      *
-     * @param string $src
-     * @param int|array|string $width The maximum width of the image. If an
-     * array or a string is passed, it is considered as the filters argument.
-     * @param int $height The maximum height of the image
-     * @param array|string $filters An array of filters
-     *
+     * @param  string  $src
+     * @param  int|array|string  $width  The maximum width of the image. If an
+     *                                   array or a string is passed, it is considered as the filters argument.
+     * @param  int  $height  The maximum height of the image
+     * @param  array|string  $filters  An array of filters
      * @return string The generated url containing the filters.
      */
     public function url($src, $width = null, $height = null, $filters = [])
     {
         $urlGenerator = $this->getUrlGenerator();
+
         return $urlGenerator->make($src, $width, $height, $filters);
     }
 
     /**
      * Return a pattern to match url
      *
-     * @param  array    $config    Pattern configuration
-     * @return string   $pattern   A regex matching the images url
+     * @param  array  $config  Pattern configuration
+     * @return string $pattern   A regex matching the images url
      */
     public function pattern($config = [])
     {
         $urlGenerator = $this->getUrlGenerator();
+
         return $urlGenerator->pattern($config);
     }
 
@@ -107,15 +109,16 @@ class Image implements
     public function parse($path, $config = [])
     {
         $urlGenerator = $this->getUrlGenerator();
+
         return $urlGenerator->parse($path, $config);
     }
 
     /**
      * Get an ImageHandler for a specific source
      *
-     * @param string|null $name The name of the source
+     * @param  string|null  $name  The name of the source
      * @return Folklore\Image\Contracts\ImageHandlerContract The image manipulator object, bound
-     * the to specified source
+     *                                                       the to specified source
      */
     public function source($name = null)
     {
@@ -128,15 +131,14 @@ class Image implements
         $source = $this->getSourceManager()->driver($name);
         $handler = $this->container->make(ImageHandlerContract::class);
         $handler->setSource($source);
-        
+
         return $this->handlers[$key] = $handler;
     }
 
     /**
      * Register a custom source creator Closure.
      *
-     * @param  string    $driver
-     * @param  \Closure  $callback
+     * @param  string  $driver
      * @return $this
      */
     public function extend($driver, Closure $callback)
@@ -176,25 +178,25 @@ class Image implements
      * ]);
      * ```
      *
-     * @param  array|string  $config A config array that will override values
-     * from the `config/image.php`. If you pass a string, it is considered as
-     * a path to a filtes containing routes.
+     * @param  array|string  $config  A config array that will override values
+     *                                from the `config/image.php`. If you pass a string, it is considered as
+     *                                a path to a filtes containing routes.
      * @return array
      */
     public function routes($config = [])
     {
         $config = array_merge($this->routeConfig, is_string($config) ? [
-            'map' => $config
+            'map' => $config,
         ] : $config);
         $groupConfig = Arr::only($config, ['domain', 'prefix', 'as', 'namespace', 'middleware']);
         $map = data_get($config, 'map', null);
 
         // Map routes defined in the routes files
         $this->container->make('router')->group($groupConfig, function ($router) use ($map) {
-            if (!is_null($map) && is_file($map)) {
+            if (! is_null($map) && is_file($map)) {
                 require $map;
             } else {
-                require __DIR__ . '/../../routes/images.php';
+                require __DIR__.'/../../routes/images.php';
             }
         });
     }
@@ -253,11 +255,11 @@ class Image implements
      * ]);
      * ```
      *
-     * @param string $name The name of the filter
-     * @param \Closure|array|string|object $filter The filter can be an array of
-     * filters, a closure that will get the Image object or a class path to a
-     * Filter class. (more info canbe found in the
-     * [Filters](../filters.md) documentation)
+     * @param  string  $name  The name of the filter
+     * @param  Closure|array|string|object  $filter  The filter can be an array of
+     *                                               filters, a closure that will get the Image object or a class path to a
+     *                                               Filter class. (more info canbe found in the
+     *                                               [Filters](../filters.md) documentation)
      * @return $this
      */
     public function filter($name, $filter)
@@ -270,12 +272,13 @@ class Image implements
     /**
      * Set all filters
      *
-     * @param  array    $filters
+     * @param  array  $filters
      * @return $this
      */
     public function setFilters($filters)
     {
         $this->filters = $filters;
+
         return $this;
     }
 
@@ -292,7 +295,7 @@ class Image implements
     /**
      * Get a filter
      *
-     * @param  string    $name
+     * @param  string  $name
      * @return array|Closure|string|object
      */
     public function getFilter($name)
@@ -303,30 +306,31 @@ class Image implements
     /**
      * Check if a filter exists
      *
-     * @param  string    $name
-     * @return boolean
+     * @param  string  $name
+     * @return bool
      */
     public function hasFilter($name)
     {
-        return $this->getFilter($name) !== null ? true:false;
+        return $this->getFilter($name) !== null ? true : false;
     }
 
     /**
      * Set route config
      *
-     * @param  array    $routeConfig
+     * @param  array  $routeConfig
      * @return $this
      */
     public function setRouteConfig($routeConfig)
     {
         $this->routeConfig = $routeConfig;
+
         return $this;
     }
 
     /**
      * Get the source manager
      *
-     * @return \Folklore\Image\SourceManager
+     * @return SourceManager
      */
     public function getSourceManager()
     {
@@ -336,7 +340,7 @@ class Image implements
     /**
      * Get the source manager
      *
-     * @return \Folklore\Image\Contracts\FiltersManager
+     * @return FiltersManager
      */
     public function getFiltersManager()
     {
@@ -346,7 +350,7 @@ class Image implements
     /**
      * Get the url generator
      *
-     * @return \Folklore\Image\Contracts\UrlGenerator
+     * @return UrlGenerator
      */
     public function getUrlGenerator()
     {
@@ -356,7 +360,7 @@ class Image implements
     /**
      * Get the imagine manager
      *
-     * @return \Folklore\Image\getImagineManager
+     * @return getImagineManager
      */
     public function getImagineManager()
     {
@@ -366,7 +370,7 @@ class Image implements
     /**
      * Get the imagine instance from the manager
      *
-     * @return \Imagine\Image\ImagineInterface
+     * @return ImagineInterface
      */
     public function getImagine()
     {
@@ -377,7 +381,7 @@ class Image implements
      * Dynamically call the default source handler
      *
      * @param  string  $method
-     * @param  array   $parameters
+     * @param  array  $parameters
      * @return mixed
      */
     public function __call($method, $parameters)

@@ -2,14 +2,15 @@
 
 namespace Folklore\Image;
 
+use Folklore\Image\Contracts\CacheManager as CacheManagerContract;
+use Folklore\Image\Contracts\ImageDataHandler;
 use Illuminate\Filesystem\Filesystem;
 use Imagine\Image\ImageInterface;
-use Folklore\Image\Contracts\ImageDataHandler;
-use Folklore\Image\Contracts\CacheManager as CacheManagerContract;
 
 class CacheManager implements CacheManagerContract
 {
     protected $filesystem;
+
     protected $dataHandler;
 
     public function __construct(Filesystem $filesystem, ImageDataHandler $dataHandler)
@@ -35,10 +36,10 @@ class CacheManager implements CacheManagerContract
         // Check if cache directory is writable and create the directory if
         // it doesn't exists.
         $directoryExists = $this->filesystem->exists($directory);
-        if ($directoryExists && !$this->filesystem->isWritable($directory)) {
+        if ($directoryExists && ! $this->filesystem->isWritable($directory)) {
             throw new \Exception('Destination is not writeable');
         }
-        if (!$directoryExists) {
+        if (! $directoryExists) {
             $this->filesystem->makeDirectory($directory, $mode ?? 0755, true, true);
         }
 

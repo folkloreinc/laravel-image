@@ -1,23 +1,27 @@
-<?php namespace Folklore\Image;
+<?php
 
-use Folklore\Image\Contracts\ImagineManager as ImagineManagerContract;
-use Illuminate\Support\ServiceProvider as BaseServiceProvider;
-use Illuminate\Bus\Dispatcher;
-use Folklore\Image\Http\ImageResponse;
-use Folklore\Image\RouteRegistrar;
-use Folklore\Image\Contracts\ImageHandlerFactory as ImageHandlerFactoryContract;
-use Folklore\Image\Contracts\FiltersManager as FiltersManagerContract;
-use Folklore\Image\Contracts\ImageManager as ImageManagerContract;
-use Folklore\Image\Contracts\ImageHandler as ImageHandlerContract;
-use Folklore\Image\Contracts\ImageDataHandler as ImageDataHandlerContract;
+namespace Folklore\Image;
+
+use Folklore\Image\Console\CreateUrlCacheCommand;
 use Folklore\Image\Contracts\CacheManager as CacheManagerContract;
+use Folklore\Image\Contracts\FiltersManager as FiltersManagerContract;
+use Folklore\Image\Contracts\ImageDataHandler as ImageDataHandlerContract;
+use Folklore\Image\Contracts\ImageHandler as ImageHandlerContract;
+use Folklore\Image\Contracts\ImageHandlerFactory as ImageHandlerFactoryContract;
+use Folklore\Image\Contracts\ImageManager as ImageManagerContract;
+use Folklore\Image\Contracts\ImagineManager as ImagineManagerContract;
 use Folklore\Image\Contracts\RouteResolver as RouteResolverContract;
 use Folklore\Image\Contracts\UrlGenerator as UrlGeneratorContract;
+use Folklore\Image\Handlers\CreateUrlCacheHandler;
+use Folklore\Image\Http\CacheMiddleware;
+use Folklore\Image\Http\ImageResponse;
+use Folklore\Image\Jobs\CreateUrlCache;
+use Illuminate\Bus\Dispatcher;
 use Illuminate\Contracts\Routing\ResponseFactory as ResponseFactoryContract;
+use Illuminate\Support\ServiceProvider as BaseServiceProvider;
 
 class ServiceProvider extends BaseServiceProvider
 {
-
     /**
      * Indicates if loading of the provider is deferred.
      *
@@ -46,19 +50,19 @@ class ServiceProvider extends BaseServiceProvider
     public function bootPublishes()
     {
         // Config file path
-        $configFile = __DIR__ . '/../../config/image.php';
-        $routesFile = __DIR__ . '/../../routes/images.php';
+        $configFile = __DIR__.'/../../config/image.php';
+        $routesFile = __DIR__.'/../../routes/images.php';
 
         // Merge files
         $this->mergeConfigFrom($configFile, 'image');
 
         // Publish
         $this->publishes([
-            $configFile => config_path('image.php')
+            $configFile => config_path('image.php'),
         ], 'config');
 
         $this->publishes([
-            $routesFile => base_path('routes/images.php')
+            $routesFile => base_path('routes/images.php'),
         ], 'routes');
     }
 
@@ -77,7 +81,7 @@ class ServiceProvider extends BaseServiceProvider
         $router->pattern('image_pattern', $pattern);
 
         $map = $this->app['config']->get('image.routes.map');
-        if (!is_null($map)) {
+        if (! is_null($map)) {
             $this->app['image']->routes();
         }
     }
@@ -122,8 +126,7 @@ class ServiceProvider extends BaseServiceProvider
         $dispatcher = $this->app->make(Dispatcher::class);
         if (method_exists($dispatcher, 'maps')) {
             $dispatcher->maps([
-                \Folklore\Image\Jobs\CreateUrlCache::class =>
-                    \Folklore\Image\Handlers\CreateUrlCacheHandler::class.'@handle'
+                CreateUrlCache::class => CreateUrlCacheHandler::class.'@handle',
             ]);
         }
     }
@@ -165,6 +168,7 @@ class ServiceProvider extends BaseServiceProvider
             $image = new Image($this->app, $this->app['router']);
             $image->setFilters($this->app['config']->get('image.filters', []));
             $image->setRouteConfig($this->app['config']->get('image.routes', []));
+
             return $image;
         });
 
@@ -222,6 +226,7 @@ class ServiceProvider extends BaseServiceProvider
             $generator->setFilterFormat($config->get('image.url.filter_format', ''));
             $generator->setFilterSeparator($config->get('image.url.filter_separator', ''));
             $generator->setPlaceholdersPatterns($config->get('image.url.placeholders_patterns', ''));
+
             return $generator;
         });
     }
@@ -241,6 +246,7 @@ class ServiceProvider extends BaseServiceProvider
             $registrar->setPatternName($config->get('image.routes.pattern_name'));
             $registrar->setCacheMiddleware($config->get('image.routes.cache_middleware'));
             $registrar->setController($config->get('image.routes.controller'));
+
             return $registrar;
         });
     }
@@ -255,6 +261,7 @@ class ServiceProvider extends BaseServiceProvider
         $this->app->bind(ImageHandler::class, function () {
             $filtersManager = $this->app->make(FiltersManagerContract::class);
             $memoryLimit = $this->app['config']->get('image.memory_limit', '128M');
+
             return new ImageHandler($filtersManager, $memoryLimit);
         });
     }
@@ -284,7 +291,7 @@ class ServiceProvider extends BaseServiceProvider
      */
     public function registerMiddlewares()
     {
-        $this->app->bind('image.middleware.cache', \Folklore\Image\Http\CacheMiddleware::class);
+        $this->app->bind('image.middleware.cache', CacheMiddleware::class);
     }
 
     /**
@@ -294,7 +301,7 @@ class ServiceProvider extends BaseServiceProvider
      */
     public function registerConsole()
     {
-        $this->app->bind('image.console.create_url_cache', \Folklore\Image\Console\CreateUrlCacheCommand::class);
+        $this->app->bind('image.console.create_url_cache', CreateUrlCacheCommand::class);
     }
 
     /**
@@ -310,7 +317,7 @@ class ServiceProvider extends BaseServiceProvider
             'image.router',
             'image.imagine',
             'image.source',
-            'image.middleware.cache'
+            'image.middleware.cache',
         ];
     }
 }

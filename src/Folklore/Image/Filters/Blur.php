@@ -10,6 +10,7 @@ class Blur implements FilterWithValueContract
     public function apply(ImageInterface $image, $value)
     {
         $image->effects()->blur($value);
+
         return $image;
     }
 }

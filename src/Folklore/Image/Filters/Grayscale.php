@@ -10,6 +10,7 @@ class Grayscale implements FilterContract
     public function apply(ImageInterface $image)
     {
         $image->effects()->grayscale();
+
         return $image;
     }
 }

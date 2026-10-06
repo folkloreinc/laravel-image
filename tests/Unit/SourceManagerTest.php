@@ -2,10 +2,10 @@
 
 namespace Folklore\Image\Tests\Unit;
 
-use Folklore\Image\Tests\TestCase;
 use Folklore\Image\SourceManager;
-use Folklore\Image\Sources\LocalSource;
 use Folklore\Image\Sources\FilesystemSource;
+use Folklore\Image\Sources\LocalSource;
+use Folklore\Image\Tests\TestCase;
 
 /**
  * @coversDefaultClass Folklore\Image\SourceManager
@@ -23,11 +23,13 @@ class SourceManagerTest extends TestCase
 
     /**
      * Test getting the local driver
+     *
      * @test
+     *
      * @covers ::createDriver
      * @covers ::createLocalDriver
      */
-    public function testLocalDriver()
+    public function test_local_driver()
     {
         $driver = $this->manager->driver('local');
         $config = app('config')->get('image.sources.local');
@@ -36,11 +38,13 @@ class SourceManagerTest extends TestCase
 
     /**
      * Test getting the filesystem driver
+     *
      * @test
+     *
      * @covers ::createDriver
      * @covers ::createFilesystemDriver
      */
-    public function testFilesystemDriver()
+    public function test_filesystem_driver()
     {
         $driver = $this->manager->driver('filesystem');
         $config = app('config')->get('image.sources.filesystem');
@@ -49,13 +53,15 @@ class SourceManagerTest extends TestCase
 
     /**
      * Test getting a custom driver
+     *
      * @test
+     *
      * @covers ::createDriver
      */
-    public function testCustomDriver()
+    public function test_custom_driver()
     {
         $this->app['config']->set('image.sources.custom', [
-            'driver' => 'custom'
+            'driver' => 'custom',
         ]);
         $this->manager->extend('custom', function () {
             return 'custom';
@@ -66,11 +72,13 @@ class SourceManagerTest extends TestCase
 
     /**
      * Test get and set default driver
+     *
      * @test
+     *
      * @covers ::getDefaultDriver
      * @covers ::setDefaultDriver
      */
-    public function testGetDefaultDriver()
+    public function test_get_default_driver()
     {
         $defaultDriver = $this->app['config']->get('image.source');
         $this->assertEquals($defaultDriver, $this->manager->getDefaultDriver());

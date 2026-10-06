@@ -10,6 +10,7 @@ class Gamma implements FilterWithValueContract
     public function apply(ImageInterface $image, $value)
     {
         $image->effects()->gamma($value);
+
         return $image;
     }
 }

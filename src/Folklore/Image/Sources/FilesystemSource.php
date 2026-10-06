@@ -2,16 +2,17 @@
 
 namespace Folklore\Image\Sources;
 
-use Folklore\Image\Contracts\ImageDataHandler;
-use League\Flysystem\Adapter\Local;
-use Imagine\Image\ImageInterface;
 use finfo;
+use Folklore\Image\Contracts\ImageDataHandler;
+use Imagine\Image\ImageInterface;
+use League\Flysystem\Adapter\Local;
 
 class FilesystemSource extends AbstractSource
 {
     public function pathExists($path)
     {
         $fullPath = $this->getFullPath($path);
+
         return $this->existsOnDisk($fullPath);
     }
 
@@ -20,8 +21,8 @@ class FilesystemSource extends AbstractSource
         $disk = $this->getDisk();
 
         $extension = pathinfo($path, PATHINFO_EXTENSION);
-        $isFile = !empty($extension);
-        $directory = $isFile ? pathinfo($path, PATHINFO_DIRNAME):$path;
+        $isFile = ! empty($extension);
+        $directory = $isFile ? pathinfo($path, PATHINFO_DIRNAME) : $path;
 
         $files = $disk->allFiles($directory);
         $images = $this->getImagesFromFiles($files, $path);
@@ -35,24 +36,28 @@ class FilesystemSource extends AbstractSource
         $disk = $this->getDisk();
         if ($disk->getAdapter() instanceof Local) {
             $localPath = $disk->getAdapter()->getPathPrefix();
+
             return parent::getFormatFromPath(rtrim($localPath, '/').'/'.ltrim($fullPath, '/'));
         }
 
         $cache = data_get($this->config, 'cache', false);
-        $existsCache = $cache ? $this->existsOnCache($fullPath):false;
+        $existsCache = $cache ? $this->existsOnCache($fullPath) : false;
         if ($existsCache) {
             $cachePath = data_get($this->config, 'cache_path', null);
             if ($cachePath) {
                 $cacheFullPath = $this->getCacheFullPath($fullPath);
+
                 return parent::getFormatFromPath($cacheFullPath);
             } else {
                 $cacheKey = $this->getCacheKey();
                 $content = app('cache')->get($cacheKey);
+
                 return $this->getFormatFromContent($content);
             }
         }
 
         $content = $disk->get($fullPath);
+
         return $this->getFormatFromContent($content);
     }
 
@@ -63,11 +68,12 @@ class FilesystemSource extends AbstractSource
 
         if ($disk->getAdapter() instanceof Local) {
             $localPath = $disk->getAdapter()->getPathPrefix();
+
             return $this->imagine->open(rtrim($localPath, '/').'/'.ltrim($fullPath, '/'));
         }
 
         $cache = data_get($this->config, 'cache', false);
-        $existsCache = $cache ? $this->existsOnCache($fullPath):false;
+        $existsCache = $cache ? $this->existsOnCache($fullPath) : false;
 
         $stream = null;
         $content = null;
@@ -90,7 +96,7 @@ class FilesystemSource extends AbstractSource
 
         if ($stream) {
             return $this->imagine->read($stream);
-        } else if ($content) {
+        } elseif ($content) {
             return $this->imagine->load($content);
         } else {
             return $this->imagine->open($pathToOpen);
@@ -104,6 +110,7 @@ class FilesystemSource extends AbstractSource
 
         if ($disk->getAdapter() instanceof Local) {
             $localPath = $disk->getAdapter()->getPathPrefix();
+
             return app(ImageDataHandler::class)->save($image, rtrim($localPath, '/').'/'.ltrim($fullPath, '/'));
         }
 
@@ -123,12 +130,14 @@ class FilesystemSource extends AbstractSource
     public function getDisk()
     {
         $disk = $this->config['disk'];
-        return $disk === 'cloud' ? app('filesystem')->cloud():app('filesystem')->disk($disk);
+
+        return $disk === 'cloud' ? app('filesystem')->cloud() : app('filesystem')->disk($disk);
     }
 
     protected function getFullPath($path)
     {
         $prefixPath = data_get($this->config, 'path', '/');
+
         return rtrim($prefixPath, '/').'/'.ltrim($path, '/');
     }
 
@@ -137,7 +146,8 @@ class FilesystemSource extends AbstractSource
         $prefix = data_get($this->config, 'cache_path', null);
         $cachePath = $this->getCachePath($path);
         $extension = pathinfo($path, \PATHINFO_EXTENSION);
-        return rtrim($prefix, '/').'/'.$cachePath.(empty($extension) ? '':('.'.$extension));
+
+        return rtrim($prefix, '/').'/'.$cachePath.(empty($extension) ? '' : ('.'.$extension));
     }
 
     protected function getCachePath($path)
@@ -150,6 +160,7 @@ class FilesystemSource extends AbstractSource
     protected function getCacheKey($path)
     {
         $cachePath = $this->getCachePath($path);
+
         return preg_replace('/[^a-zA-Z0-9]+/i', '_', $cachePath);
     }
 
@@ -161,18 +172,21 @@ class FilesystemSource extends AbstractSource
         }
 
         $cacheKey = $this->getCacheKey($path);
+
         return app('cache')->has($cacheKey);
     }
 
     protected function existsOnDisk($path)
     {
         $disk = $this->getDisk();
+
         return $disk->exists($path);
     }
 
     protected function getMimeFromContent($content)
     {
         $finfo = new finfo(FILEINFO_MIME);
+
         return $finfo->buffer($content);
     }
 
@@ -202,7 +216,7 @@ class FilesystemSource extends AbstractSource
             $filesystem = app('files');
             $fullPath = $this->getCacheFullPath($path);
             $directory = pathinfo($fullPath, PATHINFO_DIRNAME);
-            if (!$filesystem->isDirectory($directory)) {
+            if (! $filesystem->isDirectory($directory)) {
                 $filesystem->makeDirectory($directory, $cacheMode, true, true);
             }
             $filesystem->put($fullPath, $contents);

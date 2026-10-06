@@ -2,11 +2,13 @@
 
 namespace Folklore\Image\Tests\Unit;
 
-use Folklore\Image\Tests\TestCase;
-use Folklore\Image\ImageHandler;
-use Folklore\Image\Filters\Rotate as RotateFilter;
+use Folklore\Image\Exception\FileMissingException;
+use Folklore\Image\Exception\FilterMissingException;
+use Folklore\Image\Exception\FormatException;
 use Folklore\Image\Filters\Resize as ResizeFilter;
-use Folklore\Image\Contracts\FiltersManager as FiltersManagerContract;
+use Folklore\Image\Filters\Rotate as RotateFilter;
+use Folklore\Image\ImageHandler;
+use Folklore\Image\Tests\TestCase;
 use Imagine\Image\ImageInterface;
 
 /**
@@ -15,6 +17,7 @@ use Imagine\Image\ImageInterface;
 class ImageHandlerTest extends TestCase
 {
     protected $handler;
+
     protected $localSource;
 
     protected function setUp(): void
@@ -37,11 +40,13 @@ class ImageHandlerTest extends TestCase
 
     /**
      * Test set and get source
+     *
      * @test
+     *
      * @covers ::setSource
      * @covers ::getSource
      */
-    public function testGetSource()
+    public function test_get_source()
     {
         $this->assertEquals($this->localSource, $this->handler->getSource());
 
@@ -52,10 +57,12 @@ class ImageHandlerTest extends TestCase
 
     /**
      * Test open image
+     *
      * @test
+     *
      * @covers ::open
      */
-    public function testOpen()
+    public function test_open()
     {
         $image = $this->handler->open('image.jpg');
 
@@ -67,10 +74,12 @@ class ImageHandlerTest extends TestCase
 
     /**
      * Test getting the format of an image
+     *
      * @test
+     *
      * @covers ::format
      */
-    public function testFormat()
+    public function test_format()
     {
         $format = $this->handler->format('image.jpg');
         $this->assertEquals('jpeg', $format);
@@ -81,19 +90,21 @@ class ImageHandlerTest extends TestCase
 
     /**
      * Test making an image
+     *
      * @test
+     *
      * @covers ::make
      * @covers ::applyFilter
      */
-    public function testMake()
+    public function test_make()
     {
         $returnImage = $this->handler->open('image.jpg');
-        $returnImage = with(new ResizeFilter())->apply($returnImage, [
+        $returnImage = with(new ResizeFilter)->apply($returnImage, [
             'width' => 100,
             'height' => 90,
-            'crop' => false
+            'crop' => false,
         ]);
-        $returnImage = with(new RotateFilter())->apply($returnImage, 90);
+        $returnImage = with(new RotateFilter)->apply($returnImage, 90);
 
         $rotateFilterMock = $this->getMockBuilder(RotateFilter::class)
             ->onlyMethods(['apply'])
@@ -118,7 +129,7 @@ class ImageHandlerTest extends TestCase
             'width' => 100,
             'height' => 90,
             'crop' => true,
-            'rotate' => 90
+            'rotate' => 90,
         ]);
 
         $this->assertInstanceOf(ImageInterface::class, $image);
@@ -129,45 +140,53 @@ class ImageHandlerTest extends TestCase
 
     /**
      * Test making an image with wrong path
+     *
      * @test
+     *
      * @covers ::make
      */
-    public function testMakeWithWrongPath()
+    public function test_make_with_wrong_path()
     {
-        $this->expectException(\Folklore\Image\Exception\FileMissingException::class);
+        $this->expectException(FileMissingException::class);
         $image = $this->handler->make('doesnt-exists.jpg');
     }
 
     /**
      * Test making an image with wrong format
+     *
      * @test
+     *
      * @covers ::make
      */
-    public function testMakeWithWrongFormat()
+    public function test_make_with_wrong_format()
     {
-        $this->expectException(\Folklore\Image\Exception\FormatException::class);
+        $this->expectException(FormatException::class);
         $image = $this->handler->make('wrong.jpg');
     }
 
     /**
      * Test making an image with wrong format
+     *
      * @test
+     *
      * @covers ::make
      */
-    public function testMakeWithWrongFilter()
+    public function test_make_with_wrong_filter()
     {
-        $this->expectException(\Folklore\Image\Exception\FilterMissingException::class);
+        $this->expectException(FilterMissingException::class);
         $image = $this->handler->make('image.jpg', [
-            'wrong' => true
+            'wrong' => true,
         ]);
     }
 
     /**
      * Test saving an image
+     *
      * @test
+     *
      * @covers ::save
      */
-    public function testSave()
+    public function test_save()
     {
         $image = $this->handler->open('image.jpg');
         $this->handler->save($image, 'image-test.jpg');

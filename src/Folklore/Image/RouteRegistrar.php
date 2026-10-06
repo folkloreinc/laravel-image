@@ -1,9 +1,10 @@
 <?php
+
 namespace Folklore\Image;
 
-use Illuminate\Routing\Router;
-use Illuminate\Container\Container;
 use Folklore\Image\Contracts\UrlGenerator as UrlGeneratorContract;
+use Illuminate\Routing\Route;
+use Illuminate\Routing\Router;
 use Illuminate\Support\Arr;
 
 class RouteRegistrar
@@ -30,8 +31,8 @@ class RouteRegistrar
     /**
      * Create a new route registrar instance.
      *
-     * @param \Illuminate\Routing\Router $router The laravel router
-     * @param \Folklore\Image\UrlGenerator $urlGenerator The url generator
+     * @param  Router  $router  The laravel router
+     * @param  UrlGenerator  $urlGenerator  The url generator
      * @return void
      */
     public function __construct(Router $router, UrlGeneratorContract $urlGenerator)
@@ -56,9 +57,9 @@ class RouteRegistrar
      * ]);
      * ```
      *
-     * @param string $path The path of the route. It must contain `{pattern}`.
-     * @param array $config Configuration options for the route.
-     * @return \Illuminate\Routing\Route The route created
+     * @param  string  $path  The path of the route. It must contain `{pattern}`.
+     * @param  array  $config  Configuration options for the route.
+     * @return Route The route created
      */
     public function image($path, $config = [])
     {
@@ -77,7 +78,7 @@ class RouteRegistrar
         // Here we check if the route contains any url config. If it does, we
         // create a route pattern to catch it
         $patternOptions = data_get($config, 'pattern', []);
-        if (sizeof($patternOptions)) {
+        if (count($patternOptions)) {
             $generatedPatternName = $patternName.'_'.preg_replace(
                 '/[^a-z0-9]+/i',
                 '_',
@@ -92,24 +93,25 @@ class RouteRegistrar
 
         $routePath = preg_replace('/\{\s*pattern\s*\}/i', '{'.$patternName.'}', $path);
 
-        return $this->router->get($routePath, array(
+        return $this->router->get($routePath, [
             'as' => $as,
-            'domain' => $domain === null ? '':$domain,
+            'domain' => $domain === null ? '' : $domain,
             'middleware' => $middleware,
             'image' => Arr::except($config, $this->allowedAttributes),
-            'uses' => $controller
-        ));
+            'uses' => $controller,
+        ]);
     }
 
     /**
      * Set the name of the router pattern
      *
-     * @param string $name The name of the pattern that will be added to the router
+     * @param  string  $name  The name of the pattern that will be added to the router
      * @return $this
      */
     public function setPatternName($name)
     {
         $this->patternName = $name;
+
         return $this;
     }
 
@@ -126,12 +128,13 @@ class RouteRegistrar
     /**
      * Set the middleware that will be used for caching images
      *
-     * @param string $middleware The middleware name or class path
+     * @param  string  $middleware  The middleware name or class path
      * @return $this
      */
     public function setCacheMiddleware($middleware)
     {
         $this->cacheMiddleware = $middleware;
+
         return $this;
     }
 
@@ -143,6 +146,7 @@ class RouteRegistrar
     public function setController($value)
     {
         $this->controller = $value;
+
         return $this;
     }
 
