@@ -41,7 +41,7 @@ class CacheMiddleware
         // Otherwise, ignore it.
         if ($response instanceof ImageResponse) {
             $image = $response->getImage();
-            $path = $this->cacheManager->put($image, $path, $cachePath, $cacheMode);
+            $path = $this->cacheManager->put($image, $path, $cachePath, $cacheMode, $response->getEncodingOptions());
             $response->setImagePath($path);
         }
 
