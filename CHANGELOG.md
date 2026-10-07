@@ -4,6 +4,23 @@ All notable changes to `folklore/laravel-image` are documented in this file. The
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-07
+
+The first tagged release of `v1.x`: it stabilizes the package, without breaking existing image URLs or public APIs. Sites can require `folklore/laravel-image:^1.1` instead of `v1.x-dev`.
+
+### Upgrade notes
+
+What sites will notice, and how to keep the previous behaviour where there is a setting:
+
+- **Output quality** follows `image.quality` (JPEG 82, WebP 80, AVIF 60), with and without the route cache. Uncached images were encoded at quality 100; set `image.quality` to 100 to keep that. A route's `quality` option still wins.
+- **EXIF orientation:** phone photos are turned upright before any filter. Turn it off with `image.auto_orient`.
+- **Metadata:** derivatives are stripped of EXIF and GPS data, and converted to sRGB with Imagick and Gmagick. Turn it off with `image.strip_metadata`.
+- **New formats:** SVG and HEIC sources, which answered 404 or 415, are now served; HEIC as JPEG unless the URL asks for another format.
+- **Restrictions** run in `log` mode: requests that break them are logged as warnings and still served. Check your logs before switching `image.restrictions.mode` to `enforce`.
+- **URL options:** `upscale`, `auto_orient` and `memory_limit` in a URL are ignored. Set them on the route or in the config.
+- **JS generator:** `format` is now the output format, as in PHP (a `format` containing `{…}` is still read as the URL template), and a source URL keeps its host.
+- **Requirements:** PHP 8.2+ and Laravel 9+.
+
 ### Added
 
 - GitHub Actions: tests on PHP 8.2–8.5 × Laravel 9–13 (`prefer-lowest` and `prefer-stable`), Pint, Larastan, and the JS suite and build.
@@ -49,3 +66,6 @@ All notable changes to `folklore/laravel-image` are documented in this file. The
 ### Removed
 
 - Travis CI, Coveralls, `phpcs.xml` and the Prettier PHP plugin.
+
+[Unreleased]: https://github.com/folkloreinc/laravel-image/compare/v1.1.0...v1.x
+[1.1.0]: https://github.com/folkloreinc/laravel-image/releases/tag/v1.1.0
