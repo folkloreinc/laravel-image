@@ -5,8 +5,9 @@ namespace Folklore\Image\Sources;
 use finfo;
 use Folklore\Image\Contracts\ImageDataHandler;
 use Folklore\Image\Exception\InvalidPathException;
+use Illuminate\Filesystem\FilesystemAdapter;
 use Imagine\Image\ImageInterface;
-use League\Flysystem\Adapter\Local;
+use League\Flysystem\Local\LocalFilesystemAdapter;
 
 class FilesystemSource extends AbstractSource
 {
@@ -39,10 +40,9 @@ class FilesystemSource extends AbstractSource
     {
         $fullPath = $this->getFullPath($path);
         $disk = $this->getDisk();
-        if ($disk->getAdapter() instanceof Local) {
-            $localPath = $disk->getAdapter()->getPathPrefix();
-
-            return parent::getFormatFromPath(rtrim($localPath, '/').'/'.ltrim($fullPath, '/'));
+        $localPath = $this->getLocalPath($fullPath);
+        if ($localPath !== null) {
+            return parent::getFormatFromPath($localPath);
         }
 
         $cache = data_get($this->config, 'cache', false);
@@ -54,7 +54,7 @@ class FilesystemSource extends AbstractSource
 
                 return parent::getFormatFromPath($cacheFullPath);
             } else {
-                $cacheKey = $this->getCacheKey();
+                $cacheKey = $this->getCacheKey($fullPath);
                 $content = app('cache')->get($cacheKey);
 
                 return $this->getFormatFromContent($content);
@@ -71,10 +71,9 @@ class FilesystemSource extends AbstractSource
         $fullPath = $this->getFullPath($path);
         $disk = $this->getDisk();
 
-        if ($disk->getAdapter() instanceof Local) {
-            $localPath = $disk->getAdapter()->getPathPrefix();
-
-            return $this->imagine->open(rtrim($localPath, '/').'/'.ltrim($fullPath, '/'));
+        $localPath = $this->getLocalPath($fullPath);
+        if ($localPath !== null) {
+            return $this->imagine->open($localPath);
         }
 
         $cache = data_get($this->config, 'cache', false);
@@ -88,7 +87,7 @@ class FilesystemSource extends AbstractSource
             if ($cachePath) {
                 $pathToOpen = $this->getCacheFullPath($fullPath);
             } else {
-                $cacheKey = $this->getCacheKey();
+                $cacheKey = $this->getCacheKey($fullPath);
                 $content = app('cache')->get($cacheKey);
             }
         } else {
@@ -113,10 +112,9 @@ class FilesystemSource extends AbstractSource
         $fullPath = $this->getFullPath($path);
         $disk = $this->getDisk();
 
-        if ($disk->getAdapter() instanceof Local) {
-            $localPath = $disk->getAdapter()->getPathPrefix();
-
-            return app(ImageDataHandler::class)->save($image, rtrim($localPath, '/').'/'.ltrim($fullPath, '/'));
+        $localPath = $this->getLocalPath($fullPath);
+        if ($localPath !== null) {
+            return app(ImageDataHandler::class)->save($image, $localPath);
         }
 
         $format = pathinfo($fullPath, \PATHINFO_EXTENSION);
@@ -137,6 +135,20 @@ class FilesystemSource extends AbstractSource
         $disk = $this->config['disk'];
 
         return $disk === 'cloud' ? app('filesystem')->cloud() : app('filesystem')->disk($disk);
+    }
+
+    /**
+     * The absolute path of a file on a local disk, so it can be read in place,
+     * or null for other disks.
+     */
+    protected function getLocalPath(string $fullPath): ?string
+    {
+        $disk = $this->getDisk();
+        if ($disk instanceof FilesystemAdapter && $disk->getAdapter() instanceof LocalFilesystemAdapter) {
+            return $disk->path($fullPath);
+        }
+
+        return null;
     }
 
     protected function getFullPath($path)
@@ -230,6 +242,10 @@ class FilesystemSource extends AbstractSource
             }
             $filesystem->put($fullPath, $contents);
         } else {
+            // A cache store can't serialize a stream
+            if (is_resource($contents)) {
+                $contents = stream_get_contents($contents);
+            }
             $cacheKey = $this->getCacheKey($path);
             $cacheExpiration = data_get($this->config, 'cache_expiration', -1);
             if ($cacheExpiration === -1) {
