@@ -43,6 +43,7 @@ All notable changes to `folklore/laravel-image` are documented in this file. The
     - it accepts the `pattern` and `host` options, and keeps the host of a source URL;
     - generator options (such as `placeholders_patterns`) are no longer added to the URL as filters.
 - PHP URL generator: a `host` with a scheme, such as `https://cdn.example.com`, is used as is instead of giving `http://https://…` (#44).
+- A published `config/image.php` that is old or partial gets the package defaults for the nested keys it doesn't set (in `url`, `routes`, `restrictions`, `quality` and `utils`). Without `url.placeholders_patterns`, for example, the application failed to boot (#43).
 - `Utils::convertImage()` deletes its temporary files, including on failure, and only fetches `http` and `https` URLs. The new `image.utils.allowed_hosts` option restricts the hosts it fetches from (#13).
 
 ### Removed

@@ -17,6 +17,7 @@ use Folklore\Image\Http\CacheMiddleware;
 use Folklore\Image\Http\ImageResponse;
 use Folklore\Image\Jobs\CreateUrlCache;
 use Illuminate\Bus\Dispatcher;
+use Illuminate\Contracts\Foundation\CachesConfiguration;
 use Illuminate\Contracts\Routing\ResponseFactory as ResponseFactoryContract;
 use Illuminate\Support\ServiceProvider as BaseServiceProvider;
 
@@ -55,6 +56,7 @@ class ServiceProvider extends BaseServiceProvider
 
         // Merge files
         $this->mergeConfigFrom($configFile, 'image');
+        $this->mergeNestedConfigDefaults($configFile);
 
         // Publish
         $this->publishes([
@@ -64,6 +66,43 @@ class ServiceProvider extends BaseServiceProvider
         $this->publishes([
             $routesFile => base_path('routes/images.php'),
         ], 'routes');
+    }
+
+    /**
+     * Fill the nested keys a published config doesn't set with the package defaults.
+     *
+     * `mergeConfigFrom()` only merges the top-level keys, so an old or partial
+     * published config would leave keys such as `url.placeholders_patterns` or
+     * `routes.pattern_name` empty. The site's own values keep priority, and lists
+     * (such as `routes.middleware`) are never merged.
+     */
+    protected function mergeNestedConfigDefaults(string $configFile): void
+    {
+        if ($this->app instanceof CachesConfiguration && $this->app->configurationIsCached()) {
+            return;
+        }
+
+        $defaults = require $configFile;
+        $config = $this->app['config'];
+        foreach (['url', 'routes', 'restrictions', 'quality', 'utils'] as $key) {
+            $value = $config->get('image.'.$key);
+            if (is_array($value) && is_array($defaults[$key] ?? null)) {
+                $config->set('image.'.$key, $this->mergeDefaults($defaults[$key], $value));
+            }
+        }
+    }
+
+    protected function mergeDefaults(array $defaults, array $values): array
+    {
+        foreach ($defaults as $key => $default) {
+            if (! array_key_exists($key, $values)) {
+                $values[$key] = $default;
+            } elseif (is_array($default) && is_array($values[$key]) && ! array_is_list($default)) {
+                $values[$key] = $this->mergeDefaults($default, $values[$key]);
+            }
+        }
+
+        return $values;
     }
 
     public function bootRouter()
