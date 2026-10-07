@@ -408,11 +408,11 @@ class UrlGenerator implements UrlGeneratorContract
 
         $filterFormat = data_get($config, 'filter_format', $this->getFilterFormat());
         $filterPattern = preg_replace('#\\\{\s*key\s*\\\}#i', '(\w+)', preg_quote($filterFormat, '#'));
-        $filterPattern = preg_replace('#\\\{\s*value\s*\\\}#i', '([a-z0-9\,\.]+)', $filterPattern);
+        $filterPattern = preg_replace('#\\\{\s*value\s*\\\}#i', '([a-z0-9\,\.\-_]+)', $filterPattern);
 
         // Loop through the params and make the options key value pairs
         $filterSeparator = data_get($config, 'filter_separator', $this->getFilterSeparator());
-        $filterParts = explode($filterSeparator, $path);
+        $filterParts = $this->splitFilters($path, $filterSeparator);
         foreach ($filterParts as $filter) {
             $matches = null;
             $withValueMatches = null;
@@ -445,6 +445,44 @@ class UrlGenerator implements UrlGeneratorContract
         }
 
         return $filters;
+    }
+
+    /**
+     * Split the filters on the separator, except inside parentheses, so a value
+     * can contain the separator, as in `rotate(-90)`.
+     *
+     * @return array<int, string>
+     */
+    protected function splitFilters(string $path, string $separator): array
+    {
+        if ($separator === '') {
+            return [$path];
+        }
+
+        $parts = [];
+        $current = '';
+        $depth = 0;
+        $length = strlen($path);
+        $separatorLength = strlen($separator);
+        for ($i = 0; $i < $length; $i++) {
+            $char = $path[$i];
+            if ($depth === 0 && substr($path, $i, $separatorLength) === $separator) {
+                $parts[] = $current;
+                $current = '';
+                $i += $separatorLength - 1;
+
+                continue;
+            }
+            if ($char === '(') {
+                $depth++;
+            } elseif ($char === ')' && $depth > 0) {
+                $depth--;
+            }
+            $current .= $char;
+        }
+        $parts[] = $current;
+
+        return $parts;
     }
 
     public function setFormat($value)
