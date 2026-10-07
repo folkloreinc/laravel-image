@@ -9,8 +9,41 @@ on:
 permissions:
   contents: read
 
+# A new push to a pull request cancels its previous run. Runs on v1.x all finish.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
+  # Pull requests that change no file the JS suite depends on skip it.
+  # Pushes and manual runs always run it.
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    name: Changes
+    outputs:
+      js: ${{ steps.affected.outputs.js }}
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Find the suites the changes affect
+        id: affected
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT_NAME" = pull_request ]; then
+            # The checkout is the merge commit, whose first parent is the base branch.
+            git diff --name-only HEAD^1 HEAD | .github/scripts/affected-suites.sh | tee -a "$GITHUB_OUTPUT"
+          else
+            echo js=true | tee -a "$GITHUB_OUTPUT"
+          fi
+
   js:
+    needs: changes
+    if: needs.changes.outputs.js == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
 

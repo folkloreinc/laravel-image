@@ -9,14 +9,43 @@ on:
 permissions:
   contents: read
 
+# A new push to a pull request cancels its previous run. Runs on v1.x all finish.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  test:
+  # Pull requests that change no file the PHP suite depends on (docs, the JS package)
+  # skip the test jobs. Pushes and manual runs always run them.
+  changes:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 5
+    name: Changes
+    outputs:
+      php: ${{ steps.affected.outputs.php }}
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Find the suites the changes affect
+        id: affected
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT_NAME" = pull_request ]; then
+            # The checkout is the merge commit, whose first parent is the base branch.
+            git diff --name-only HEAD^1 HEAD | .github/scripts/affected-suites.sh | tee -a "$GITHUB_OUTPUT"
+          else
+            echo php=true | tee -a "$GITHUB_OUTPUT"
+          fi
+
+  test:
+    needs: changes
+    if: needs.changes.outputs.php == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     strategy:
       fail-fast: false
@@ -24,13 +53,21 @@ jobs:
         php: ['8.2', '8.3', '8.4', '8.5']
         # Laravel 9 is still used by active projects (see AGENTS.md).
         laravel: ['9.*', '10.*', '11.*', '12.*', '13.*']
-        stability: [prefer-lowest, prefer-stable]
+        stability: [prefer-stable]
         include:
           - { laravel: '9.*', testbench: '7.*' }
           - { laravel: '10.*', testbench: '8.*' }
           - { laravel: '11.*', testbench: '9.*' }
           - { laravel: '12.*', testbench: '10.*' }
           - { laravel: '13.*', testbench: '11.*' }
+          # The lowest dependencies, once per Laravel version, on its lowest PHP version:
+          # that's where the declared minimums break. On newer PHP versions, Composer
+          # already skips the dependency versions they don't support.
+          - { php: '8.2', laravel: '9.*', testbench: '7.*', stability: prefer-lowest }
+          - { php: '8.2', laravel: '10.*', testbench: '8.*', stability: prefer-lowest }
+          - { php: '8.2', laravel: '11.*', testbench: '9.*', stability: prefer-lowest }
+          - { php: '8.2', laravel: '12.*', testbench: '10.*', stability: prefer-lowest }
+          - { php: '8.3', laravel: '13.*', testbench: '11.*', stability: prefer-lowest }
         # PHP versions each Laravel version supports.
         exclude:
           - { laravel: '9.*', php: '8.4' }
@@ -76,8 +113,10 @@ jobs:
         run: vendor/bin/phpunit
 
   coverage:
+    needs: changes
+    if: needs.changes.outputs.php == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
     name: Coverage
 
     steps:
@@ -117,8 +156,10 @@ jobs:
           path: coverage/clover.xml
 
   s3:
+    needs: changes
+    if: needs.changes.outputs.php == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
     name: S3-compatible disk
 
     steps:
@@ -154,19 +195,29 @@ jobs:
         run: vendor/bin/phpunit tests/Feature/S3DiskTest.php --fail-on-skipped
 
   # A single, stable check to require in branch protection, instead of every matrix job.
+  # The test jobs either all succeed, or were all skipped because the PHP suite isn't affected.
   tests-passed:
     if: always()
-    needs: [test, coverage, s3]
+    needs: [changes, test, coverage, s3]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     name: Tests passed
 
     steps:
       - name: Check that every test job succeeded
+        env:
+          CHANGES: ${{ needs.changes.result }}
+          PHP: ${{ needs.changes.outputs.php }}
+          TEST: ${{ needs.test.result }}
+          COVERAGE: ${{ needs.coverage.result }}
+          S3: ${{ needs.s3.result }}
         run: |
-          echo "test: ${{ needs.test.result }}"
-          echo "coverage: ${{ needs.coverage.result }}"
-          echo "s3: ${{ needs.s3.result }}"
-          test "${{ needs.test.result }}" = success
-          test "${{ needs.coverage.result }}" = success
-          test "${{ needs.s3.result }}" = success
+          echo "changes: $CHANGES (php: $PHP)"
+          echo "test: $TEST"
+          echo "coverage: $COVERAGE"
+          echo "s3: $S3"
+          test "$CHANGES" = success
+          if [ "$PHP" = true ]; then expected=success; else expected=skipped; fi
+          for result in "$TEST" "$COVERAGE" "$S3"; do
+            test "$result" = "$expected"
+          done
