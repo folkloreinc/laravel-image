@@ -44,7 +44,8 @@
     },
     "suggest": {
         "ext-gd": "Required by the gd driver",
-        "ext-imagick": "Required by the imagick driver (better quality, more formats)"
+        "ext-imagick": "Required by the imagick driver (better quality, more formats)",
+        "ext-exif": "Required to turn images upright according to their EXIF orientation"
     },
     "autoload": {
         "psr-0": {
