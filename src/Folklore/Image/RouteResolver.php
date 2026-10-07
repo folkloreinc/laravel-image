@@ -84,7 +84,7 @@ class RouteResolver implements RouteResolverContract
         $response = response()
             ->image($image)
             ->setQuality($quality !== null ? (int) $quality : null)
-            ->setFormat(data_get($parseData, 'format') ?? $mime ?? $handler->format($path))
+            ->setFormat($this->getResponseFormat(data_get($parseData, 'format') ?? $mime ?? $handler->format($path)))
             ->setExpiresIn($expires);
 
         $headers = data_get($config, 'headers', []);
@@ -93,6 +93,17 @@ class RouteResolver implements RouteResolverContract
         }
 
         return $response;
+    }
+
+    /**
+     * The format to serve: browsers can't display HEIC, so a HEIC source without a
+     * requested format (such as `.heic.webp`) is served as JPEG.
+     */
+    protected function getResponseFormat(?string $format): ?string
+    {
+        $name = $format !== null ? strtolower(preg_replace('/^image\//i', '', $format)) : null;
+
+        return in_array($name, ['heic', 'heif', 'heic-sequence', 'heif-sequence'], true) ? 'jpeg' : $format;
     }
 
     /**

@@ -11,6 +11,14 @@ class ImageDataHandler implements ImageDataHandlerContract
     {
         $format = pathinfo($path, \PATHINFO_EXTENSION);
 
+        // A cached HEIC derivative is served to browsers, so it's written as JPEG. The
+        // drivers pick the format from the extension, so encode it first.
+        if (in_array(strtolower($format), ['heic', 'heif'], true)) {
+            file_put_contents($path, $this->get($image, 'jpeg', $opts));
+
+            return $image;
+        }
+
         return $image->save($path, $this->options($format, $opts));
     }
 

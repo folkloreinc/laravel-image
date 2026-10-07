@@ -102,6 +102,12 @@ abstract class AbstractSource implements Source
                 break;
         }
 
+        // HEIC has no image type either: check the content
+        $mime = is_file($path) ? @mime_content_type($path) : false;
+        if (in_array($mime, ['image/heic', 'image/heif', 'image/heic-sequence', 'image/heif-sequence'], true)) {
+            return 'heic';
+        }
+
         if (preg_match('/\.svg$/', $format) === 1) {
             return 'svg';
         }
