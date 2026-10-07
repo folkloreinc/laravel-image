@@ -121,12 +121,6 @@ parameters:
 			path: src/Folklore/Image/SourceManager.php
 
 		-
-			message: '#^Parameter \#2 \$subject of function preg_match expects string, int\|false given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Folklore/Image/Sources/AbstractSource.php
-
-		-
 			message: '#^Unreachable statement \- code above always terminates\.$#'
 			identifier: deadCode.unreachable
 			count: 3
