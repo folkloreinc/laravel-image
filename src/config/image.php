@@ -120,7 +120,7 @@ return [
             'dirname' => '(.*?)?',
             'basename' => '([^\/\.]+?)',
             'filename' => '([^\/]+)',
-            'extension' => '(jpeg|jpg|gif|png|webp|avif|bmp|heic)',
+            'extension' => '(jpeg|jpg|gif|png|webp|avif|bmp|heic|svg)',
             'format_extension' => '(\.(jpeg|jpg|gif|png|webp|avif))?',
         ],
     ],

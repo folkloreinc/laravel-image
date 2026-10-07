@@ -102,7 +102,9 @@ abstract class AbstractSource implements Source
                 break;
         }
 
-        if (preg_match('/\.svg$/', $format) === 1) {
+        // SVG has no image type: check the content, then the extension
+        $mime = is_file($path) ? @mime_content_type($path) : false;
+        if (in_array($mime, ['image/svg+xml', 'image/svg'], true) || preg_match('/\.svgz?$/i', $path) === 1) {
             return 'svg';
         }
 
