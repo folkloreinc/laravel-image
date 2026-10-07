@@ -92,6 +92,14 @@ jobs:
       - name: Install dependencies
         run: composer update --prefer-stable --prefer-dist --no-interaction
 
+      # The HEIC tests need libheif's HEVC decoder, which Ubuntu ships as a plugin.
+      # This job checks it works, so they don't silently skip everywhere.
+      - name: Install the HEIC decoder
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libheif-plugin-libde265
+          php -r 'new Imagick("tests/fixture/heic/photo.heic"); echo "Imagick reads HEIC\n";'
+
       - name: Run tests with coverage
         run: |
           mkdir -p coverage

@@ -14,6 +14,7 @@ All notable changes to `folklore/laravel-image` are documented in this file. The
     - the documented route options `allow_size`, `allow_filters` and `disallow_filters` are now checked, and `headers` is added to the response;
     - global size limits (`image.restrictions`: `max_width`, `max_height`, `max_pixels`, `max_filters`), which each route can override;
     - in the default `log` mode, a request that breaks a restriction is logged as a warning and still served; in `enforce` mode it answers 404.
+- HEIC sources (iPhone photos) are detected and served when the driver can read them (Imagick with libheif and its HEVC decoder): as JPEG by default, or in the requested format (`photo.heic.webp`). A driver that can't read a source, such as GD with a HEIC photo, answers 415 instead of 500 (#42).
 - An `upscale` option (`image.upscale`, per route, or in `make()`): `false` never enlarges the source, even for crops, which then keep the requested ratio at the largest size the source allows. The default, `null`, keeps the v1 behaviour (#12).
 
 ### Changed

@@ -33,6 +33,7 @@ class TestCase extends BaseTestCase
                     public_path('filesystem'),
                     public_path('custom'),
                     public_path('svg'),
+                    public_path('heic'),
                     public_path('orientation'),
                     public_path('metadata'),
                 ],
