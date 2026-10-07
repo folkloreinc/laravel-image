@@ -33,6 +33,9 @@ All notable changes to `folklore/laravel-image` are documented in this file. The
 - Images made by `make()`, and so every image served by a route, are stripped of their metadata (EXIF, GPS coordinates, comments). With the imagick and gmagick drivers, they keep the source's EXIF whenever no `Resize` ran, for example for a format conversion or a grayscale filter alone. Their colors are first converted to sRGB from the embedded profile, so wide-gamut photos (Display P3, Adobe RGB) no longer look washed out once the profile is gone; GD can't convert profiles. Turn it off with `image.strip_metadata` (#22).
 - A `memory_limit` filter in an image URL is ignored: it could raise PHP's memory limit for that request above `image.memory_limit`. `make()` options and a route's `filters` can still set it (#26).
 - Image URLs with a negative value, such as `rotate(-90)`, or a crop position, such as `crop(top_left)`, are parsed instead of answering 404. Both generators already produced them (#39).
+- `filesystem` source (#40):
+    - with `cache` on and no `cache_path`, the source no longer throws an `ArgumentCountError` once an image is cached, and caches the file contents instead of a stream the cache store can't serialize;
+    - local disks are detected with Flysystem 3 and read in place again, instead of through the disk API and the source cache.
 - A published `config/image.php` that is old or partial gets the package defaults for the nested keys it doesn't set (in `url`, `routes`, `restrictions`, `quality` and `utils`). Without `url.placeholders_patterns`, for example, the application failed to boot (#43).
 - `Utils::convertImage()` deletes its temporary files, including on failure, and only fetches `http` and `https` URLs. The new `image.utils.allowed_hosts` option restricts the hosts it fetches from (#13).
 

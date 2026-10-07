@@ -133,24 +133,6 @@ parameters:
 			path: src/Folklore/Image/Sources/AbstractSource.php
 
 		-
-			message: '#^Call to method getPathPrefix\(\) on an unknown class League\\Flysystem\\Adapter\\Local\.$#'
-			identifier: class.notFound
-			count: 3
-			path: src/Folklore/Image/Sources/FilesystemSource.php
-
-		-
-			message: '#^Class League\\Flysystem\\Adapter\\Local not found\.$#'
-			identifier: class.notFound
-			count: 3
-			path: src/Folklore/Image/Sources/FilesystemSource.php
-
-		-
-			message: '#^Method Folklore\\Image\\Sources\\FilesystemSource\:\:getCacheKey\(\) invoked with 0 parameters, 1 required\.$#'
-			identifier: arguments.count
-			count: 2
-			path: src/Folklore/Image/Sources/FilesystemSource.php
-
-		-
 			message: '#^Unreachable statement \- code above always terminates\.$#'
 			identifier: deadCode.unreachable
 			count: 2
