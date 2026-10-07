@@ -22,7 +22,7 @@ All notable changes to `folklore/laravel-image` are documented in this file. The
 - **Requires PHP 8.2 and Laravel 9 or later** (`illuminate/support` ^9.0 to ^13.0). Projects on older versions that require `v1.x-dev` can no longer update the package: they keep the commit locked in their `composer.lock`.
 - The test suite runs on Testbench 7–11 and PHPUnit 9.5–12.
 - JS tooling: Jest is installed, ESLint uses a flat config, and Babel helpers are bundled.
-- `composer.json`: `suggest` instead of the invalid `suggests` key, and an accurate description.
+- `composer.json`: `suggest` instead of the invalid `suggests` key, an accurate description, and a PSR-4 autoload instead of PSR-0 (#53).
 - Output quality is set per format with `image.quality` (JPEG 82, WebP 80, AVIF 60), and PNG is lossless at compression level 9. A route's `quality` option still overrides it for every format, and now also applies to cached files. Uncached responses were encoded at quality 100 (and uncompressed PNG), and cached files at the encoder defaults: both now produce the same file (#20).
 
 ### Fixed
