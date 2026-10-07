@@ -46,7 +46,7 @@ class ErrorResponsesTest extends TestCase
 
     public function test_an_unparsable_filter_returns_404()
     {
-        $this->get('/errors/image-filters(crop(top_left)).jpg')->assertNotFound();
+        $this->get('/errors/image-filters(blur(1:2)).jpg')->assertNotFound();
     }
 
     public function test_a_missing_image_returns_404()
