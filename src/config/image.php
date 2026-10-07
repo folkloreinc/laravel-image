@@ -235,6 +235,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Output quality
+    |--------------------------------------------------------------------------
+    |
+    | The quality used to encode each format, from 0 to 100, with and without
+    | the route cache. A route's `quality` option overrides it for every format.
+    | PNG is always lossless and compressed as much as possible.
+    |
+    */
+    'quality' => [
+        'jpeg' => 82,
+        'webp' => 80,
+        'avif' => 60,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Memory limit
     |--------------------------------------------------------------------------
     |

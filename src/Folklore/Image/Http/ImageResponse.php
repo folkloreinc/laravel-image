@@ -17,7 +17,12 @@ class ImageResponse extends StreamedResponse
 
     protected $format = 'jpg';
 
-    protected $quality = 100;
+    /**
+     * The output quality. Null uses the defaults per format from `image.quality`.
+     *
+     * @var int|null
+     */
+    protected $quality = null;
 
     /**
      * Constructor.
@@ -124,9 +129,15 @@ class ImageResponse extends StreamedResponse
             return file_get_contents($this->imagePath);
         }
 
-        return app(ImageDataHandler::class)->get($this->image, $this->format, [
-            'quality' => $this->quality,
-        ]);
+        return app(ImageDataHandler::class)->get($this->image, $this->format, $this->getEncodingOptions());
+    }
+
+    /**
+     * The options to encode the image with: the quality, when one is set.
+     */
+    public function getEncodingOptions(): array
+    {
+        return $this->quality !== null ? ['quality' => $this->quality] : [];
     }
 
     /**
