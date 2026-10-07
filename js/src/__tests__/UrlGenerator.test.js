@@ -48,3 +48,40 @@ test('generating url with config', () => {
     });
     expect(url).toEqual('/path/to/300x300/small/rotate-90/image.jpg');
 });
+
+test('generating url with an output format', () => {
+    const urlGenerator = new UrlGenerator();
+    const url = urlGenerator.make('path/to/image.jpg', 300, null, { format: 'webp' });
+    expect(url).toEqual('/path/to/image-filters(300x_).jpg.webp');
+});
+
+test('generating url with a pattern, like the PHP generator', () => {
+    const urlGenerator = new UrlGenerator();
+    const url = urlGenerator.make('path/to/image.jpg', 300, 300, {
+        format: 'webp',
+        pattern: {
+            format: '{dirname}/{filters}/{basename}.{extension}{format_extension}',
+            filters_format: '{filter}',
+        },
+    });
+    expect(url).toEqual('/path/to/300x300/image.jpg.webp');
+});
+
+test('generating url with a host', () => {
+    const urlGenerator = new UrlGenerator({ host: 'cdn.example.com' });
+    expect(urlGenerator.make('path/to/image.jpg', 300, 300)).toEqual(
+        'http://cdn.example.com/path/to/image-filters(300x300).jpg',
+    );
+    expect(
+        urlGenerator.make('path/to/image.jpg', 300, 300, { host: 'https://img.example.com/' }),
+    ).toEqual('https://img.example.com/path/to/image-filters(300x300).jpg');
+});
+
+test('generator options are not added as filters', () => {
+    const urlGenerator = new UrlGenerator({
+        placeholders_patterns: { extension: '(jpg|png)' },
+    });
+    expect(urlGenerator.make('path/to/image.jpg', 300, 300)).toEqual(
+        '/path/to/image-filters(300x300).jpg',
+    );
+});

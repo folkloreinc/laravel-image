@@ -38,6 +38,11 @@ All notable changes to `folklore/laravel-image` are documented in this file. The
     - with `cache` on and no `cache_path`, the source no longer throws an `ArgumentCountError` once an image is cached, and caches the file contents instead of a stream the cache store can't serialize;
     - local disks are detected with Flysystem 3 and read in place again, instead of through the disk API and the source cache.
 - SVG sources are detected (from their content, or their extension) and the default route pattern accepts `.svg`, so image routes serve and resize them. The SVG check looked at the image type instead of the path, so it never matched (#41).
+- JS URL generator, aligned with the PHP one (#44):
+    - the default URL template has `{format_extension}`, and the `format` option is the output format (`.jpg.webp`), as in PHP; a `format` containing placeholders is still read as the URL template;
+    - it accepts the `pattern` and `host` options, and keeps the host of a source URL;
+    - generator options (such as `placeholders_patterns`) are no longer added to the URL as filters.
+- PHP URL generator: a `host` with a scheme, such as `https://cdn.example.com`, is used as is instead of giving `http://https://…` (#44).
 - `Utils::convertImage()` deletes its temporary files, including on failure, and only fetches `http` and `https` URLs. The new `image.utils.allowed_hosts` option restricts the hosts it fetches from (#13).
 
 ### Removed
