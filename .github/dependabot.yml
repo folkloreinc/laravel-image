@@ -18,3 +18,9 @@ updates:
     target-branch: v1.x
     schedule:
       interval: weekly
+    ignore:
+      # Babel 8 can't be installed yet: @rollup/plugin-babel still requires
+      # @babel/core ^7. Remove this once it accepts Babel 8, then upgrade
+      # @babel/core and @babel/preset-env together (#37).
+      - dependency-name: "@babel/*"
+        update-types: ["version-update:semver-major"]
