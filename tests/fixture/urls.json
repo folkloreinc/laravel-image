@@ -102,6 +102,48 @@
         "parsed": { "path": "/uploads/photo.jpeg", "filters": { "width": 640, "height": null } }
     },
     {
+        "description": "negative value",
+        "src": "path/to/image.jpg",
+        "width": null,
+        "height": null,
+        "filters": { "rotate": -90 },
+        "url": "/path/to/image-filters(rotate(-90)).jpg",
+        "parsed": { "path": "/path/to/image.jpg", "filters": { "rotate": "-90" } }
+    },
+    {
+        "description": "negative value between other filters",
+        "src": "path/to/image.jpg",
+        "width": 300,
+        "height": 200,
+        "filters": { "rotate": -90, "grayscale": true },
+        "url": "/path/to/image-filters(300x200-rotate(-90)-grayscale).jpg",
+        "parsed": {
+            "path": "/path/to/image.jpg",
+            "filters": { "width": 300, "height": 200, "rotate": "-90", "grayscale": true }
+        }
+    },
+    {
+        "description": "crop position",
+        "src": "path/to/image.jpg",
+        "width": 300,
+        "height": 200,
+        "filters": { "crop": "top_left" },
+        "url": "/path/to/image-filters(300x200-crop(top_left)).jpg",
+        "parsed": {
+            "path": "/path/to/image.jpg",
+            "filters": { "width": 300, "height": 200, "crop": "top_left" }
+        }
+    },
+    {
+        "description": "list value, parsed as the string the filter splits",
+        "src": "path/to/image.jpg",
+        "width": null,
+        "height": null,
+        "filters": { "colorize": ["ff0000", "RGB"] },
+        "url": "/path/to/image-filters(colorize(ff0000,RGB)).jpg",
+        "parsed": { "path": "/path/to/image.jpg", "filters": { "colorize": "ff0000,RGB" } }
+    },
+    {
         "description": "output format",
         "src": "path/to/image.jpg",
         "width": 300,
