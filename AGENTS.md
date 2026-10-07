@@ -69,9 +69,11 @@ Every change ships with automated tests:
 
 CI (GitHub Actions, `.github/workflows`) runs:
 
-- `run-tests.yml`: the PHP suite on every supported PHP × Laravel combination, with `prefer-lowest` and `prefer-stable`, a coverage report, the S3-compatible disk tests, and a `Tests passed` job that succeeds only when all of them do;
+- `run-tests.yml`: the PHP suite with `prefer-stable` on every supported PHP × Laravel combination, and with `prefer-lowest` on the lowest PHP version of each Laravel version, a coverage report, the S3-compatible disk tests, and a `Tests passed` job that succeeds only when all of them do;
 - `pint.yml` and `phpstan.yml`: code style, static analysis and `composer validate --strict`;
 - `js.yml`: lint, Jest and the Rollup build.
+
+On a pull request, `run-tests.yml` and `js.yml` skip their suite when no file it depends on changed (`.github/scripts/affected-suites.sh` decides; `Tests passed` still reports). A file the script doesn't know runs the PHP suite. When you add a kind of file that only one suite uses, list it there. Pushes to `v1.x` run everything.
 
 A change merges only when CI is green.
 
