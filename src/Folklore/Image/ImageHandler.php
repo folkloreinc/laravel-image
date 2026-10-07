@@ -11,6 +11,8 @@ use Folklore\Image\Exception\FilterMissingException;
 use Folklore\Image\Exception\FormatException;
 use Folklore\Image\Filters\Resize;
 use Illuminate\Support\Arr;
+use Imagine\Exception\InvalidArgumentException as ImagineInvalidArgumentException;
+use Imagine\Exception\RuntimeException as ImagineRuntimeException;
 use Imagine\Filter\Basic\Autorotate;
 use Imagine\Image\ImageInterface;
 use Imagine\Imagick\Image as ImagickImage;
@@ -94,8 +96,13 @@ class ImageHandler implements ImageHandlerContract
             Utils::raiseMemoryLimit($config['memory_limit']);
         }
 
-        // Open the image
-        $image = $this->source->openFromPath($path);
+        // Open the image. A driver that can't read the format (such as GD with a
+        // HEIC photo) throws, which means the format isn't supported here.
+        try {
+            $image = $this->source->openFromPath($path);
+        } catch (ImagineRuntimeException|ImagineInvalidArgumentException $e) {
+            throw new FormatException('Image ['.$path.'] can\'t be read by the image driver.', 0, $e);
+        }
 
         // Turn it upright, so filters apply to the image as it is meant to be seen
         if ($config['auto_orient']) {
