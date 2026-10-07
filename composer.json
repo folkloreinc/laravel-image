@@ -48,8 +48,8 @@
         "ext-exif": "Required to turn images upright according to their EXIF orientation"
     },
     "autoload": {
-        "psr-0": {
-            "Folklore\\Image": "src/"
+        "psr-4": {
+            "Folklore\\Image\\": "src/Folklore/Image/"
         },
         "files": [
             "src/Folklore/Image/helpers.php"

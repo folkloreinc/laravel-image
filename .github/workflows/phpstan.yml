@@ -30,5 +30,9 @@ jobs:
       - name: Install dependencies
         run: composer update --prefer-stable --prefer-dist --no-interaction
 
+      # Fails if a class doesn't match its PSR-4 path
+      - name: Check the autoload
+        run: composer dump-autoload --optimize --strict-psr
+
       - name: Run Larastan
         run: vendor/bin/phpstan analyse --memory-limit=1G --error-format=github
