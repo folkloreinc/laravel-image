@@ -22,6 +22,7 @@ All notable changes to `folklore/laravel-image` are documented in this file. The
 - The test suite runs on Testbench 7–11 and PHPUnit 9.5–12.
 - JS tooling: Jest is installed, ESLint uses a flat config, and Babel helpers are bundled.
 - `composer.json`: `suggest` instead of the invalid `suggests` key, and an accurate description.
+- Output quality is set per format with `image.quality` (JPEG 82, WebP 80, AVIF 60), and PNG is lossless at compression level 9. A route's `quality` option still overrides it for every format, and now also applies to cached files. Uncached responses were encoded at quality 100 (and uncompressed PNG), and cached files at the encoder defaults: both now produce the same file (#20).
 
 ### Fixed
 

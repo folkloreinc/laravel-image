@@ -49,7 +49,8 @@ class ImageResponseTest extends TestCase
     {
         $image = app('image')->open('image.jpg');
         $originalContent = $image->get($this->response->getFormat(), [
-            'jpeg_quality' => $this->response->getQuality(),
+            'flatten' => true,
+            'quality' => config('image.quality.jpeg'),
         ]);
         $this->response->setImage($image);
         ob_start();
@@ -89,9 +90,32 @@ class ImageResponseTest extends TestCase
     {
         $image = app('image')->open('image.jpg');
         $content = $image->get($this->response->getFormat(), [
-            'jpeg_quality' => $this->response->getQuality(),
+            'flatten' => true,
+            'quality' => config('image.quality.jpeg'),
         ]);
         $this->response->setImage($image);
+        $this->assertNull($this->response->getQuality());
+        $this->assertEquals($content, $this->response->getContent());
+    }
+
+    /**
+     * Test that an explicit quality overrides the default per format
+     *
+     * @test
+     *
+     * @covers ::getContent
+     * @covers ::getEncodingOptions
+     */
+    public function test_get_content_with_quality()
+    {
+        $image = app('image')->open('image.jpg');
+        $content = $image->get($this->response->getFormat(), [
+            'flatten' => true,
+            'quality' => 40,
+        ]);
+        $this->response->setImage($image);
+        $this->response->setQuality(40);
+        $this->assertEquals(['quality' => 40], $this->response->getEncodingOptions());
         $this->assertEquals($content, $this->response->getContent());
     }
 

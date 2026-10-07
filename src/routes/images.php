@@ -49,6 +49,10 @@ $router->image('{pattern}', [
         // 'width' => 100
     ],
 
+    // Output quality, from 0 to 100, for every format. Null uses the defaults
+    // per format from `image.quality`.
+    'quality' => null,
+
     // Expires header in seconds
     'expires' => 3600 * 24 * 31,
 
