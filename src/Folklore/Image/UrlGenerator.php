@@ -171,8 +171,14 @@ class UrlGenerator implements UrlGeneratorContract
         $host = '/';
         if (! is_null($placeholders['host'])) {
             $host = $placeholders['host'];
-            $host = ! preg_match('/^https?\:\/\//i', $url) ?
-                $scheme.'://'.$host.'/' : '';
+            if (preg_match('/^https?\:\/\//i', $url)) {
+                $host = '';
+            } elseif (preg_match('/^https?\:\/\//i', $host)) {
+                // The host already has a scheme, as in `https://cdn.example.com`
+                $host = rtrim($host, '/').'/';
+            } else {
+                $host = $scheme.'://'.$host.'/';
+            }
         }
 
         return $host.ltrim($url, '/');

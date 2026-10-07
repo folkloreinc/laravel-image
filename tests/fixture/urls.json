@@ -100,5 +100,41 @@
         "filters": {},
         "url": "/uploads/photo-filters(640x_).jpeg",
         "parsed": { "path": "/uploads/photo.jpeg", "filters": { "width": 640, "height": null } }
+    },
+    {
+        "description": "output format",
+        "src": "path/to/image.jpg",
+        "width": 300,
+        "height": null,
+        "filters": { "format": "webp" },
+        "url": "/path/to/image-filters(300x_).jpg.webp",
+        "parsed": { "path": "/path/to/image.jpg", "filters": { "width": 300, "height": null } }
+    },
+    {
+        "description": "host",
+        "src": "path/to/image.jpg",
+        "width": 300,
+        "height": 300,
+        "filters": { "host": "cdn.example.com" },
+        "url": "http://cdn.example.com/path/to/image-filters(300x300).jpg",
+        "parsed": null
+    },
+    {
+        "description": "host with a scheme, and an output format",
+        "src": "path/to/image.jpg",
+        "width": null,
+        "height": null,
+        "filters": { "host": "https://cdn.example.com", "format": "png" },
+        "url": "https://cdn.example.com/path/to/image.jpg.png",
+        "parsed": null
+    },
+    {
+        "description": "source URL with a host",
+        "src": "https://example.com/path/to/image.jpg",
+        "width": 100,
+        "height": 100,
+        "filters": {},
+        "url": "https://example.com/path/to/image-filters(100x100).jpg",
+        "parsed": null
     }
 ]

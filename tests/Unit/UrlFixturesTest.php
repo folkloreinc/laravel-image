@@ -22,6 +22,11 @@ class UrlFixturesTest extends TestCase
     public function test_fixture_urls_parse_back_to_their_path_and_filters()
     {
         foreach ($this->fixtures() as $fixture) {
+            // Absolute URLs aren't parsed: routes only see the path
+            if ($fixture['parsed'] === null) {
+                continue;
+            }
+
             $parsed = app('image')->parse($fixture['url']);
 
             $this->assertEquals($fixture['parsed']['path'], $parsed['path'], $fixture['description']);
