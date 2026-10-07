@@ -11,7 +11,9 @@ use Folklore\Image\Exception\FilterMissingException;
 use Folklore\Image\Exception\FormatException;
 use Folklore\Image\Filters\Resize;
 use Illuminate\Support\Arr;
+use Imagine\Filter\Basic\Autorotate;
 use Imagine\Image\ImageInterface;
+use Imagine\Imagick\Image as ImagickImage;
 
 class ImageHandler implements ImageHandlerContract
 {
@@ -44,6 +46,9 @@ class ImageHandler implements ImageHandlerContract
      * ]);
      * ```
      *
+     * The image is first turned upright according to its EXIF orientation, unless
+     * the `auto_orient` option (or the `image.auto_orient` config) is false.
+     *
      * The resulting image is in sRGB and has no metadata, unless the
      * `image.strip_metadata` config is false.
      *
@@ -53,12 +58,13 @@ class ImageHandler implements ImageHandlerContract
      */
     public function make($path, $options = [])
     {
-        $configKeys = ['memory_limit'];
+        $configKeys = ['memory_limit', 'auto_orient'];
 
         // Get config
         $configOptions = Arr::only($options, $configKeys);
         $config = array_merge([
             'memory_limit' => $this->memoryLimit,
+            'auto_orient' => config('image.auto_orient', true),
         ], $configOptions);
 
         // See if the referenced file exists and is an image
@@ -91,6 +97,11 @@ class ImageHandler implements ImageHandlerContract
         // Open the image
         $image = $this->source->openFromPath($path);
 
+        // Turn it upright, so filters apply to the image as it is meant to be seen
+        if ($config['auto_orient']) {
+            $image = $this->autoOrient($image);
+        }
+
         // Apply the custom filter on the image and replace the
         // current image with the return value.
         if (count($filters)) {
@@ -104,6 +115,30 @@ class ImageHandler implements ImageHandlerContract
         // (EXIF, GPS, comments), so derivatives don't leak where a photo was taken
         if (config('image.strip_metadata', true)) {
             $image->strip();
+        }
+
+        return $image;
+    }
+
+    /**
+     * Rotate and flip an image according to its EXIF orientation, then mark it
+     * as upright so a viewer doesn't rotate it again.
+     *
+     * @return ImageInterface
+     */
+    protected function autoOrient(ImageInterface $image)
+    {
+        $metadata = $image->metadata();
+        $orientation = (int) ($metadata['ifd0.Orientation'] ?? 1);
+        if ($orientation < 2 || $orientation > 8) {
+            return $image;
+        }
+
+        $image = (new Autorotate)->apply($image);
+
+        $metadata['ifd0.Orientation'] = 1;
+        if ($image instanceof ImagickImage) {
+            $image->getImagick()->setImageOrientation(\Imagick::ORIENTATION_TOPLEFT);
         }
 
         return $image;
