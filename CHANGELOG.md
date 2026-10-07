@@ -29,6 +29,7 @@ All notable changes to `folklore/laravel-image` are documented in this file. The
 - `image.memory_limit` is now a minimum: processing an image no longer lowers a higher memory limit, and keeps an unlimited one (#8).
 - Image routes answer 415 for a source file that isn't a supported image and 404 for an unknown filter, instead of a 500 (#9).
 - The `local` and `filesystem` sources reject paths that resolve outside their root, when reading (404) and when saving (`InvalidPathException`). The check is lexical, so symbolic links inside the root, such as `public/storage`, keep working (#10).
+- Images are rotated and flipped according to their EXIF orientation before any filter, so resized phone photos are no longer sideways or upside down, and crops apply to the upright image. On by default: turn it off with `image.auto_orient`, a route's `auto_orient` option or the `auto_orient` option of `make()`; the URL can't. Requires the exif extension (#21).
 - `Utils::convertImage()` deletes its temporary files, including on failure, and only fetches `http` and `https` URLs. The new `image.utils.allowed_hosts` option restricts the hosts it fetches from (#13).
 
 ### Removed

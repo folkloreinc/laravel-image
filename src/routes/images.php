@@ -36,6 +36,10 @@ $router->image('{pattern}', [
     // `image.upscale` setting, true always upscales, false never does.
     'upscale' => null,
 
+    // Whether images are turned upright according to their EXIF orientation:
+    // null keeps the global `image.auto_orient` setting.
+    'auto_orient' => null,
+
     // Any pattern options you want to override.
     'pattern' => [],
 
