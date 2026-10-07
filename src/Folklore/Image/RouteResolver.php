@@ -15,7 +15,7 @@ class RouteResolver implements RouteResolverContract
     /**
      * Options a URL can't set: only the route (or the config) decides on them.
      */
-    protected const ROUTE_ONLY_OPTIONS = ['upscale', 'auto_orient'];
+    protected const ROUTE_ONLY_OPTIONS = ['upscale', 'auto_orient', 'memory_limit'];
 
     protected $image;
 
@@ -121,8 +121,8 @@ class RouteResolver implements RouteResolverContract
     /**
      * Merge the filters from the URL with the route's own filters and options.
      *
-     * Only the route decides on upscaling and orientation: `upscale` and `auto_orient`
-     * filters in the URL are ignored.
+     * Only the route decides on upscaling, orientation and memory: `upscale`,
+     * `auto_orient` and `memory_limit` filters in the URL are ignored.
      */
     protected function mergeFilters(array $config, array $pathFilters, array $routeFilters): array
     {
