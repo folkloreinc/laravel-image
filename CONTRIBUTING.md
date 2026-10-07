@@ -30,6 +30,14 @@ IMAGE_TEST_S3_ENDPOINT=http://127.0.0.1:9000 vendor/bin/phpunit tests/Feature/S3
 
 A pull request is merged only when CI is green.
 
+## Releasing
+
+Maintainers release from `v1.x`, following [Semantic Versioning](https://semver.org/) (`v1.x` never breaks existing URLs or public APIs):
+
+1. Open a release pull request that moves the `[Unreleased]` section of `CHANGELOG.md` to the new version with its date, with upgrade notes when sites will see a change, and bumps `version` in `package.json`.
+2. Once it's merged and CI is green on `v1.x`, tag the merge commit (`git tag v1.2.0 && git push origin v1.2.0`) and publish a GitHub release with the changelog section. Packagist picks up the tag.
+3. Publish the JS package from the tag: `npm publish`.
+
 ## Security
 
 Please don't report vulnerabilities in public issues. See [SECURITY.md](SECURITY.md).

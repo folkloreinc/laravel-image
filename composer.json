@@ -71,6 +71,9 @@
     },
     "minimum-stability": "stable",
     "extra": {
+        "branch-alias": {
+            "dev-v1.x": "1.x-dev"
+        },
         "laravel": {
             "providers": [
                 "Folklore\\Image\\ServiceProvider"
