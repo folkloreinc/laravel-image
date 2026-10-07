@@ -107,6 +107,29 @@ class ServeImagesTest extends TestCase
         $this->assertDirectoryDoesNotExist($this->cachePath().'/served');
     }
 
+    public function test_it_serves_urls_with_negative_values_and_crop_positions()
+    {
+        $this->app['router']->image('local/{pattern}', [
+            'as' => 'image.local',
+            'source' => 'local',
+            'cache' => false,
+        ]);
+
+        // The URLs the generators produce for these filters (the fixture is 80×40)
+        $rotated = app('image')->url('orientation/orientation-1.jpg', null, null, ['rotate' => -90]);
+        $this->assertEquals('/orientation/orientation-1-filters(rotate(-90)).jpg', $rotated);
+        $topLeft = app('image')->url('image.jpg', 100, 50, ['crop' => 'top_left']);
+        $this->assertEquals('/image-filters(100x50-crop(top_left)).jpg', $topLeft);
+
+        $response = $this->get('/local'.$rotated);
+        $response->assertOk();
+        $this->assertImageSize(40, 80, $this->content($response));
+
+        $response = $this->get('/local'.$topLeft);
+        $response->assertOk();
+        $this->assertImageSize(100, 50, $this->content($response));
+    }
+
     public function test_it_returns_a_404_for_a_missing_image()
     {
         $this->app['router']->image('local/{pattern}', [
