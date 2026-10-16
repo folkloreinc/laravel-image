@@ -4,9 +4,21 @@ All notable changes to `folklore/laravel-image` are documented in this file. The
 
 ## [Unreleased]
 
-### Changed
+2.0 is in development on the `v2.x` branch, with Niche as the pilot project ([#59](https://github.com/folkloreinc/laravel-image/issues/59), [roadmap](docs/roadmap.md)). It is released in slices, tagged `v2.0.0-alpha.N`, then `beta.N` and `rc.N`. Until the release candidate, an alpha can break the previous one: each alpha lists its breaking changes since the previous one under **Breaking changes**.
 
-- CI runs fewer jobs: pull requests skip the PHP or JS suite when no file it depends on changed, `prefer-lowest` runs once per Laravel version on its lowest PHP version (19 test jobs instead of 28), superseded pull request runs are cancelled, and Dependabot groups its updates (#57).
+Changes to 1.x after 1.1.0 are in the changelog of the [`v1.x`](https://github.com/folkloreinc/laravel-image/blob/v1.x/CHANGELOG.md) branch.
+
+### Breaking changes
+
+- Requires PHP 8.3+ and Laravel 12+ ([decision 0001](docs/decisions/0001-supported-versions.md), #61).
+- The 1.x code is removed, and Imagine with it: 2.x renders with Intervention Image 4 ([decision 0002](docs/decisions/0002-rendering-engine.md), #61, #62). The 1.x API comes back as a compatibility layer in the beta ([decision 0007](docs/decisions/0007-compatibility-layer.md)); 1.x URLs keep being decoded.
+- No JavaScript package in 2.x: the server builds and signs every URL ([decision 0008](docs/decisions/0008-no-javascript-package.md), #62).
+
+### Added
+
+- The public contracts of 2.0, with their tests: `ImageSpec`, presets and their versions, `UrlCodec` and the v2 URL syntax ([decision 0009](docs/decisions/0009-v2-url-syntax.md)), `Signer`, `SourceResolver` and `ImageSource`, `Renderer` and `Operation`, `DerivativeStore`, `ImageVariant`, `Image::fake()`, and the contract test traits for their implementations (#63).
+- CI on PHP 8.3–8.5 × Laravel 12–13 × the GD, Imagick and libvips drivers, Larastan at the maximum level (#61).
+- A release workflow: pre-releases are tagged from a green commit of `v2.x` and published on GitHub and Packagist (#64).
 
 ## [1.1.0] - 2026-10-07
 
@@ -73,5 +85,5 @@ What sites will notice, and how to keep the previous behaviour where there is a 
 
 - Travis CI, Coveralls, `phpcs.xml` and the Prettier PHP plugin.
 
-[Unreleased]: https://github.com/folkloreinc/laravel-image/compare/v1.1.0...v1.x
+[Unreleased]: https://github.com/folkloreinc/laravel-image/compare/v1.1.0...v2.x
 [1.1.0]: https://github.com/folkloreinc/laravel-image/releases/tag/v1.1.0

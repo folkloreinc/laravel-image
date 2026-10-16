@@ -4,6 +4,7 @@
 
 | Version | Supported |
 | ------- | --------- |
+| 2.x     | Pre-releases (alpha, beta, RC): fixes go in the next one |
 | 1.x     | Yes       |
 | < 1.0   | No        |
 

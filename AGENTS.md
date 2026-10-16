@@ -28,6 +28,8 @@ Read [`docs/`](docs/README.md) before changing anything: the [architecture](docs
 - `v2.x` supports **PHP 8.3–8.5 and Laravel 12–13** ([decisions/0001](docs/decisions/0001-supported-versions.md)). CI tests every combination, on each image driver.
 - `v2.x` is the development branch of 2.0 until 2.0.0, then becomes the default branch. Composer aliases it as `2.x-dev`.
 - `v1.x` stays maintained for fixes and security. A fix that applies to both lines goes to `v1.x` first.
+- 2.0 ships as pre-releases (`v2.0.0-alpha.N`, then beta and RC), one per roadmap slice, on Packagist only. A tag is only pushed on a commit of `v2.x` whose CI is green; the `release` workflow checks it and publishes the GitHub release from `CHANGELOG.md`. The steps are in [CONTRIBUTING.md](CONTRIBUTING.md#releasing).
+- Every change that users of an alpha will notice goes in the `[Unreleased]` section of `CHANGELOG.md`, in the same pull request, with breaking changes under **Breaking changes**.
 - `main` and `develop` are stale; don't base work on them.
 
 ## Pull requests
@@ -73,6 +75,7 @@ CI (GitHub Actions, `.github/workflows`) runs:
 
 - `run-tests.yml`: the PHP suite with `prefer-stable` on every supported PHP × Laravel combination and on each image driver (GD, Imagick, and libvips with FFI enabled), with `prefer-lowest` on the lowest PHP version of each Laravel version, a coverage report, and a `Tests passed` job that succeeds only when all of them do;
 - `pint.yml` and `phpstan.yml`: code style, static analysis, `composer validate --strict` and the PSR-4 autoload.
+- `release.yml`, on `v2.*` tags: checks that the tag is on `v2.x` and its CI green (`.github/scripts/check-green.sh`), and publishes the GitHub release with the changelog section (`.github/scripts/release-notes.sh`).
 
 Each test job sets `IMAGE_TEST_DRIVER` to its driver. Image tests get their driver from `TestCase::driverOrSkip()`: a driver that isn't installed is skipped, except the one under test, which fails the job. Locally, without `IMAGE_TEST_DRIVER`, every installed driver is tested.
 

@@ -24,12 +24,27 @@ A pull request is merged only when CI is green.
 
 ## Releasing
 
-Maintainers release from `v1.x` (1.x) and `v2.x` (2.0 pre-releases), following [Semantic Versioning](https://semver.org/):
+1.x is released from `v1.x`, following its own guide. 2.0 is released from `v2.x` in pre-releases, then 2.0.0, on Packagist only (there is no JavaScript package in 2.x):
 
-1. Open a release pull request that moves the `[Unreleased]` section of `CHANGELOG.md` to the new version with its date, with upgrade notes when sites will see a change.
-2. Once it's merged and CI is green, tag the merge commit (`git tag v1.2.0 && git push origin v1.2.0`) and publish a GitHub release with the changelog section. Packagist picks up the tag.
+- **Versions:** `v2.0.0-alpha.N` for each slice of the [roadmap](docs/roadmap.md), then `v2.0.0-beta.N`, `v2.0.0-rc.N` and `v2.0.0`. Until the release candidate, an alpha can break the previous one. Projects require `^2.0@alpha` (or `@beta`, `@rc`).
+- **Only from a green commit of `v2.x`:** the release workflow refuses a tag that isn't on `v2.x`, or whose commit doesn't have its `Tests passed`, `phpstan` and `pint` checks green.
 
-There is no JavaScript package in 2.x. The npm package `laravel-image` (1.0.x) is published from `v1.x` only.
+Steps:
+
+1. Open a release pull request against `v2.x` that moves the `[Unreleased]` section of `CHANGELOG.md` to a `## [2.0.0-alpha.1] - YYYY-MM-DD` section, with the **breaking changes since the previous alpha** first, and adds its link at the bottom (`[2.0.0-alpha.1]: https://github.com/folkloreinc/laravel-image/releases/tag/v2.0.0-alpha.1`). Check the roadmap boxes of the slice.
+2. Merge it, and wait for CI to pass on the merge commit of `v2.x`.
+3. Tag that commit and push the tag:
+
+   ```bash
+   git switch v2.x && git pull
+   git tag -a v2.0.0-alpha.1 -m "v2.0.0-alpha.1"
+   git push origin v2.0.0-alpha.1
+   ```
+
+4. The `release` workflow checks the tag and CI, and publishes the GitHub release with the changelog section, marked as a pre-release for alpha, beta and RC versions, so 1.x stays the latest release. Packagist picks up the tag.
+5. Check that [Packagist](https://packagist.org/packages/folklore/laravel-image) lists the version, then tell the pilot project.
+
+A tag that fails the checks publishes nothing: delete it (`git push origin :refs/tags/v2.0.0-alpha.1`), fix the cause, and tag again. Never move a tag that Packagist already has.
 
 ## Security
 
