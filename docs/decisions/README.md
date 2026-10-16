@@ -13,6 +13,7 @@ One file per decision. A decision is not edited once accepted: a later one repla
 | [0007](0007-compatibility-layer.md) | A compatibility layer for 1.x until 3.0 | Accepted |
 | [0008](0008-no-javascript-package.md) | No JavaScript package in 2.x; the server builds the URLs | Accepted |
 | [0009](0009-v2-url-syntax.md) | The v2 URL syntax | Accepted |
+| [0010](0010-media-resolver.md) | The `media` resolver: versions, keys and disks | Accepted |
 
 Template:
 
