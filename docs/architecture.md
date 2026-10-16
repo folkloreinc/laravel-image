@@ -101,7 +101,7 @@ interface SourceResolver
 ```
 
 - `disk`: a Laravel disk and a path, with path containment. The URL key is the path; the version is the file's last modification time (or its ETag on S3-compatible disks), cached.
-- `media` (in `laravel-mediatheque` 2): `med_…`, `media://med_…` or a media model. The URL key is the `uid`; dimensions, focal point, placeholder and visibility come from the media.
+- `media` (in `laravel-mediatheque` 2): `med_…`, `media://med_…` or a media model. The URL key is the `uid` (the media's image), or `{uid}/{handle}[/{index}]` for another of its files, such as a video's poster. The version is the first 8 hex characters of the file's SHA-256 checksum, and the disk is the file's mediatheque source ([decisions/0010](decisions/0010-media-resolver.md)). Dimensions, focal point, placeholder and visibility come from the media.
 
 ### Specs
 

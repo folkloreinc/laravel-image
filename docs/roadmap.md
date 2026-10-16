@@ -20,7 +20,8 @@ Tracking issues: [#3](https://github.com/folkloreinc/laravel-image/issues/3) (ov
 - [x] Remove the 1.x code from `v2.x`, including `js/`, the npm and Babel tooling and `js.yml` ([decisions/0008](decisions/0008-no-javascript-package.md)), and start the new layout; keep the 1.x URL fixtures and README examples for the compatibility tests (#62)
 - [x] Release process: changelog, `v2.0.0-alpha.N` tags from green CI, on Packagist (#64)
 - [x] Contracts and their tests: `ImageSpec` and its enums, `Preset`, `UrlCodec` (v2 syntax, [decisions/0009](decisions/0009-v2-url-syntax.md); `V1Codec` in the beta, its fixtures are kept), `Signer`, `SourceResolver` and `ImageSource`, `Renderer` and `Operation`, `DerivativeStore`, `ImageVariant`, `Image::fake()` (#63)
-- [ ] Review the `SourceResolver` contract and the image metadata with `laravel-mediatheque` 2 ([laravel-mediatheque#23](https://github.com/folkloreinc/laravel-mediatheque/issues/23)), and the `transform` shape with Panneau 5 ([laravel-panneau#35](https://github.com/folkloreinc/laravel-panneau/issues/35))
+- [x] Review the `SourceResolver` contract with `laravel-mediatheque` 2 ([review](https://github.com/folkloreinc/laravel-image/issues/59#issuecomment-6219674071)); the points that block alpha 1 are settled in [decisions/0010](decisions/0010-media-resolver.md), the others before the alpha that needs them
+- [ ] Review the `transform` shape with Panneau 5 ([laravel-panneau#35](https://github.com/folkloreinc/laravel-panneau/issues/35)), before alpha 2
 
 ## Alpha 1: presets and signed URLs behind a CDN
 
@@ -46,6 +47,7 @@ What the pilot's creator MVP needs.
 - [ ] Channel presets in the published config: Open Graph 1200×630, square, 4:5, 9:16, email-safe JPEG
 - [ ] Focal point (`focus`), `dpr`, `upscale` policy
 - [ ] Source `transform` (crop, rotate, flip) in Panneau 5's shape, on the media or per usage
+- [ ] With `laravel-mediatheque` 2: metadata names (orientation, ThumbHash, dominant color), the focal point and `transform` on the media, and clearing a media's derivatives when its visibility changes or its original is replaced ([decisions/0010](decisions/0010-media-resolver.md))
 - [ ] Responsive presets (`widths`, `formats`), `srcset()`, `<x-image>` with `<picture>`, AVIF and WebP
 - [ ] `Image::analyze()`: dimensions, dominant color, ThumbHash; placeholders on variants and in `<x-image>`
 - [ ] `Image::warm()`, `image:warm`, `image:clear`, `image:presets --json`
