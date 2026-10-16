@@ -137,14 +137,16 @@ final class DiskResolverTest extends TestCase
         $this->assertSame([80, 40, 6], [$source->width, $source->height, $source->orientation]);
     }
 
-    public function test_formats_without_dimensions_have_their_mime_type(): void
+    public function test_heic_and_svg_sources_have_their_mime_type(): void
     {
         $heic = $this->resolver()->resolve('heic/photo.heic');
         $svg = $this->resolver()->resolve('svg/shape.svg');
 
-        $this->assertSame('image/heic', $heic->mime);
-        $this->assertSame((bool) $heic->width, (bool) $heic->height);
+        // PHP 8.5 reads the dimensions of HEIF files, and names their type image/heif.
+        $this->assertContains($heic->mime, ['image/heic', 'image/heif']);
+        $this->assertContains([$heic->width, $heic->height], [[null, null], [120, 80]]);
         $this->assertSame('image/svg+xml', $svg->mime);
+        $this->assertNull($svg->width);
     }
 
     public function test_the_version_changes_with_the_file(): void
