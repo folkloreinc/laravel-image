@@ -30,7 +30,7 @@
         "php": "^8.3",
         "illuminate/contracts": "^12.0|^13.0",
         "illuminate/support": "^12.0|^13.0",
-        "intervention/image": "^4.3"
+        "intervention/image": "^4.3.4"
     },
     "require-dev": {
         "intervention/image-driver-vips": "^4.1",
