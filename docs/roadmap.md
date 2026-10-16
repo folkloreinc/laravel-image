@@ -33,8 +33,8 @@ What the pilot's media library needs first, end to end: images stored on an S3-c
 - [ ] Intervention renderer with the `auto` driver (vips, imagick, gd); resize with `fit` and `ratio`; formats and quality per format
 - [ ] Parity with 1.1 on every derivative: EXIF orientation, sRGB, metadata stripping, HEIC sources
 - [ ] `DiskStore` on any disk, with a lock per variant
-- [ ] `Route::image()` (opt-in), strict mode, enforced limits, signed URLs with an expiry, private sources only through signed URLs
-- [ ] Caching headers: `immutable`, `ETag`, `304`; stream or redirect
+- [x] `Route::image()` (opt-in), strict mode, enforced limits, signed URLs with an expiry, private sources only through signed URLs (#71)
+- [x] Caching headers: `immutable`, `ETag`, `304`; stream or redirect (#71)
 - [x] `ImageVariant` and `ImageVariantResource` (#70)
 - [x] `Image::fake()` with assertions (#70)
 - [ ] `image:doctor`

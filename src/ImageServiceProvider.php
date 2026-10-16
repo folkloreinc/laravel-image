@@ -6,6 +6,7 @@ namespace Folklore\Image;
 
 use Folklore\Image\Contracts\Signer;
 use Folklore\Image\Contracts\UrlCodec;
+use Folklore\Image\Rendering\Derivatives;
 use Folklore\Image\Sources\SourceResolvers;
 use Folklore\Image\Specs\PresetRegistry;
 use Folklore\Image\Urls\HmacSigner;
@@ -13,6 +14,8 @@ use Folklore\Image\Urls\V2Codec;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Contracts\Foundation\CachesConfiguration;
+use Illuminate\Routing\Route;
+use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
 
 final class ImageServiceProvider extends ServiceProvider
@@ -31,11 +34,15 @@ final class ImageServiceProvider extends ServiceProvider
         $this->app->singleton(UrlCodec::class, V2Codec::class);
         $this->app->singleton(Signer::class, fn (Container $app) => new HmacSigner($app->make(ImageConfig::class)->signerKeys()));
         $this->app->singleton(PresetRegistry::class, fn (Container $app) => new PresetRegistry($app, $app->make(ImageConfig::class)->presets()));
+        $this->app->singleton(Derivatives::class);
         $this->app->singleton(SourceResolvers::class, fn (Container $app) => new SourceResolvers($app, $app->make(ImageConfig::class)->resolvers()));
     }
 
     public function boot(): void
     {
+        $app = $this->app;
+        Router::macro('image', fn (?string $prefix = null): Route => $app->make(ImageManager::class)->routes($prefix));
+
         if ($this->app->runningInConsole()) {
             $this->publishes([__DIR__.'/../config/image.php' => $this->app->configPath('image.php')], 'image-config');
         }
