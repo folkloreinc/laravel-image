@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Folklore\Image;
 
+use Folklore\Image\Console\DoctorCommand;
 use Folklore\Image\Contracts\Signer;
 use Folklore\Image\Contracts\UrlCodec;
 use Folklore\Image\Sources\SourceResolvers;
@@ -37,6 +38,7 @@ final class ImageServiceProvider extends ServiceProvider
     public function boot(): void
     {
         if ($this->app->runningInConsole()) {
+            $this->commands([DoctorCommand::class]);
             $this->publishes([__DIR__.'/../config/image.php' => $this->app->configPath('image.php')], 'image-config');
         }
     }
