@@ -138,6 +138,14 @@ abstract class InterventionRendererTestCase extends TestCase
         $this->assertTransparentAt($image, 100, 190);
     }
 
+    public function test_contain_pads_with_white_in_jpeg(): void
+    {
+        $image = $this->render(new ImageSpec(width: 200, height: 200, fit: Fit::Contain, format: Format::Jpeg));
+
+        $this->assertColorAt([255, 255, 255], $image, 100, 10, 10);
+        $this->assertColorAt(self::RED, $image, 10, 50);
+    }
+
     public function test_inside_keeps_the_whole_image_without_padding(): void
     {
         $image = $this->render(new ImageSpec(width: 200, height: 200, fit: Fit::Inside, format: Format::Png));
