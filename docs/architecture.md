@@ -1,6 +1,6 @@
 # Architecture of 2.0
 
-Status: accepted direction for 2.0. The examples show the intended API; names can still change until the contracts are written in phase 0 ([roadmap.md](roadmap.md)).
+Status: accepted direction for 2.0. The examples show the intended API. The contracts are written (`src/Contracts/`, with their tests), and the v2 URL syntax is settled by [decisions/0009](decisions/0009-v2-url-syntax.md); the builder and the implementations land in the alphas ([roadmap.md](roadmap.md)).
 
 ## Goals
 
@@ -34,7 +34,7 @@ Status: accepted direction for 2.0. The examples show the intended API; names ca
                    url()            variants()             render() / store()
                        │          ImageVariant[]              in code
                        ▼
-           UrlCodec + Signer: /img/{signature}/{spec}/{source}.{format}
+           UrlCodec + Signer: /img/{signature}/{spec}/{resolver}/{key}.{format}
                        │
                        ▼  (CDN miss)
   ImageController ─▶ decode ─▶ verify (strict mode, signature, expiry, limits)
@@ -57,7 +57,7 @@ Image::for('uploads/photo.jpg')->width(800)->ratio('16:9')->focus(0.3, 0.6)->avi
 Image::for($media)->preset('og')->signed(expires: now()->addHour())->url();
 
 Image::for($media)->variants('card');      // Collection<ImageVariant>
-Image::for($media)->srcset('card');        // "…/card.3f9a,w400,v-8c1f/… 400w, … 800w, … 1200w"
+Image::for($media)->srcset('card');        // "…/card.3f9a1c,w400,v-8c1f/… 400w, … 800w, … 1200w"
 Image::for($media)->preset('card')->variant(); // one ImageVariant
 
 Image::for('uploads/photo.jpg')->width(300)->render();          // RenderedImage, in code
@@ -79,7 +79,7 @@ It renders a `<picture>` with AVIF and WebP `<source>` elements, an `<img>` fall
 `ImageVariant` is a readonly value object, serializable to JSON:
 
 ```json
-{ "preset": "card", "url": "https://img.example.com/img/_/card.3f9a,v-8c1f/med_01JAB3….webp", "width": 800, "height": 450, "mime": "image/webp" }
+{ "preset": "card", "url": "https://img.example.com/img/_/card.3f9a1c,v-8c1f/media/med_01JAB3….webp", "width": 800, "height": 450, "mime": "image/webp" }
 ```
 
 `ImageVariantResource` gives the same shape, and keeps the `{ id, url, width, height, mime }` shape of `laravel-folklore`'s `ImageSize` when asked (`->legacy()`). Panneau 5's media items expose `variants` as a map of named sizes built from it.
@@ -132,15 +132,15 @@ Orientation, sRGB conversion and metadata stripping always apply, before the tra
 ```
 
 - A preset is a spec plus optional responsive `widths` and `formats`. It can also be a class (`implements Preset`) for presets that depend on the source.
-- Its **version** is a short hash of its definition, part of its URLs.
+- Its **version** is a short hash of its definition (6 hex characters), part of its URLs. A preset URL can only add one of the preset's widths; other options make a free spec, which strict mode only renders signed ([decisions/0009](decisions/0009-v2-url-syntax.md)).
 - The package ships the channel presets above, commented in the published config.
 - `php artisan image:presets --json` lists them with their versions, for tooling and docs.
 
 ### URLs and signatures
 
-- `UrlCodec` encodes a source and a spec into a path, and decodes a path back. `V2Codec` is the default; `V1Codec` decodes 1.x URLs.
+- `UrlCodec` encodes an `ImageUrl` (a source, a preset or a free spec, a version, an expiry, a signature) into a path, and decodes a path back, in one spelling only. `V2Codec` is the default ([decisions/0009](decisions/0009-v2-url-syntax.md)); `V1Codec` decodes 1.x URLs.
 - The host comes from `image.url.host` (a CDN host), and can be overridden per request for multi-domain sites.
-- `Signer` signs with HMAC-SHA256 and rotating keys, with an optional expiry. Unsigned URLs use `_` in place of the signature.
+- `Signer` signs the path after the signature (which includes the expiry) with HMAC-SHA256 and rotating keys. Unsigned URLs use `_` in place of the signature.
 
 ### Rendering
 
@@ -158,7 +158,7 @@ Orientation, sRGB conversion and metadata stripping always apply, before the tra
 
 See [decisions/0003](decisions/0003-delivery.md).
 
-- `DerivativeStore`: `DiskStore` (any Laravel disk, the default), `PublicPathStore` (the 1.x static cache), `NullStore` (tests, previews). Derivatives are stored under `{source key}/{spec key}.{ext}`, so `image:clear {reference}` removes all of a source's derivatives.
+- `DerivativeStore`: `DiskStore` (any Laravel disk, the default), `PublicPathStore` (the 1.x static cache), `NullStore` (tests, previews). Derivatives are stored under `{resolver}/{source key}/{source version}/{spec}.{ext}` (`DerivativeKey`), so `image:clear {reference}` removes all of a source's derivatives.
 - Rendering takes a lock on the derivative key (`Cache::lock()`), so concurrent misses render once.
 - The controller streams the derivative, or redirects to the disk URL (`image.delivery.serve`), with long-lived caching headers, an `ETag` and `304` answers.
 - `Image::warm($reference, $presets)` queues the rendering of presets ahead of time; `image:warm` does it from the command line.
@@ -169,7 +169,7 @@ See [decisions/0005](decisions/0005-secure-by-default.md). Routes are opt-in, st
 
 ```php
 // routes/web.php
-Route::image('img')->middleware('cache.headers'); // GET /img/{signature}/{spec}/{source}.{format}
+Route::image('img')->middleware('cache.headers'); // GET /img/{signature}/{spec}/{resolver}/{key}.{format}
 ```
 
 ### Analysis and placeholders
@@ -191,7 +191,9 @@ Image::assertUrlGenerated(preset: 'card');
 Image::assertRendered(fn (ImageSpec $spec) => $spec->width === 800);
 ```
 
-`Image::fake()` builds real URLs and variants from source metadata, renders nothing, and needs no image driver.
+`Image::fake()` builds real URLs and variants from source metadata, renders nothing, and needs no image driver. It replaces the `Renderer` with `FakeRenderer`, and records the URLs the `UrlCodec` encodes.
+
+Implementations of the contracts are tested with the traits of `Folklore\Image\Testing\Contracts` (`SourceResolverContractTests`, `RendererContractTests`, `DerivativeStoreContractTests`, `OperationContractTests`), which other packages use too: `laravel-mediatheque` 2 runs the resolver tests on its `media` resolver.
 
 ### Commands
 
@@ -236,18 +238,20 @@ src/
   ImageManager.php             entry point behind the facade
   PendingImage.php             fluent, immutable builder
   Contracts/                   SourceResolver, Renderer, Operation, DerivativeStore, UrlCodec, Signer, Preset
+  Exceptions/                  InvalidImageSpec, InvalidImageUrl, SourceNotFound, …
   Sources/                     ImageSource, DiskResolver
-  Specs/                       ImageSpec, Transform, Fit, Format, Focus, PresetRegistry
-  Urls/                        V2Codec, V1Codec, HmacSigner
-  Rendering/                   InterventionRenderer, Operations/
-  Storage/                     DiskStore, PublicPathStore, NullStore
+  Specs/                       ImageSpec, Transform, Crop, Fit, Flip, Format, Focus, Ratio, Size, ArrayPreset, PresetRegistry
+  Urls/                        ImageUrl, PresetReference, V2Codec, V1Codec, HmacSigner
+  Rendering/                   RenderedImage, InterventionRenderer, Operations/
+  Storage/                     DerivativeKey, StoredDerivative, DiskStore, PublicPathStore, NullStore
   Http/                        ImageController, LegacyImageController, routes macros
   Variants/                    ImageVariant, ImageVariantResource, Srcset
   View/Components/Image.php    <x-image>
-  Testing/ImageFake.php
+  Testing/                     ImageFake, FakeRenderer, Contracts/ (contract test traits)
   Console/                     doctor, presets, warm, clear, upgrade
   Compat/                      1.x facade methods, helpers, config reader
-tests/fixtures/urls/           codec fixtures (JSON), including every 1.x URL format
+tests/fixtures/urls/           codec fixtures (JSON): v2.json, and every 1.x URL format in v1.json
+tests/fixtures/                specs.json, signatures.json, images/
 ```
 
 Namespace: `Folklore\Image`, PSR-4 from `src/`. The container binds `Folklore\Image\ImageManager` and the contracts; the generic `image` key is only bound by the compatibility layer.

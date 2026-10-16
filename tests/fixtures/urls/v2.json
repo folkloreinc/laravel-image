@@ -1,0 +1,527 @@
+{
+    "description": "The v2 URL syntax (docs/decisions/0009-v2-url-syntax.md): paths after the route prefix. Each valid path decodes to its url, and its url encodes back to the path. Each invalid path is refused. Never change a valid case: URLs live in caches and stored content.",
+    "valid": [
+        {
+            "description": "a preset, unsigned, from a media",
+            "path": "_/card.3f9a1c,v-8c1f/media/med_01JAB3QX.webp",
+            "url": {
+                "resolver": "media",
+                "key": "med_01JAB3QX",
+                "format": "webp",
+                "preset": {
+                    "name": "card",
+                    "version": "3f9a1c"
+                },
+                "width": null,
+                "spec": null,
+                "version": "8c1f",
+                "expires": null,
+                "signature": null
+            }
+        },
+        {
+            "description": "a preset at one of its responsive widths",
+            "path": "_/card.3f9a1c,w400,v-8c1f/media/med_01JAB3QX.avif",
+            "url": {
+                "resolver": "media",
+                "key": "med_01JAB3QX",
+                "format": "avif",
+                "preset": {
+                    "name": "card",
+                    "version": "3f9a1c"
+                },
+                "width": 400,
+                "spec": null,
+                "version": "8c1f",
+                "expires": null,
+                "signature": null
+            }
+        },
+        {
+            "description": "a preset with a dash in its name, from a disk path, without a source version",
+            "path": "_/og-image.1b2c3d/disk/uploads/photo.jpg.jpg",
+            "url": {
+                "resolver": "disk",
+                "key": "uploads/photo.jpg",
+                "format": "jpeg",
+                "preset": {
+                    "name": "og-image",
+                    "version": "1b2c3d"
+                },
+                "width": null,
+                "spec": null,
+                "version": null,
+                "expires": null,
+                "signature": null
+            }
+        },
+        {
+            "description": "a preset, signed, that expires",
+            "path": "Ki9wNCYcyQGQJ0x2Jo6GnQ/card.3f9a1c,v-8c1f,exp-1767225600/media/med_01JAB3QX.webp",
+            "url": {
+                "resolver": "media",
+                "key": "med_01JAB3QX",
+                "format": "webp",
+                "preset": {
+                    "name": "card",
+                    "version": "3f9a1c"
+                },
+                "width": null,
+                "spec": null,
+                "version": "8c1f",
+                "expires": 1767225600,
+                "signature": "Ki9wNCYcyQGQJ0x2Jo6GnQ"
+            }
+        },
+        {
+            "description": "a free spec, signed, that expires",
+            "path": "6tasEwQ9sn9mUqQa56D_4A/w800,h450,fp-30-60,v-8c1f,exp-1767225600/disk/uploads/2026/photo.jpg.avif",
+            "url": {
+                "resolver": "disk",
+                "key": "uploads/2026/photo.jpg",
+                "format": "avif",
+                "preset": null,
+                "width": null,
+                "spec": {
+                    "width": 800,
+                    "height": 450,
+                    "focus": {
+                        "x": 0.3,
+                        "y": 0.6
+                    },
+                    "format": "avif"
+                },
+                "version": "8c1f",
+                "expires": 1767225600,
+                "signature": "6tasEwQ9sn9mUqQa56D_4A"
+            }
+        },
+        {
+            "description": "a free spec, unsigned",
+            "path": "_/w300/disk/photo.png.png",
+            "url": {
+                "resolver": "disk",
+                "key": "photo.png",
+                "format": "png",
+                "preset": null,
+                "width": null,
+                "spec": {
+                    "width": 300,
+                    "format": "png"
+                },
+                "version": null,
+                "expires": null,
+                "signature": null
+            }
+        },
+        {
+            "description": "no options: the original, converted",
+            "path": "_/_/disk/photo.jpg.webp",
+            "url": {
+                "resolver": "disk",
+                "key": "photo.jpg",
+                "format": "webp",
+                "preset": null,
+                "width": null,
+                "spec": {
+                    "format": "webp"
+                },
+                "version": null,
+                "expires": null,
+                "signature": null
+            }
+        },
+        {
+            "description": "no options, with a source version",
+            "path": "_/v-8c1f/disk/photo.jpg.jpg",
+            "url": {
+                "resolver": "disk",
+                "key": "photo.jpg",
+                "format": "jpeg",
+                "preset": null,
+                "width": null,
+                "spec": {
+                    "format": "jpeg"
+                },
+                "version": "8c1f",
+                "expires": null,
+                "signature": null
+            }
+        },
+        {
+            "description": "every token, in the canonical order",
+            "path": "_/c-10-20-600-400,r-90,flip-h,w400,h300,fit-contain,blur-5,grayscale,q80,v-abc/disk/a.jpg.png",
+            "url": {
+                "resolver": "disk",
+                "key": "a.jpg",
+                "format": "png",
+                "preset": null,
+                "width": null,
+                "spec": {
+                    "crop": {
+                        "x": 10,
+                        "y": 20,
+                        "width": 600,
+                        "height": 400
+                    },
+                    "rotate": 90,
+                    "flip": "horizontal",
+                    "width": 400,
+                    "height": 300,
+                    "fit": "contain",
+                    "operations": {
+                        "blur": [
+                            "5"
+                        ],
+                        "grayscale": []
+                    },
+                    "format": "png",
+                    "quality": 80
+                },
+                "version": "abc",
+                "expires": null,
+                "signature": null
+            }
+        },
+        {
+            "description": "a width and a ratio, with a focal point",
+            "path": "_/w800,ar-16-9,fp-50-25/disk/a.jpg.webp",
+            "url": {
+                "resolver": "disk",
+                "key": "a.jpg",
+                "format": "webp",
+                "preset": null,
+                "width": null,
+                "spec": {
+                    "width": 800,
+                    "ratio": "16:9",
+                    "focus": {
+                        "x": 0.5,
+                        "y": 0.25
+                    },
+                    "format": "webp"
+                },
+                "version": null,
+                "expires": null,
+                "signature": null
+            }
+        },
+        {
+            "description": "a ratio alone, and a flip on both axes",
+            "path": "_/flip-hv,ar-1-1/disk/a.jpg.gif",
+            "url": {
+                "resolver": "disk",
+                "key": "a.jpg",
+                "format": "gif",
+                "preset": null,
+                "width": null,
+                "spec": {
+                    "flip": "both",
+                    "ratio": "1:1",
+                    "format": "gif"
+                },
+                "version": null,
+                "expires": null,
+                "signature": null
+            }
+        },
+        {
+            "description": "an operation with several arguments",
+            "path": "_/w300,duotone-ff0000-0000ff/disk/a.jpg.jpg",
+            "url": {
+                "resolver": "disk",
+                "key": "a.jpg",
+                "format": "jpeg",
+                "preset": null,
+                "width": null,
+                "spec": {
+                    "width": 300,
+                    "operations": {
+                        "duotone": [
+                            "ff0000",
+                            "0000ff"
+                        ]
+                    },
+                    "format": "jpeg"
+                },
+                "version": null,
+                "expires": null,
+                "signature": null
+            }
+        },
+        {
+            "description": "a key with spaces, parentheses and accents: each segment is percent-encoded",
+            "path": "_/w300/disk/uploads/%C3%A9t%C3%A9%202026/photo%20%281%29.jpg.webp",
+            "url": {
+                "resolver": "disk",
+                "key": "uploads/été 2026/photo (1).jpg",
+                "format": "webp",
+                "preset": null,
+                "width": null,
+                "spec": {
+                    "width": 300,
+                    "format": "webp"
+                },
+                "version": null,
+                "expires": null,
+                "signature": null
+            }
+        },
+        {
+            "description": "a key with the characters that stay as they are",
+            "path": "_/w300/disk/photo-1_2~3.jpg.jpg",
+            "url": {
+                "resolver": "disk",
+                "key": "photo-1_2~3.jpg",
+                "format": "jpeg",
+                "preset": null,
+                "width": null,
+                "spec": {
+                    "width": 300,
+                    "format": "jpeg"
+                },
+                "version": null,
+                "expires": null,
+                "signature": null
+            }
+        },
+        {
+            "description": "a key without extension",
+            "path": "_/h200/media/med_01JAB3QX.jpg",
+            "url": {
+                "resolver": "media",
+                "key": "med_01JAB3QX",
+                "format": "jpeg",
+                "preset": null,
+                "width": null,
+                "spec": {
+                    "height": 200,
+                    "format": "jpeg"
+                },
+                "version": null,
+                "expires": null,
+                "signature": null
+            }
+        },
+        {
+            "description": "a key with dots",
+            "path": "_/w300/disk/a.b/c.d.e.png",
+            "url": {
+                "resolver": "disk",
+                "key": "a.b/c.d.e",
+                "format": "png",
+                "preset": null,
+                "width": null,
+                "spec": {
+                    "width": 300,
+                    "format": "png"
+                },
+                "version": null,
+                "expires": null,
+                "signature": null
+            }
+        }
+    ],
+    "invalid": [
+        {
+            "description": "too few segments",
+            "path": "_/w300/disk.jpg"
+        },
+        {
+            "description": "a leading slash",
+            "path": "/_/w300/disk/a.jpg.jpg"
+        },
+        {
+            "description": "a trailing slash",
+            "path": "_/w300/disk/a.jpg.jpg/"
+        },
+        {
+            "description": "no extension",
+            "path": "_/w300/disk/photo"
+        },
+        {
+            "description": "jpeg instead of jpg",
+            "path": "_/w300/disk/photo.jpg.jpeg"
+        },
+        {
+            "description": "an uppercase extension",
+            "path": "_/w300/disk/photo.jpg.JPG"
+        },
+        {
+            "description": "an unknown format",
+            "path": "_/w300/disk/photo.bmp"
+        },
+        {
+            "description": "the auto format",
+            "path": "_/w300/disk/photo.jpg.auto"
+        },
+        {
+            "description": "options out of order",
+            "path": "_/h300,w300/disk/a.jpg.jpg"
+        },
+        {
+            "description": "a flip after the size",
+            "path": "_/w300,flip-h/disk/a.jpg.jpg"
+        },
+        {
+            "description": "a duplicate option",
+            "path": "_/w300,w300/disk/a.jpg.jpg"
+        },
+        {
+            "description": "a leading zero",
+            "path": "_/w0300/disk/a.jpg.jpg"
+        },
+        {
+            "description": "a zero width",
+            "path": "_/w0/disk/a.jpg.jpg"
+        },
+        {
+            "description": "the default fit written out",
+            "path": "_/w300,h300,fit-cover/disk/a.jpg.jpg"
+        },
+        {
+            "description": "a fit without a box",
+            "path": "_/w300,fit-contain/disk/a.jpg.jpg"
+        },
+        {
+            "description": "an unknown fit",
+            "path": "_/w300,h300,fit-stretch/disk/a.jpg.jpg"
+        },
+        {
+            "description": "a focal point without a crop",
+            "path": "_/w300,fp-30-60/disk/a.jpg.jpg"
+        },
+        {
+            "description": "a focal point outside the image",
+            "path": "_/w300,h300,fp-130-60/disk/a.jpg.jpg"
+        },
+        {
+            "description": "a ratio that isn't reduced",
+            "path": "_/ar-32-18/disk/a.jpg.jpg"
+        },
+        {
+            "description": "a width, a height and a ratio",
+            "path": "_/w300,h300,ar-1-1/disk/a.jpg.jpg"
+        },
+        {
+            "description": "operations out of order",
+            "path": "_/grayscale,blur-5/disk/a.jpg.jpg"
+        },
+        {
+            "description": "an operation with an uppercase argument",
+            "path": "_/w300,duotone-FF0000/disk/a.jpg.jpg"
+        },
+        {
+            "description": "an unknown token",
+            "path": "_/w300,big_size/disk/a.jpg.jpg"
+        },
+        {
+            "description": "an empty token",
+            "path": "_/w300,,h300/disk/a.jpg.jpg"
+        },
+        {
+            "description": "an underscore among the options",
+            "path": "_/_,w300/disk/a.jpg.jpg"
+        },
+        {
+            "description": "a rotation that isn't a multiple of 90",
+            "path": "_/r-45/disk/a.jpg.jpg"
+        },
+        {
+            "description": "a full turn",
+            "path": "_/r-360,w300/disk/a.jpg.jpg"
+        },
+        {
+            "description": "a quality of 0",
+            "path": "_/w300,q0/disk/a.jpg.jpg"
+        },
+        {
+            "description": "a quality above 100",
+            "path": "_/w300,q101/disk/a.jpg.jpg"
+        },
+        {
+            "description": "an expiry without a signature",
+            "path": "_/w300,exp-1767225600/disk/a.jpg.jpg"
+        },
+        {
+            "description": "the expiry before the version",
+            "path": "Ki9wNCYcyQGQJ0x2Jo6GnQ/w300,exp-1767225600,v-8c1f/disk/a.jpg.jpg"
+        },
+        {
+            "description": "two versions",
+            "path": "_/w300,v-8c1f,v-9d2e/disk/a.jpg.jpg"
+        },
+        {
+            "description": "a signature too short",
+            "path": "short/w300/disk/a.jpg.jpg"
+        },
+        {
+            "description": "a signature with other characters",
+            "path": "Ki9wNCYcyQGQJ0x2Jo6G+Q/w300/disk/a.jpg.jpg"
+        },
+        {
+            "description": "a preset with another option",
+            "path": "_/card.3f9a1c,h300/media/med_01JAB3QX.webp"
+        },
+        {
+            "description": "a preset with two widths",
+            "path": "_/card.3f9a1c,w400,w800/media/med_01JAB3QX.webp"
+        },
+        {
+            "description": "a preset after an option",
+            "path": "_/w400,card.3f9a1c/media/med_01JAB3QX.webp"
+        },
+        {
+            "description": "an uppercase preset name",
+            "path": "_/Card.3f9a1c/media/med_01JAB3QX.webp"
+        },
+        {
+            "description": "a preset without a version",
+            "path": "_/card./media/med_01JAB3QX.webp"
+        },
+        {
+            "description": "an uppercase resolver",
+            "path": "_/w300/Media/med_01JAB3QX.webp"
+        },
+        {
+            "description": "a parent directory in the key",
+            "path": "_/w300/disk/../secret.jpg.jpg"
+        },
+        {
+            "description": "a current directory in the key",
+            "path": "_/w300/disk/./secret.jpg.jpg"
+        },
+        {
+            "description": "an empty segment in the key",
+            "path": "_/w300/disk/a//b.jpg.jpg"
+        },
+        {
+            "description": "an encoded slash in the key",
+            "path": "_/w300/disk/a%2Fb.jpg.jpg"
+        },
+        {
+            "description": "an encoded parent directory",
+            "path": "_/w300/disk/%2E%2E/secret.jpg.jpg"
+        },
+        {
+            "description": "a character encoded without need",
+            "path": "_/w300/disk/a%41.jpg.jpg"
+        },
+        {
+            "description": "a lowercase percent-encoding",
+            "path": "_/w300/disk/a%c3%a9.jpg.jpg"
+        },
+        {
+            "description": "a space left unencoded",
+            "path": "_/w300/disk/a b.jpg.jpg"
+        },
+        {
+            "description": "a null byte in the key",
+            "path": "_/w300/disk/a%00.jpg.jpg"
+        },
+        {
+            "description": "a backslash in the key",
+            "path": "_/w300/disk/a%5Cb.jpg.jpg"
+        }
+    ]
+}
