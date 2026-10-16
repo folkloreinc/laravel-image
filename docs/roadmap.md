@@ -38,7 +38,7 @@ What the pilot's media library needs first, end to end: images stored on an S3-c
 - [x] `ImageVariant` and `ImageVariantResource` (#70)
 - [x] `Image::fake()` with assertions (#70)
 - [ ] `image:doctor`
-- [ ] Docs: getting started, presets, URLs and signatures, delivery behind a CDN
+- [x] Docs: getting started, presets, URLs and signatures, delivery behind a CDN (#73)
 
 ## Alpha 2: channels, editing and responsive images
 
