@@ -25,7 +25,8 @@ Read [`docs/`](docs/README.md) before changing anything: the [architecture](docs
 
 ## Branches and releases
 
-- `v2.x` is the development branch of 2.0 until 2.0.0, then becomes the default branch.
+- `v2.x` supports **PHP 8.3–8.5 and Laravel 12–13** ([decisions/0001](docs/decisions/0001-supported-versions.md)). CI tests every combination, on each image driver.
+- `v2.x` is the development branch of 2.0 until 2.0.0, then becomes the default branch. Composer aliases it as `2.x-dev`.
 - `v1.x` stays maintained for fixes and security. A fix that applies to both lines goes to `v1.x` first.
 - `main` and `develop` are stale; don't base work on them.
 
@@ -50,7 +51,7 @@ Something out of scope noticed along the way becomes a new issue, not part of th
 ## Repository map
 
 ```
-src/                  PHP package, PSR-4 (empty until the 2.0 contracts land; layout in docs/architecture.md)
+src/                  PHP package, PSR-4 `Folklore\\Image\\` (layout in docs/architecture.md)
 tests/                PHPUnit
 tests/fixtures/       JSON fixtures (urls/) and test images (images/)
 docs/                 architecture, decisions, roadmap, upgrade guide
@@ -68,8 +69,10 @@ Every change ships with automated tests:
 
 CI (GitHub Actions, `.github/workflows`) runs:
 
-- `run-tests.yml`: the PHP suite on every supported PHP × Laravel combination, a coverage report, and a `Tests passed` job that succeeds only when all of them do;
-- `pint.yml` and `phpstan.yml`: code style, static analysis and `composer validate --strict`.
+- `run-tests.yml`: the PHP suite with `prefer-stable` on every supported PHP × Laravel combination and on each image driver (GD, Imagick, and libvips with FFI enabled), with `prefer-lowest` on the lowest PHP version of each Laravel version, a coverage report, and a `Tests passed` job that succeeds only when all of them do;
+- `pint.yml` and `phpstan.yml`: code style, static analysis, `composer validate --strict` and the PSR-4 autoload.
+
+Each test job sets `IMAGE_TEST_DRIVER` to its driver. Image tests get their driver from `TestCase::driverOrSkip()`: a driver that isn't installed is skipped, except the one under test, which fails the job. Locally, without `IMAGE_TEST_DRIVER`, every installed driver is tested.
 
 On a pull request, `run-tests.yml` skips the suite when no file it depends on changed (`.github/scripts/affected-suites.sh` decides; `Tests passed` still reports). A file the script doesn't know runs the suite.
 
@@ -83,7 +86,7 @@ This package uses the tools Laravel packages usually use, so contributors find f
 | ------------ | --------------------------------------------- | ----------------------------------------- |
 | Tests        | PHPUnit with Orchestra Testbench              | `composer test`, `composer test-coverage` |
 | Style        | Laravel Pint (`laravel` preset, `pint.json`)  | `composer format`                         |
-| Analysis     | Larastan (`phpstan.neon.dist`)                | `composer analyse`                        |
+| Analysis     | Larastan at the maximum level (`phpstan.neon.dist`) | `composer analyse`                  |
 | CI           | GitHub Actions (`.github/workflows`)          |                                           |
 
 Don't add other formatters or linters, such as `phpcs` or the Prettier PHP plugin.
@@ -91,5 +94,9 @@ Don't add other formatters or linters, such as `phpcs` or the Prettier PHP plugi
 ## Checks
 
 Before committing, run `composer test`, `composer analyse` and `composer format`.
+
+- **Larastan** runs at the maximum level on `src/` and `tests/`, with **no baseline**. Fix an error instead of ignoring it; don't add a baseline, `@phpstan-ignore` comments or casts that only silence it.
+- **Code style:** Pint's `laravel` preset, with `declare(strict_types=1)` in every file.
+- **Drivers:** to test the libvips driver locally, install libvips (`brew install vips`, `apt-get install libvips-tools`) and keep FFI enabled.
 
 - **Formatting-only commits** (for example a new Pint rule) go in their own commit, listed in `.git-blame-ignore-revs`.

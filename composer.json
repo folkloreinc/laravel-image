@@ -27,20 +27,28 @@
         }
     ],
     "require": {
-        "php": "^8.2",
-        "illuminate/support": "^9.0|^10.0|^11.0|^12.0|^13.0"
+        "php": "^8.3",
+        "illuminate/contracts": "^12.0|^13.0",
+        "illuminate/support": "^12.0|^13.0",
+        "intervention/image": "^4.3"
     },
     "require-dev": {
-        "fakerphp/faker": "^1.23",
-        "larastan/larastan": "^2.9|^3.0",
-        "laravel/pint": "^1.13",
+        "intervention/image-driver-vips": "^4.1",
+        "larastan/larastan": "^3.0",
+        "laravel/pint": "^1.24",
         "mockery/mockery": "^1.6",
-        "orchestra/testbench": "^7.0|^8.0|^9.0|^10.0|^11.0",
-        "phpunit/phpunit": "^9.5.10|^10.5|^11.0|^12.0"
+        "orchestra/testbench": "^10.0|^11.0",
+        "phpstan/phpstan-phpunit": "^2.0",
+        "phpunit/phpunit": "^11.5|^12.0"
+    },
+    "suggest": {
+        "ext-exif": "Turns photos upright from their EXIF orientation",
+        "ext-imagick": "Required by the imagick driver",
+        "intervention/image-driver-vips": "The libvips driver, the fastest and the lightest on memory (needs libvips and ext-ffi with ffi.enable=true)"
     },
     "autoload": {
         "psr-4": {
-            "Folklore\\Image\\": "src/Folklore/Image/"
+            "Folklore\\Image\\": "src/"
         }
     },
     "autoload-dev": {
@@ -60,7 +68,12 @@
     "minimum-stability": "stable",
     "extra": {
         "branch-alias": {
-            "dev-v1.x": "1.x-dev"
+            "dev-v2.x": "2.x-dev"
+        },
+        "laravel": {
+            "providers": [
+                "Folklore\\Image\\ImageServiceProvider"
+            ]
         }
     }
 }
