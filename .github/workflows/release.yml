@@ -1,0 +1,60 @@
+name: release
+
+# Publishes a GitHub release when a 2.x version is tagged. Packagist picks up the
+# tag on its own. The tag must point to a commit of v2.x whose CI is green, and
+# CHANGELOG.md must have a section for the version (see CONTRIBUTING.md).
+on:
+  push:
+    tags: ['v2.*']
+
+permissions:
+  contents: write
+  checks: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    name: Release
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Check the version
+        id: version
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          if ! [[ "$TAG" =~ ^v2\.[0-9]+\.[0-9]+(-(alpha|beta|rc)\.[0-9]+)?$ ]]; then
+            echo "Not a 2.x version tag: $TAG (expected v2.0.0-alpha.1, v2.1.0…)" >&2
+            exit 1
+          fi
+          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+          if [[ "$TAG" == *-* ]]; then echo "prerelease=true" >> "$GITHUB_OUTPUT"; else echo "prerelease=false" >> "$GITHUB_OUTPUT"; fi
+
+      - name: Check that the tag is on v2.x
+        run: |
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/v2.x; then
+            echo "The tag points to $GITHUB_SHA, which isn't on v2.x." >&2
+            exit 1
+          fi
+
+      - name: Check that CI is green on the tagged commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: .github/scripts/check-green.sh "$GITHUB_REPOSITORY" "$GITHUB_SHA"
+
+      - name: Read the release notes from CHANGELOG.md
+        run: .github/scripts/release-notes.sh "${{ steps.version.outputs.version }}" > "$RUNNER_TEMP/notes.md"
+
+      - name: Publish the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          PRERELEASE: ${{ steps.version.outputs.prerelease }}
+        run: |
+          flags=()
+          if [ "$PRERELEASE" = true ]; then flags+=(--prerelease --latest=false); fi
+          gh release create "$TAG" --verify-tag --title "$TAG" --notes-file "$RUNNER_TEMP/notes.md" "${flags[@]}"
