@@ -37,7 +37,7 @@ What the pilot's media library needs first, end to end: images stored on an S3-c
 - [x] Caching headers: `immutable`, `ETag`, `304`; stream or redirect (#71)
 - [x] `ImageVariant` and `ImageVariantResource` (#70)
 - [x] `Image::fake()` with assertions (#70)
-- [ ] `image:doctor`
+- [x] `image:doctor` (#72)
 - [ ] Docs: getting started, presets, URLs and signatures, delivery behind a CDN
 
 ## Alpha 2: channels, editing and responsive images

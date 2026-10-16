@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Folklore\Image;
 
+use Folklore\Image\Console\DoctorCommand;
 use Folklore\Image\Contracts\DerivativeStore;
 use Folklore\Image\Contracts\Renderer;
 use Folklore\Image\Contracts\Signer;
@@ -65,6 +66,7 @@ final class ImageServiceProvider extends ServiceProvider
         Router::macro('image', fn (?string $prefix = null): Route => $app->make(ImageManager::class)->routes($prefix));
 
         if ($this->app->runningInConsole()) {
+            $this->commands([DoctorCommand::class]);
             $this->publishes([__DIR__.'/../config/image.php' => $this->app->configPath('image.php')], 'image-config');
         }
     }
