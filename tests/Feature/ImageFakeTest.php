@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Folklore\Image\Tests\Feature;
 
+use Folklore\Image\Contracts\DerivativeStore;
 use Folklore\Image\Contracts\Renderer;
 use Folklore\Image\Contracts\UrlCodec;
 use Folklore\Image\Facades\Image;
@@ -13,34 +14,24 @@ use Folklore\Image\Specs\Format;
 use Folklore\Image\Specs\ImageSpec;
 use Folklore\Image\Testing\FakeRenderer;
 use Folklore\Image\Testing\ImageFake;
-use Folklore\Image\Tests\TestCase;
+use Folklore\Image\Testing\InMemoryDerivativeStore;
+use Folklore\Image\Tests\Doubles\ArraySourceResolver;
 use Folklore\Image\Urls\ImageUrl;
-use Folklore\Image\Urls\PresetReference;
 use Folklore\Image\Urls\V2Codec;
 use PHPUnit\Framework\AssertionFailedError;
 
 /**
- * The surface of Image::fake(). Until the builder lands, the tests call the contracts the
- * builder and the controller will call: the codec and the renderer from the container.
+ * Image::fake(), through the builder: URLs and variants stay real, nothing is rendered.
  */
-final class ImageFakeTest extends TestCase
+final class ImageFakeTest extends ImageTestCase
 {
-    private ImageSource $source;
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        $this->source = new ImageSource('media', 'med_01JAB3QX', '8c1f', width: 1200, height: 800, mime: 'image/jpeg');
-    }
-
     public function test_the_container_has_the_v2_codec_and_the_manager(): void
     {
         $this->assertInstanceOf(V2Codec::class, $this->app?->make(UrlCodec::class));
         $this->assertInstanceOf(ImageManager::class, Image::getFacadeRoot());
     }
 
-    public function test_the_fake_replaces_the_renderer_and_the_manager(): void
+    public function test_the_fake_replaces_the_renderer_the_store_and_the_manager(): void
     {
         $fake = Image::fake();
 
@@ -49,15 +40,17 @@ final class ImageFakeTest extends TestCase
         $this->assertInstanceOf(ImageFake::class, Image::getFacadeRoot());
         $this->assertSame($fake, $app->make(ImageManager::class));
         $this->assertInstanceOf(FakeRenderer::class, $app->make(Renderer::class));
+        $this->assertInstanceOf(InMemoryDerivativeStore::class, $app->make(DerivativeStore::class));
     }
 
     public function test_urls_stay_real_and_are_recorded(): void
     {
         Image::fake();
+        Image::resolver(new ArraySourceResolver($this->photo));
 
-        $path = $this->codec()->encode(ImageUrl::forSource($this->source, new PresetReference('card', '3f9a1c'), Format::Webp));
+        $url = Image::for($this->photo)->preset('card')->webp()->url();
 
-        $this->assertSame('_/card.3f9a1c,v-8c1f/media/med_01JAB3QX.webp', $path);
+        $this->assertStringStartsWith('https://img.test/img/_/card.', $url);
         Image::assertUrlGenerated();
         Image::assertUrlGenerated(preset: 'card');
         Image::assertUrlGenerated('card', fn (ImageUrl $url) => $url->format === Format::Webp);
@@ -65,10 +58,20 @@ final class ImageFakeTest extends TestCase
         Image::assertUrlNotGenerated('card', fn (ImageUrl $url) => $url->isSigned());
     }
 
+    public function test_variants_are_recorded_with_their_urls(): void
+    {
+        Image::fake();
+
+        Image::for($this->photo)->variants('card');
+
+        $this->assertCount(9, Image::generatedUrls('card'));
+        Image::assertUrlGenerated('card', fn (ImageUrl $url) => $url->width === 400 && $url->format === Format::Avif);
+    }
+
     public function test_url_assertions_fail_when_nothing_matches(): void
     {
         Image::fake();
-        $this->codec()->encode(ImageUrl::forSource($this->source, new ImageSpec(width: 300)));
+        Image::for($this->photo)->width(300)->signed()->url();
 
         $this->assertAssertionFails(fn () => Image::assertUrlGenerated(preset: 'card'));
         $this->assertAssertionFails(fn () => Image::assertUrlNotGenerated());
@@ -79,31 +82,25 @@ final class ImageFakeTest extends TestCase
         Image::fake();
         Image::assertNothingRendered();
 
-        $image = $this->renderer()->render($this->source, new ImageSpec(width: 800, height: 450, format: Format::Avif));
+        $image = Image::for($this->photo)->size(800, 450)->avif()->render();
 
         $this->assertSame([800, 450, Format::Avif, ''], [$image->width, $image->height, $image->format, $image->contents]);
         Image::assertRendered();
         Image::assertRendered(fn (ImageSpec $spec) => $spec->width === 800);
-        Image::assertRendered(fn (ImageSpec $spec, ImageSource $source) => $source->key === 'med_01JAB3QX');
+        Image::assertRendered(fn (ImageSpec $spec, ImageSource $source) => $source->key === 'photos/2026/photo.jpg');
         Image::assertNotRendered(fn (ImageSpec $spec) => $spec->width === 400);
         $this->assertAssertionFails(fn () => Image::assertNothingRendered());
         $this->assertAssertionFails(fn () => Image::assertRendered(fn (ImageSpec $spec) => $spec->format === Format::Webp));
     }
 
-    private function codec(): UrlCodec
+    public function test_the_fake_follows_the_upscaling_policy(): void
     {
-        $codec = $this->app?->make(UrlCodec::class);
-        $this->assertInstanceOf(UrlCodec::class, $codec);
+        $this->config()->set('image.upscale', true);
+        Image::fake();
 
-        return $codec;
-    }
+        $image = Image::for($this->photo)->width(2400)->render();
 
-    private function renderer(): Renderer
-    {
-        $renderer = $this->app?->make(Renderer::class);
-        $this->assertInstanceOf(Renderer::class, $renderer);
-
-        return $renderer;
+        $this->assertSame([2400, 1600], [$image->width, $image->height]);
     }
 
     private function assertAssertionFails(\Closure $assertion): void

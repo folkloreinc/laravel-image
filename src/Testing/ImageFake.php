@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Folklore\Image\Testing;
 
 use Closure;
+use Folklore\Image\Contracts\DerivativeStore;
 use Folklore\Image\Contracts\Renderer;
 use Folklore\Image\Contracts\UrlCodec;
+use Folklore\Image\ImageConfig;
 use Folklore\Image\ImageManager;
 use Folklore\Image\Sources\ImageSource;
 use Folklore\Image\Specs\ImageSpec;
@@ -16,7 +18,8 @@ use PHPUnit\Framework\Assert;
 
 /**
  * What Image::fake() returns: URLs and variants are built as usual, from the sources'
- * metadata, but nothing is rendered and no image driver is needed.
+ * metadata, but nothing is rendered and no image driver is needed. Requests to the image
+ * route store their derivatives in memory.
  *
  *     Image::fake();
  *     $this->get('/articles/1')->assertOk();
@@ -33,11 +36,12 @@ class ImageFake extends ImageManager
     {
         parent::__construct($container);
 
-        $this->renderer = new FakeRenderer;
+        $this->renderer = new FakeRenderer($container->make(ImageConfig::class)->upscale());
         $this->codec = new RecordingUrlCodec($container->make(UrlCodec::class));
 
         $container->instance(Renderer::class, $this->renderer);
         $container->instance(UrlCodec::class, $this->codec);
+        $container->instance(DerivativeStore::class, new InMemoryDerivativeStore);
     }
 
     /**

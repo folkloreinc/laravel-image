@@ -127,6 +127,16 @@ final class ImageSpecTest extends TestCase
         $this->assertSame('w800,h600,fit-contain.auto', $spec->key(), 'The spec is immutable.');
     }
 
+    public function test_at_width_keeps_the_shape(): void
+    {
+        $this->assertSame('w400,h210.jpeg', (new ImageSpec(width: 1200, height: 630, format: Format::Jpeg))->atWidth(400)->key());
+        $this->assertSame('w400,h300,fit-contain.auto', (new ImageSpec(width: 800, height: 600, fit: Fit::Contain))->atWidth(400)->key());
+        $this->assertSame('w400,ar-16-9.auto', (new ImageSpec(width: 800, ratio: new Ratio(16, 9)))->atWidth(400)->key());
+        $this->assertSame('w400,ar-16-9.auto', (new ImageSpec(height: 450, ratio: new Ratio(16, 9)))->atWidth(400)->key());
+        $this->assertSame('w400.auto', (new ImageSpec(height: 450))->atWidth(400)->key());
+        $this->assertSame('w400,q70.auto', (new ImageSpec(quality: 70))->atWidth(400)->key());
+    }
+
     public function test_specs_are_compared_by_key(): void
     {
         $this->assertTrue((new ImageSpec(width: 300, fit: Fit::Inside))->equals(new ImageSpec(width: 300)));

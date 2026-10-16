@@ -6,7 +6,7 @@ namespace Folklore\Image\Tests\Unit\Storage;
 
 use Folklore\Image\Contracts\DerivativeStore;
 use Folklore\Image\Testing\Contracts\DerivativeStoreContractTests;
-use Folklore\Image\Tests\Doubles\InMemoryDerivativeStore;
+use Folklore\Image\Testing\InMemoryDerivativeStore;
 use Folklore\Image\Tests\TestCase;
 
 /**

@@ -27,16 +27,16 @@ Tracking issues: [#3](https://github.com/folkloreinc/laravel-image/issues/3) (ov
 
 What the pilot's media library needs first, end to end: images stored on an S3-compatible disk, resolved from a media id, served through a CDN.
 
-- [ ] `ImageSpec`, presets from the config with their version, and the `PendingImage` builder (`url()`, `variant()`, `variants()`, `render()`)
-- [ ] `V2Codec`, the host and the prefix
+- [x] `ImageSpec`, presets from the config with their version, and the `PendingImage` builder (`url()`, `variant()`, `variants()`, `render()`) (#70)
+- [x] `V2Codec`, the host and the prefix (#70)
 - [ ] `disk` resolver; the `media` resolver ships in `laravel-mediatheque` 2's alpha 1
 - [ ] Intervention renderer with the `auto` driver (vips, imagick, gd); resize with `fit` and `ratio`; formats and quality per format
 - [ ] Parity with 1.1 on every derivative: EXIF orientation, sRGB, metadata stripping, HEIC sources
 - [ ] `DiskStore` on any disk, with a lock per variant
 - [ ] `Route::image()` (opt-in), strict mode, enforced limits, signed URLs with an expiry, private sources only through signed URLs
 - [ ] Caching headers: `immutable`, `ETag`, `304`; stream or redirect
-- [ ] `ImageVariant` and `ImageVariantResource`
-- [ ] `Image::fake()` with assertions
+- [x] `ImageVariant` and `ImageVariantResource` (#70)
+- [x] `Image::fake()` with assertions (#70)
 - [ ] `image:doctor`
 - [ ] Docs: getting started, presets, URLs and signatures, delivery behind a CDN
 

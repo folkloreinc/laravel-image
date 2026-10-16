@@ -16,6 +16,12 @@ Changes to 1.x after 1.1.0 are in the changelog of the [`v1.x`](https://github.c
 
 ### Added
 
+- `Image::for($reference)` returns an immutable `PendingImage` builder: `preset()`, `width()`, `height()`, `size()`, `fit()`, `ratio()`, `format()` and its shortcuts (`webp()`, `avif()`…), `quality()`, `signed(expires:)`, `host()`, then `url()`, `variant()`, `variants()` (a preset's responsive widths × formats, with their exact dimensions from the source's metadata) and `render()` (#70).
+- `config/image.php`: versioned `presets`, `url.host` and `url.prefix`, `signing.keys` (derived from `APP_KEY` and `APP_PREVIOUS_KEYS` by default) and `signing.default_ttl`, `strict`, `limits`, `delivery`, `upscale`. A published config only needs the keys it changes (#70).
+- Private sources only get signed URLs that expire; in strict mode, a free spec only gets a signed URL; limits are checked when a URL is built (#70).
+- `ImageVariantResource`, the JSON shape of a variant in APIs: `{preset, url, width, height, mime}` (#70).
+- Resolvers are registered from the config or with `Image::resolver()`; `Image::useHost()` changes the host of the URLs of a request (#70).
+- `Image::fake()` works through the builder, and keeps derivatives in memory (`Folklore\Image\Testing\InMemoryDerivativeStore`) (#70).
 - The public contracts of 2.0, with their tests: `ImageSpec`, presets and their versions, `UrlCodec` and the v2 URL syntax ([decision 0009](docs/decisions/0009-v2-url-syntax.md)), `Signer`, `SourceResolver` and `ImageSource`, `Renderer` and `Operation`, `DerivativeStore`, `ImageVariant`, `Image::fake()`, and the contract test traits for their implementations (#63).
 - CI on PHP 8.3–8.5 × Laravel 12–13 × the GD, Imagick and libvips drivers, Larastan at the maximum level (#61).
 - A release workflow: pre-releases are tagged from a green commit of `v2.x` and published on GitHub and Packagist (#64).

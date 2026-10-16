@@ -9,6 +9,12 @@ use Folklore\Image\Testing\ImageFake;
 use Illuminate\Support\Facades\Facade;
 
 /**
+ * @method static \Folklore\Image\PendingImage for(mixed $reference)
+ * @method static void resolver(\Folklore\Image\Contracts\SourceResolver $resolver)
+ * @method static void useHost(?string $host)
+ * @method static \Folklore\Image\Specs\PresetRegistry presets()
+ * @method static \Folklore\Image\Sources\SourceResolvers resolvers()
+ * @method static list<\Folklore\Image\Urls\ImageUrl> generatedUrls(?string $preset = null, ?\Closure $callback = null)
  * @method static void assertUrlGenerated(?string $preset = null, ?\Closure $callback = null)
  * @method static void assertUrlNotGenerated(?string $preset = null, ?\Closure $callback = null)
  * @method static void assertRendered(?\Closure $callback = null)
