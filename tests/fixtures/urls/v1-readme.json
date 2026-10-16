@@ -1,0 +1,61 @@
+{
+    "description": "The examples of the 1.x README and its tests (v1.x: README.md, tests/Feature/ReadmeExamplesTest.php). The 2.x compatibility layer must keep generating and serving them (docs/decisions/0007-compatibility-layer.md).",
+    "filters": {
+        "thumbnail": { "width": 300, "height": 300, "crop": true }
+    },
+    "generated": [
+        {
+            "description": "a crop",
+            "src": "/uploads/photo.jpg",
+            "width": 300,
+            "height": 300,
+            "filters": { "crop": true },
+            "url": "/uploads/photo-filters(300x300-crop).jpg"
+        },
+        {
+            "description": "a crop with a position, and another filter",
+            "src": "/uploads/photo.jpg",
+            "width": 300,
+            "height": 300,
+            "filters": { "crop": "top_left", "grayscale": true },
+            "url": "/uploads/photo-filters(300x300-crop(top_left)-grayscale).jpg"
+        },
+        {
+            "description": "a width, converted to WebP",
+            "src": "/uploads/photo.jpg",
+            "width": 800,
+            "height": null,
+            "filters": { "format": "webp" },
+            "url": "/uploads/photo-filters(800x_).jpg.webp"
+        },
+        {
+            "description": "a width and a filter, converted to WebP",
+            "src": "/uploads/photo.jpg",
+            "width": 800,
+            "height": null,
+            "filters": { "grayscale": true, "format": "webp" },
+            "url": "/uploads/photo-filters(800x_-grayscale).jpg.webp"
+        },
+        {
+            "description": "a named filter",
+            "src": "/uploads/photo.jpg",
+            "width": null,
+            "height": null,
+            "filters": { "thumbnail": true },
+            "url": "/uploads/photo-filters(thumbnail).jpg"
+        }
+    ],
+    "made": [
+        {
+            "description": "Image::make() with options",
+            "src": "/uploads/photo.jpg",
+            "options": { "width": 300, "height": 300, "crop": true, "grayscale": true }
+        }
+    ],
+    "served": [
+        { "url": "/image-filters(300x300-crop).jpg", "source": "image.jpg", "mime": "image/jpeg" },
+        { "url": "/image-filters(300x300-crop(top_left)-grayscale).jpg", "source": "image.jpg", "mime": "image/jpeg" },
+        { "url": "/image-filters(200x_-grayscale).jpg.webp", "source": "image.jpg", "mime": "image/webp" },
+        { "url": "/image-filters(thumbnail).jpg", "source": "image.jpg", "mime": "image/jpeg" }
+    ]
+}

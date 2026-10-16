@@ -1,15 +1,15 @@
 {
     "name": "folklore/laravel-image",
-    "description": "URL-based image manipulation for Laravel, built on Imagine",
+    "description": "On-the-fly image renditions for Laravel: presets, signed URLs and responsive variants, behind a CDN",
     "keywords": [
         "laravel",
         "image",
-        "imagick",
-        "gd",
-        "imagine",
-        "watermark",
-        "gmagick",
-        "thumbnail"
+        "thumbnail",
+        "resize",
+        "crop",
+        "presets",
+        "responsive-images",
+        "cdn"
     ],
     "homepage": "https://github.com/folkloreinc/laravel-image",
     "license": "MIT",
@@ -28,32 +28,20 @@
     ],
     "require": {
         "php": "^8.2",
-        "illuminate/support": "^9.0|^10.0|^11.0|^12.0|^13.0",
-        "guzzlehttp/guzzle": "^6.3.1|^7.0.1|^8.0.0",
-        "imagine/imagine": "^1.2.4",
-        "contao/imagine-svg": "^1.0"
+        "illuminate/support": "^9.0|^10.0|^11.0|^12.0|^13.0"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
         "larastan/larastan": "^2.9|^3.0",
         "laravel/pint": "^1.13",
-        "league/flysystem-aws-s3-v3": "^3.0",
         "mockery/mockery": "^1.6",
         "orchestra/testbench": "^7.0|^8.0|^9.0|^10.0|^11.0",
         "phpunit/phpunit": "^9.5.10|^10.5|^11.0|^12.0"
     },
-    "suggest": {
-        "ext-gd": "Required by the gd driver",
-        "ext-imagick": "Required by the imagick driver (better quality, more formats)",
-        "ext-exif": "Required to turn images upright according to their EXIF orientation"
-    },
     "autoload": {
         "psr-4": {
             "Folklore\\Image\\": "src/Folklore/Image/"
-        },
-        "files": [
-            "src/Folklore/Image/helpers.php"
-        ]
+        }
     },
     "autoload-dev": {
         "psr-4": {
@@ -73,14 +61,6 @@
     "extra": {
         "branch-alias": {
             "dev-v1.x": "1.x-dev"
-        },
-        "laravel": {
-            "providers": [
-                "Folklore\\Image\\ServiceProvider"
-            ],
-            "aliases": {
-                "Image": "Folklore\\Image\\Facade"
-            }
         }
     }
 }
