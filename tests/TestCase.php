@@ -2,65 +2,31 @@
 
 namespace Folklore\Image\Tests;
 
-use Folklore\Image\Facade;
-use Folklore\Image\ServiceProvider;
-use Illuminate\Foundation\Application;
 use Orchestra\Testbench\TestCase as BaseTestCase;
 
-class TestCase extends BaseTestCase
+abstract class TestCase extends BaseTestCase
 {
     /**
-     * Define environment setup.
-     *
-     * @param  Application  $app
-     * @return void
+     * The path of a file in tests/fixtures.
      */
-    protected function getEnvironmentSetUp($app)
+    protected static function fixturePath(string $path): string
     {
-        if (method_exists($app, 'usePublicPath')) {
-            $app->usePublicPath(__DIR__.'/fixture');
-        } else {
-            $app->instance('path.public', __DIR__.'/fixture');
-        }
-
-        $app['config']->set('image.source', 'local');
-        $app['config']->set('image.sources', [
-            'local' => [
-                'driver' => 'local',
-                'path' => public_path(),
-                'ignore' => [
-                    public_path('cache'),
-                    public_path('filesystem'),
-                    public_path('custom'),
-                    public_path('svg'),
-                    public_path('heic'),
-                    public_path('orientation'),
-                    public_path('metadata'),
-                ],
-            ],
-            'filesystem' => [
-                'driver' => 'filesystem',
-                'disk' => 'local',
-                'path' => null,
-                'cache' => true,
-                'cache_path' => public_path('cache'),
-            ],
-        ]);
-
-        $app['config']->set('filesystems.disks.local.root', public_path('filesystem'));
+        return __DIR__.'/fixtures/'.$path;
     }
 
-    protected function getPackageProviders($app)
+    /**
+     * The decoded contents of a JSON file in tests/fixtures.
+     *
+     * @return array<mixed>
+     */
+    protected static function jsonFixture(string $path): array
     {
-        return [
-            ServiceProvider::class,
-        ];
-    }
+        $contents = file_get_contents(static::fixturePath($path));
+        static::assertIsString($contents, $path);
 
-    protected function getPackageAliases($app)
-    {
-        return [
-            'Image' => Facade::class,
-        ];
+        $data = json_decode($contents, true, flags: JSON_THROW_ON_ERROR);
+        static::assertIsArray($data, $path);
+
+        return $data;
     }
 }

@@ -1,13 +1,8 @@
 /vendor
 composer.phar
 composer.lock
-package-lock.json
 .DS_Store
 /coverage
-/node_modules
-/js/es
-/js/lib
-/_book
 .phpunit.result.cache
 /.phpunit.cache
 phpunit.xml

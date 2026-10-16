@@ -1,9 +1,9 @@
 includes:
     - vendor/larastan/larastan/extension.neon
-    - phpstan-baseline.neon
 
 parameters:
     level: 5
+    # src/ is empty until the 2.x code lands.
     paths:
-        - src
+        - tests
     tmpDir: build/phpstan
