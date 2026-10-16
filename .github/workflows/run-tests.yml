@@ -79,7 +79,7 @@ jobs:
         if: matrix.driver == 'vips'
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends libvips-tools
+          sudo apt-get install -y --no-install-recommends libvips-tools libheif-plugin-libde265
           vips --version
 
       - uses: shivammathur/setup-php@v2
@@ -91,6 +91,15 @@ jobs:
           # be enough here, but CI runs what production needs.
           ini-values: ffi.enable=${{ matrix.driver == 'vips' && 'true' || 'preload' }}
           coverage: none
+
+      # HEIC sources need libheif's HEVC decoder, which Ubuntu ships as a plugin. The
+      # Imagick jobs check it works, so the HEIC tests can't silently skip there.
+      - name: Install the HEIC decoder
+        if: matrix.driver == 'imagick'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libheif-plugin-libde265
+          php -r 'new Imagick("tests/fixtures/images/heic/photo.heic"); echo "Imagick reads HEIC\n";'
 
       - name: Install dependencies
         run: |
@@ -141,11 +150,53 @@ jobs:
           name: coverage
           path: coverage/clover.xml
 
+  # The tests of the `s3` group, on an S3-compatible disk: the disk resolver (ETags) and
+  # DiskStore. They skip in the other jobs, which have no server.
+  s3:
+    needs: changes
+    if: needs.changes.outputs.php == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    name: S3-compatible disk
+
+    steps:
+      - uses: actions/checkout@v7
+
+      # MinIO no longer publishes public Docker images, so CI uses moto's S3-compatible
+      # server. The tests only rely on the S3 API, so they also run against MinIO locally.
+      - name: Start an S3-compatible server (moto)
+        run: |
+          python3 -m venv "$RUNNER_TEMP/moto"
+          "$RUNNER_TEMP/moto/bin/pip" install --quiet "moto[server]==5.2.3"
+          "$RUNNER_TEMP/moto/bin/moto_server" -H 127.0.0.1 -p 9000 > "$RUNNER_TEMP/moto.log" 2>&1 &
+          for attempt in $(seq 1 30); do
+            curl -s -o /dev/null http://127.0.0.1:9000/ && exit 0
+            sleep 1
+          done
+          cat "$RUNNER_TEMP/moto.log"
+          exit 1
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: gd, exif, fileinfo, ffi
+          coverage: none
+
+      - name: Install dependencies
+        run: composer update --prefer-stable --prefer-dist --no-interaction
+
+      - name: Run the S3 tests
+        env:
+          IMAGE_TEST_S3_ENDPOINT: http://127.0.0.1:9000
+          IMAGE_TEST_DRIVER: gd
+        # Fail instead of silently skipping if the server is unreachable.
+        run: vendor/bin/phpunit --group s3 --fail-on-skipped
+
   # A single, stable check to require in branch protection, instead of every matrix job.
   # The test jobs either all succeed, or were all skipped because the PHP suite isn't affected.
   tests-passed:
     if: always()
-    needs: [changes, test, coverage]
+    needs: [changes, test, coverage, s3]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     name: Tests passed
@@ -157,12 +208,14 @@ jobs:
           PHP: ${{ needs.changes.outputs.php }}
           TEST: ${{ needs.test.result }}
           COVERAGE: ${{ needs.coverage.result }}
+          S3: ${{ needs.s3.result }}
         run: |
           echo "changes: $CHANGES (php: $PHP)"
           echo "test: $TEST"
           echo "coverage: $COVERAGE"
+          echo "s3: $S3"
           test "$CHANGES" = success
           if [ "$PHP" = true ]; then expected=success; else expected=skipped; fi
-          for result in "$TEST" "$COVERAGE"; do
+          for result in "$TEST" "$COVERAGE" "$S3"; do
             test "$result" = "$expected"
           done
