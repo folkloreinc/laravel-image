@@ -18,6 +18,8 @@ composer analyse     # Larastan
 composer format      # Laravel Pint
 ```
 
+2.x needs PHP 8.3+ and the `ffi` extension (for the libvips driver, a development dependency). The image tests run on every installed driver: GD, Imagick, and libvips (`brew install vips`, or `apt-get install libvips-tools`). Set `IMAGE_TEST_DRIVER=gd`, `imagick` or `vips` to require one, as CI does.
+
 A pull request is merged only when CI is green.
 
 ## Releasing

@@ -16,7 +16,7 @@ Tracking issues: [#3](https://github.com/folkloreinc/laravel-image/issues/3) (ov
 
 - [x] `v2.x` branch, created from `v1.x`
 - [x] `docs/`: current state, architecture, decisions, this roadmap, upgrade guide
-- [ ] Tooling: PSR-4 from `src/`, PHP 8.3+, Laravel 12+, CI matrix (PHP 8.3 to 8.5 × Laravel 12 and 13 × GD, Imagick and libvips), Pint, Larastan at the maximum level without a baseline for new code
+- [x] Tooling: PSR-4 from `src/`, PHP 8.3+, Laravel 12+, CI matrix (PHP 8.3 to 8.5 × Laravel 12 and 13 × GD, Imagick and libvips), Pint, Larastan at the maximum level without a baseline for new code (#61)
 - [x] Remove the 1.x code from `v2.x`, including `js/`, the npm and Babel tooling and `js.yml` ([decisions/0008](decisions/0008-no-javascript-package.md)), and start the new layout; keep the 1.x URL fixtures and README examples for the compatibility tests (#62)
 - [ ] Release process: changelog, `v2.0.0-alpha.N` tags from green CI
 - [ ] Contracts and their tests: `ImageSpec` and its enums, `Preset`, `UrlCodec` (v2 syntax and `V1Codec`), `Signer`, `SourceResolver` and `ImageSource`, `Renderer` and `Operation`, `DerivativeStore`, `ImageVariant`, `Image::fake()`

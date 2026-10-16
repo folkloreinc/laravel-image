@@ -1,9 +1,11 @@
 includes:
     - vendor/larastan/larastan/extension.neon
+    - vendor/phpstan/phpstan-phpunit/extension.neon
 
 parameters:
-    level: 5
-    # src/ is empty until the 2.x code lands.
+    # 2.x has no baseline: fix an error instead of ignoring it.
+    level: max
     paths:
+        - src
         - tests
     tmpDir: build/phpstan
