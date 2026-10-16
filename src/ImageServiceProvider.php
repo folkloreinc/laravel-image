@@ -4,16 +4,22 @@ declare(strict_types=1);
 
 namespace Folklore\Image;
 
+use Folklore\Image\Contracts\DerivativeStore;
 use Folklore\Image\Contracts\Renderer;
 use Folklore\Image\Contracts\UrlCodec;
 use Folklore\Image\Rendering\InterventionRenderer;
 use Folklore\Image\Sources\DiskResolver;
+use Folklore\Image\Storage\DiskStore;
+use Folklore\Image\Storage\RenderLock;
 use Folklore\Image\Urls\V2Codec;
 use Illuminate\Config\Repository as Config;
+use Illuminate\Contracts\Cache\Factory as CacheFactory;
+use Illuminate\Contracts\Cache\LockProvider;
 use Illuminate\Contracts\Cache\Repository as Cache;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Contracts\Filesystem\Factory as FilesystemFactory;
 use Illuminate\Support\ServiceProvider;
+use InvalidArgumentException;
 
 final class ImageServiceProvider extends ServiceProvider
 {
@@ -25,6 +31,8 @@ final class ImageServiceProvider extends ServiceProvider
         $this->app->singleton(UrlCodec::class, V2Codec::class);
         $this->app->singleton(Renderer::class, fn (Container $app) => self::renderer($app));
         $this->app->singleton(DiskResolver::class, fn (Container $app) => self::diskResolver($app));
+        $this->app->singleton(DerivativeStore::class, fn (Container $app) => self::derivativeStore($app));
+        $this->app->singleton(RenderLock::class, fn (Container $app) => self::renderLock($app));
     }
 
     public function boot(): void
@@ -48,6 +56,48 @@ final class ImageServiceProvider extends ServiceProvider
             $config->string('image.resolvers.disk.disk', 'public'),
             $config->string('image.resolvers.disk.root', ''),
             $config->integer('image.resolvers.disk.version_ttl', 300),
+        );
+    }
+
+    /**
+     * The store of `image.derivatives.store`: `disk`, or a class implementing DerivativeStore.
+     */
+    private static function derivativeStore(Container $app): DerivativeStore
+    {
+        $config = $app->make(Config::class);
+        $store = $config->string('image.derivatives.store', 'disk');
+
+        if ($store !== 'disk') {
+            $instance = $app->make($store);
+
+            return $instance instanceof DerivativeStore
+                ? $instance
+                : throw new InvalidArgumentException("The derivative store {$store} doesn't implement ".DerivativeStore::class.'.');
+        }
+
+        $disk = $config->string('image.derivatives.disk', 'public');
+
+        return new DiskStore(
+            $app->make(FilesystemFactory::class)->disk($disk),
+            $config->string('image.derivatives.path', 'derivatives'),
+            public: $config->get("filesystems.disks.{$disk}.visibility") === 'public',
+        );
+    }
+
+    private static function renderLock(Container $app): RenderLock
+    {
+        $config = $app->make(Config::class);
+        $name = $config->get('image.derivatives.lock.store');
+        $store = $app->make(CacheFactory::class)->store(is_string($name) ? $name : null)->getStore();
+
+        if (! $store instanceof LockProvider) {
+            throw new InvalidArgumentException('The cache store of image.derivatives.lock.store must support locks.');
+        }
+
+        return new RenderLock(
+            $store,
+            $config->integer('image.derivatives.lock.seconds', 60),
+            $config->integer('image.derivatives.lock.wait', 30),
         );
     }
 

@@ -21,6 +21,7 @@ Changes to 1.x after 1.1.0 are in the changelog of the [`v1.x`](https://github.c
 - A release workflow: pre-releases are tagged from a green commit of `v2.x` and published on GitHub and Packagist (#64).
 - `InterventionRenderer`, the default `Renderer`, on Intervention Image 4 with the `auto` driver (libvips, then Imagick, then GD; `image.renderer.driver`). It resizes with `fit` (cover around the focal point, contain, inside, fill) and `ratio`, applies the spec's or the source's transform, writes JPEG, PNG, GIF, WebP and AVIF with `image.quality` per format, never upscales by default, and raises `image.memory_limit` while rendering. It requires `intervention/image` 4.3.4 or later (#74).
 - The `disk` resolver, `DiskResolver`: images on any Laravel disk under an optional root (`image.resolvers.disk`), with path containment as in 1.1, a version from the file's modification time or its ETag on S3-compatible disks (cached for `version_ttl` seconds), and the upright dimensions, mime type and EXIF orientation read once per version and cached (#76).
+- `DiskStore`, the default `DerivativeStore`: derivatives on any Laravel disk under `image.derivatives.path`, at the paths of decision 0009, with long-lived caching headers and the disk's URL for redirects when the disk is public; and `RenderLock`, which renders each derivative once behind an atomic lock on its key (`image.derivatives.lock`) (#77).
 
 ## [1.1.0] - 2026-10-07
 
