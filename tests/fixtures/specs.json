@@ -1,0 +1,954 @@
+{
+    "description": "ImageSpec::fromArray(): each spec's canonical form (toArray()), its key() and its outputSize() for some source sizes. Two specs that render the same way have the same key.",
+    "valid": [
+        {
+            "description": "no options",
+            "options": {},
+            "canonical": {},
+            "key": "_.auto",
+            "sizes": [
+                {
+                    "source": [
+                        1200,
+                        800
+                    ],
+                    "upscale": false,
+                    "output": [
+                        1200,
+                        800
+                    ]
+                }
+            ]
+        },
+        {
+            "description": "a width",
+            "options": {
+                "width": 600
+            },
+            "canonical": {
+                "width": 600
+            },
+            "key": "w600.auto",
+            "sizes": [
+                {
+                    "source": [
+                        1200,
+                        800
+                    ],
+                    "upscale": false,
+                    "output": [
+                        600,
+                        400
+                    ]
+                },
+                {
+                    "source": [
+                        400,
+                        300
+                    ],
+                    "upscale": false,
+                    "output": [
+                        400,
+                        300
+                    ]
+                },
+                {
+                    "source": [
+                        400,
+                        300
+                    ],
+                    "upscale": true,
+                    "output": [
+                        600,
+                        450
+                    ]
+                }
+            ]
+        },
+        {
+            "description": "a height",
+            "options": {
+                "height": 200
+            },
+            "canonical": {
+                "height": 200
+            },
+            "key": "h200.auto",
+            "sizes": [
+                {
+                    "source": [
+                        1200,
+                        800
+                    ],
+                    "upscale": false,
+                    "output": [
+                        300,
+                        200
+                    ]
+                }
+            ]
+        },
+        {
+            "description": "a box, cover by default",
+            "options": {
+                "width": 400,
+                "height": 400
+            },
+            "canonical": {
+                "width": 400,
+                "height": 400
+            },
+            "key": "w400,h400.auto",
+            "sizes": [
+                {
+                    "source": [
+                        1200,
+                        800
+                    ],
+                    "upscale": false,
+                    "output": [
+                        400,
+                        400
+                    ]
+                },
+                {
+                    "source": [
+                        300,
+                        200
+                    ],
+                    "upscale": false,
+                    "output": [
+                        200,
+                        200
+                    ]
+                },
+                {
+                    "source": [
+                        300,
+                        200
+                    ],
+                    "upscale": true,
+                    "output": [
+                        400,
+                        400
+                    ]
+                }
+            ]
+        },
+        {
+            "description": "a box, inside",
+            "options": {
+                "width": 400,
+                "height": 400,
+                "fit": "inside"
+            },
+            "canonical": {
+                "width": 400,
+                "height": 400,
+                "fit": "inside"
+            },
+            "key": "w400,h400,fit-inside.auto",
+            "sizes": [
+                {
+                    "source": [
+                        1200,
+                        800
+                    ],
+                    "upscale": false,
+                    "output": [
+                        400,
+                        267
+                    ]
+                },
+                {
+                    "source": [
+                        300,
+                        200
+                    ],
+                    "upscale": false,
+                    "output": [
+                        300,
+                        200
+                    ]
+                },
+                {
+                    "source": [
+                        300,
+                        200
+                    ],
+                    "upscale": true,
+                    "output": [
+                        400,
+                        267
+                    ]
+                }
+            ]
+        },
+        {
+            "description": "a box, contain",
+            "options": {
+                "width": 400,
+                "height": 400,
+                "fit": "contain"
+            },
+            "canonical": {
+                "width": 400,
+                "height": 400,
+                "fit": "contain"
+            },
+            "key": "w400,h400,fit-contain.auto",
+            "sizes": [
+                {
+                    "source": [
+                        1200,
+                        800
+                    ],
+                    "upscale": false,
+                    "output": [
+                        400,
+                        400
+                    ]
+                },
+                {
+                    "source": [
+                        300,
+                        200
+                    ],
+                    "upscale": false,
+                    "output": [
+                        300,
+                        300
+                    ]
+                },
+                {
+                    "source": [
+                        300,
+                        200
+                    ],
+                    "upscale": true,
+                    "output": [
+                        400,
+                        400
+                    ]
+                }
+            ]
+        },
+        {
+            "description": "a box, fill",
+            "options": {
+                "width": 400,
+                "height": 100,
+                "fit": "fill"
+            },
+            "canonical": {
+                "width": 400,
+                "height": 100,
+                "fit": "fill"
+            },
+            "key": "w400,h100,fit-fill.auto",
+            "sizes": [
+                {
+                    "source": [
+                        1200,
+                        800
+                    ],
+                    "upscale": false,
+                    "output": [
+                        400,
+                        100
+                    ]
+                },
+                {
+                    "source": [
+                        200,
+                        200
+                    ],
+                    "upscale": false,
+                    "output": [
+                        200,
+                        50
+                    ]
+                }
+            ]
+        },
+        {
+            "description": "a width and a ratio",
+            "options": {
+                "width": 800,
+                "ratio": "16:9"
+            },
+            "canonical": {
+                "width": 800,
+                "ratio": "16:9"
+            },
+            "key": "w800,ar-16-9.auto",
+            "sizes": [
+                {
+                    "source": [
+                        1200,
+                        800
+                    ],
+                    "upscale": false,
+                    "output": [
+                        800,
+                        450
+                    ]
+                },
+                {
+                    "source": [
+                        400,
+                        400
+                    ],
+                    "upscale": false,
+                    "output": [
+                        400,
+                        225
+                    ]
+                }
+            ]
+        },
+        {
+            "description": "a height and a ratio",
+            "options": {
+                "height": 300,
+                "ratio": "4:5"
+            },
+            "canonical": {
+                "height": 300,
+                "ratio": "4:5"
+            },
+            "key": "h300,ar-4-5.auto",
+            "sizes": [
+                {
+                    "source": [
+                        1200,
+                        800
+                    ],
+                    "upscale": false,
+                    "output": [
+                        240,
+                        300
+                    ]
+                }
+            ]
+        },
+        {
+            "description": "a ratio alone crops the source",
+            "options": {
+                "ratio": "1:1"
+            },
+            "canonical": {
+                "ratio": "1:1"
+            },
+            "key": "ar-1-1.auto",
+            "sizes": [
+                {
+                    "source": [
+                        1200,
+                        800
+                    ],
+                    "upscale": false,
+                    "output": [
+                        800,
+                        800
+                    ]
+                },
+                {
+                    "source": [
+                        800,
+                        1200
+                    ],
+                    "upscale": false,
+                    "output": [
+                        800,
+                        800
+                    ]
+                }
+            ]
+        },
+        {
+            "description": "a ratio alone, contain, pads the source",
+            "options": {
+                "ratio": "1:1",
+                "fit": "contain"
+            },
+            "canonical": {
+                "ratio": "1:1",
+                "fit": "contain"
+            },
+            "key": "ar-1-1,fit-contain.auto",
+            "sizes": [
+                {
+                    "source": [
+                        1200,
+                        800
+                    ],
+                    "upscale": false,
+                    "output": [
+                        1200,
+                        1200
+                    ]
+                }
+            ]
+        },
+        {
+            "description": "a ratio is reduced",
+            "options": {
+                "ratio": "32/18"
+            },
+            "canonical": {
+                "ratio": "16:9"
+            },
+            "key": "ar-16-9.auto",
+            "sizes": [
+                {
+                    "source": [
+                        1200,
+                        800
+                    ],
+                    "upscale": false,
+                    "output": [
+                        1200,
+                        675
+                    ]
+                }
+            ]
+        },
+        {
+            "description": "the order of options doesn't matter",
+            "options": {
+                "quality": 80,
+                "format": "webp",
+                "width": 300
+            },
+            "canonical": {
+                "width": 300,
+                "format": "webp",
+                "quality": 80
+            },
+            "key": "w300,q80.webp",
+            "sizes": []
+        },
+        {
+            "description": "a fit without a box is dropped",
+            "options": {
+                "width": 300,
+                "fit": "contain"
+            },
+            "canonical": {
+                "width": 300
+            },
+            "key": "w300.auto",
+            "sizes": []
+        },
+        {
+            "description": "the default fit is dropped",
+            "options": {
+                "width": 300,
+                "height": 200,
+                "fit": "cover"
+            },
+            "canonical": {
+                "width": 300,
+                "height": 200
+            },
+            "key": "w300,h200.auto",
+            "sizes": []
+        },
+        {
+            "description": "a focal point is kept when cropping",
+            "options": {
+                "width": 300,
+                "height": 300,
+                "focus": [
+                    0.3,
+                    0.6
+                ]
+            },
+            "canonical": {
+                "width": 300,
+                "height": 300,
+                "focus": {
+                    "x": 0.3,
+                    "y": 0.6
+                }
+            },
+            "key": "w300,h300,fp-30-60.auto",
+            "sizes": []
+        },
+        {
+            "description": "a focal point is dropped when nothing is cropped",
+            "options": {
+                "width": 300,
+                "height": 300,
+                "fit": "inside",
+                "focus": [
+                    0.3,
+                    0.6
+                ]
+            },
+            "canonical": {
+                "width": 300,
+                "height": 300,
+                "fit": "inside"
+            },
+            "key": "w300,h300,fit-inside.auto",
+            "sizes": []
+        },
+        {
+            "description": "a focal point is dropped without a box",
+            "options": {
+                "width": 300,
+                "focus": {
+                    "x": 0.5,
+                    "y": 0.5
+                }
+            },
+            "canonical": {
+                "width": 300
+            },
+            "key": "w300.auto",
+            "sizes": []
+        },
+        {
+            "description": "a focal point has a precision of 0.01",
+            "options": {
+                "width": 300,
+                "height": 300,
+                "focus": [
+                    0.333,
+                    0.666
+                ]
+            },
+            "canonical": {
+                "width": 300,
+                "height": 300,
+                "focus": {
+                    "x": 0.33,
+                    "y": 0.67
+                }
+            },
+            "key": "w300,h300,fp-33-67.auto",
+            "sizes": []
+        },
+        {
+            "description": "operations are sorted by name",
+            "options": {
+                "operations": {
+                    "sharpen": [
+                        10
+                    ],
+                    "blur": [
+                        5
+                    ],
+                    "grayscale": []
+                }
+            },
+            "canonical": {
+                "operations": {
+                    "blur": [
+                        "5"
+                    ],
+                    "grayscale": [],
+                    "sharpen": [
+                        "10"
+                    ]
+                }
+            },
+            "key": "blur-5,grayscale,sharpen-10.auto",
+            "sizes": []
+        },
+        {
+            "description": "an operation by name only",
+            "options": {
+                "operations": [
+                    "grayscale"
+                ]
+            },
+            "canonical": {
+                "operations": {
+                    "grayscale": []
+                }
+            },
+            "key": "grayscale.auto",
+            "sizes": []
+        },
+        {
+            "description": "an operation with one argument",
+            "options": {
+                "operations": {
+                    "blur": 5
+                }
+            },
+            "canonical": {
+                "operations": {
+                    "blur": [
+                        "5"
+                    ]
+                }
+            },
+            "key": "blur-5.auto",
+            "sizes": []
+        },
+        {
+            "description": "a crop, in source pixels, then a resize",
+            "options": {
+                "crop": {
+                    "x": 100,
+                    "y": 50,
+                    "width": 600,
+                    "height": 400
+                },
+                "width": 300
+            },
+            "canonical": {
+                "crop": {
+                    "x": 100,
+                    "y": 50,
+                    "width": 600,
+                    "height": 400
+                },
+                "width": 300
+            },
+            "key": "c-100-50-600-400,w300.auto",
+            "sizes": [
+                {
+                    "source": [
+                        1200,
+                        800
+                    ],
+                    "upscale": false,
+                    "output": [
+                        300,
+                        200
+                    ]
+                }
+            ]
+        },
+        {
+            "description": "a crop is clamped to the source",
+            "options": {
+                "crop": {
+                    "x": 1000,
+                    "y": 0,
+                    "width": 500,
+                    "height": 500
+                }
+            },
+            "canonical": {
+                "crop": {
+                    "x": 1000,
+                    "y": 0,
+                    "width": 500,
+                    "height": 500
+                }
+            },
+            "key": "c-1000-0-500-500.auto",
+            "sizes": [
+                {
+                    "source": [
+                        1200,
+                        800
+                    ],
+                    "upscale": false,
+                    "output": [
+                        200,
+                        500
+                    ]
+                }
+            ]
+        },
+        {
+            "description": "a rotation swaps the dimensions",
+            "options": {
+                "rotate": 90,
+                "width": 400
+            },
+            "canonical": {
+                "rotate": 90,
+                "width": 400
+            },
+            "key": "r-90,w400.auto",
+            "sizes": [
+                {
+                    "source": [
+                        1200,
+                        800
+                    ],
+                    "upscale": false,
+                    "output": [
+                        400,
+                        600
+                    ]
+                }
+            ]
+        },
+        {
+            "description": "a negative rotation",
+            "options": {
+                "rotate": -90
+            },
+            "canonical": {
+                "rotate": 270
+            },
+            "key": "r-270.auto",
+            "sizes": [
+                {
+                    "source": [
+                        1200,
+                        800
+                    ],
+                    "upscale": false,
+                    "output": [
+                        800,
+                        1200
+                    ]
+                }
+            ]
+        },
+        {
+            "description": "a full turn is dropped",
+            "options": {
+                "rotate": 360,
+                "width": 100
+            },
+            "canonical": {
+                "width": 100
+            },
+            "key": "w100.auto",
+            "sizes": []
+        },
+        {
+            "description": "a flip",
+            "options": {
+                "flip": "both"
+            },
+            "canonical": {
+                "flip": "both"
+            },
+            "key": "flip-hv.auto",
+            "sizes": [
+                {
+                    "source": [
+                        1200,
+                        800
+                    ],
+                    "upscale": false,
+                    "output": [
+                        1200,
+                        800
+                    ]
+                }
+            ]
+        },
+        {
+            "description": "a crop, a rotation and a box",
+            "options": {
+                "crop": {
+                    "x": 0,
+                    "y": 0,
+                    "width": 600,
+                    "height": 800
+                },
+                "rotate": 90,
+                "width": 400,
+                "height": 200
+            },
+            "canonical": {
+                "crop": {
+                    "x": 0,
+                    "y": 0,
+                    "width": 600,
+                    "height": 800
+                },
+                "rotate": 90,
+                "width": 400,
+                "height": 200
+            },
+            "key": "c-0-0-600-800,r-90,w400,h200.auto",
+            "sizes": [
+                {
+                    "source": [
+                        1200,
+                        800
+                    ],
+                    "upscale": false,
+                    "output": [
+                        400,
+                        200
+                    ]
+                }
+            ]
+        },
+        {
+            "description": "a format and a quality",
+            "options": {
+                "format": "jpeg",
+                "quality": 82
+            },
+            "canonical": {
+                "format": "jpeg",
+                "quality": 82
+            },
+            "key": "q82.jpeg",
+            "sizes": []
+        }
+    ],
+    "invalid": [
+        {
+            "description": "a zero width",
+            "options": {
+                "width": 0
+            }
+        },
+        {
+            "description": "a width as a string",
+            "options": {
+                "width": "800"
+            }
+        },
+        {
+            "description": "a quality above 100",
+            "options": {
+                "quality": 101
+            }
+        },
+        {
+            "description": "a width, a height and a ratio",
+            "options": {
+                "width": 300,
+                "height": 300,
+                "ratio": "1:1"
+            }
+        },
+        {
+            "description": "an unknown option",
+            "options": {
+                "crop_position": "top"
+            }
+        },
+        {
+            "description": "an unknown fit",
+            "options": {
+                "width": 300,
+                "height": 300,
+                "fit": "stretch"
+            }
+        },
+        {
+            "description": "a ratio in another form",
+            "options": {
+                "ratio": "16x9"
+            }
+        },
+        {
+            "description": "a ratio of zero",
+            "options": {
+                "ratio": "0:9"
+            }
+        },
+        {
+            "description": "an operation name with digits",
+            "options": {
+                "operations": {
+                    "w800": []
+                }
+            }
+        },
+        {
+            "description": "a reserved operation name",
+            "options": {
+                "operations": {
+                    "fit": [
+                        "cover"
+                    ]
+                }
+            }
+        },
+        {
+            "description": "a one-letter operation name",
+            "options": {
+                "operations": {
+                    "b": []
+                }
+            }
+        },
+        {
+            "description": "an operation argument with a dot",
+            "options": {
+                "operations": {
+                    "gamma": [
+                        "1.5"
+                    ]
+                }
+            }
+        },
+        {
+            "description": "an operation argument with a dash",
+            "options": {
+                "operations": {
+                    "brightness": [
+                        "-10"
+                    ]
+                }
+            }
+        },
+        {
+            "description": "a rotation that isn't a multiple of 90",
+            "options": {
+                "rotate": 45
+            }
+        },
+        {
+            "description": "a focal point outside the image",
+            "options": {
+                "width": 300,
+                "height": 300,
+                "focus": [
+                    1.5,
+                    0
+                ]
+            }
+        },
+        {
+            "description": "a crop without a width",
+            "options": {
+                "crop": {
+                    "x": 0,
+                    "y": 0,
+                    "width": 0,
+                    "height": 100
+                }
+            }
+        },
+        {
+            "description": "an unknown flip",
+            "options": {
+                "flip": "diagonal"
+            }
+        },
+        {
+            "description": "an unknown format",
+            "options": {
+                "format": "bmp"
+            }
+        }
+    ],
+    "outside": [
+        {
+            "description": "a crop that starts outside the source",
+            "options": {
+                "crop": {
+                    "x": 1200,
+                    "y": 0,
+                    "width": 10,
+                    "height": 10
+                }
+            },
+            "source": [
+                1200,
+                800
+            ]
+        }
+    ]
+}

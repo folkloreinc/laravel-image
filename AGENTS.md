@@ -54,8 +54,9 @@ Something out of scope noticed along the way becomes a new issue, not part of th
 
 ```
 src/                  PHP package, PSR-4 `Folklore\\Image\\` (layout in docs/architecture.md)
-tests/                PHPUnit
-tests/fixtures/       JSON fixtures (urls/) and test images (images/)
+src/Contracts/        the public contracts; src/Testing/Contracts/ has the tests every implementation runs
+tests/                PHPUnit; tests/Doubles/ has test implementations of the contracts
+tests/fixtures/       JSON fixtures (urls/v1.json, urls/v2.json, specs.json, signatures.json) and test images (images/)
 docs/                 architecture, decisions, roadmap, upgrade guide
 ```
 
@@ -67,7 +68,8 @@ Every change ships with automated tests:
 
 - A bug fix adds a **regression test that fails without the fix** and passes with it.
 - A new option or feature is tested in both states (enabled and disabled, allowed and denied), through a real HTTP route when it affects serving images.
-- A change to URL encoding or decoding updates the URL fixtures in `tests/fixtures/urls/`.
+- A change to URL encoding or decoding updates the URL fixtures in `tests/fixtures/urls/`. A valid case of `v2.json` is never changed or removed once alpha 1 is tagged ([decisions/0009](docs/decisions/0009-v2-url-syntax.md)).
+- An implementation of a contract (a resolver, a renderer, a store, an operation) uses its trait from `src/Testing/Contracts/`.
 
 CI (GitHub Actions, `.github/workflows`) runs:
 

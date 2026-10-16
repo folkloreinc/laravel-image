@@ -1,0 +1,59 @@
+{
+    "description": "HMAC-SHA256 of the payload (UrlCodec::payload(), the path after the signature), truncated to 16 bytes, in base64url without padding. The first key signs; every key verifies.",
+    "keys": [
+        "current-signing-key",
+        "previous-signing-key"
+    ],
+    "signed": [
+        {
+            "payload": "w800,h450,fp-30-60,v-8c1f,exp-1767225600/disk/uploads/2026/photo.jpg.avif",
+            "signature": "6tasEwQ9sn9mUqQa56D_4A"
+        },
+        {
+            "payload": "card.3f9a1c,v-8c1f,exp-1767225600/media/med_01JAB3QX.webp",
+            "signature": "Ki9wNCYcyQGQJ0x2Jo6GnQ"
+        },
+        {
+            "payload": "_/disk/photo.jpg.webp",
+            "signature": "I42Rud6tkzhCVpp0-G48lQ"
+        },
+        {
+            "payload": "w300/disk/uploads/%C3%A9t%C3%A9%202026/photo%20%281%29.jpg.webp",
+            "signature": "HbEI721SCL5-6tui5RgmSg"
+        }
+    ],
+    "verified": [
+        {
+            "description": "signed with the previous key",
+            "payload": "w800,h450,fp-30-60,v-8c1f,exp-1767225600/disk/uploads/2026/photo.jpg.avif",
+            "signature": "je9rmrPjfnPSvUC7rkatAw"
+        }
+    ],
+    "refused": [
+        {
+            "description": "another payload",
+            "payload": "w801,h450,fp-30-60,v-8c1f,exp-1767225600/disk/uploads/2026/photo.jpg.avif",
+            "signature": "6tasEwQ9sn9mUqQa56D_4A"
+        },
+        {
+            "description": "a later expiry",
+            "payload": "card.3f9a1c,v-8c1f,exp-1767229200/media/med_01JAB3QX.webp",
+            "signature": "Ki9wNCYcyQGQJ0x2Jo6GnQ"
+        },
+        {
+            "description": "another key",
+            "payload": "_/disk/photo.jpg.webp",
+            "signature": "Gz3lrB9PyLIvRQzkoQrDZA"
+        },
+        {
+            "description": "the full hash, untruncated",
+            "payload": "_/disk/photo.jpg.webp",
+            "signature": "I42Rud6tkzhCVpp0-G48lbnygf8tJl5-sRauw_puXqY"
+        },
+        {
+            "description": "no signature",
+            "payload": "_/disk/photo.jpg.webp",
+            "signature": ""
+        }
+    ]
+}
