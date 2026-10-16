@@ -20,6 +20,7 @@ Changes to 1.x after 1.1.0 are in the changelog of the [`v1.x`](https://github.c
 - CI on PHP 8.3–8.5 × Laravel 12–13 × the GD, Imagick and libvips drivers, Larastan at the maximum level (#61).
 - A release workflow: pre-releases are tagged from a green commit of `v2.x` and published on GitHub and Packagist (#64).
 - `InterventionRenderer`, the default `Renderer`, on Intervention Image 4 with the `auto` driver (libvips, then Imagick, then GD; `image.renderer.driver`). It resizes with `fit` (cover around the focal point, contain, inside, fill) and `ratio`, applies the spec's or the source's transform, writes JPEG, PNG, GIF, WebP and AVIF with `image.quality` per format, never upscales by default, and raises `image.memory_limit` while rendering. It requires `intervention/image` 4.3.4 or later (#74).
+- Every derivative is upright from its EXIF orientation, converted to sRGB from its embedded profile (Imagick and libvips) and stripped of its metadata, and HEIC sources are read with Imagick (libheif) or libvips, as in 1.1 (#75).
 - The `disk` resolver, `DiskResolver`: images on any Laravel disk under an optional root (`image.resolvers.disk`), with path containment as in 1.1, a version from the file's modification time or its ETag on S3-compatible disks (cached for `version_ttl` seconds), and the upright dimensions, mime type and EXIF orientation read once per version and cached (#76).
 
 ## [1.1.0] - 2026-10-07

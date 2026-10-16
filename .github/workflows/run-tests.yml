@@ -79,7 +79,7 @@ jobs:
         if: matrix.driver == 'vips'
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends libvips-tools
+          sudo apt-get install -y --no-install-recommends libvips-tools libheif-plugin-libde265
           vips --version
 
       - uses: shivammathur/setup-php@v2
@@ -91,6 +91,15 @@ jobs:
           # be enough here, but CI runs what production needs.
           ini-values: ffi.enable=${{ matrix.driver == 'vips' && 'true' || 'preload' }}
           coverage: none
+
+      # HEIC sources need libheif's HEVC decoder, which Ubuntu ships as a plugin. The
+      # Imagick jobs check it works, so the HEIC tests can't silently skip there.
+      - name: Install the HEIC decoder
+        if: matrix.driver == 'imagick'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libheif-plugin-libde265
+          php -r 'new Imagick("tests/fixtures/images/heic/photo.heic"); echo "Imagick reads HEIC\n";'
 
       - name: Install dependencies
         run: |

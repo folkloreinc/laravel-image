@@ -92,7 +92,9 @@ final class InterventionRenderer implements Renderer
         }
 
         try {
-            $image = $this->decode($source);
+            // Decoding turns the image upright from its EXIF orientation, and the encoders strip
+            // the metadata. Colors are converted to sRGB before anything else.
+            $image = Srgb::convert($this->decode($source));
             $output = $spec->outputSize(new Size($image->width(), $image->height()), $this->upscale);
 
             if ($spec->transform !== null) {
