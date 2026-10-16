@@ -162,6 +162,21 @@ final readonly class ImageSpec
     }
 
     /**
+     * The same rendering at another width, as a preset at one of its responsive widths: a
+     * height scales with the width, and a ratio is kept, so the shape doesn't change.
+     *
+     * @throws InvalidImageSpec when the width is less than 1
+     */
+    public function atWidth(int $width): self
+    {
+        $height = $this->width !== null && $this->height !== null
+            ? max(1, (int) round($this->height * $width / $this->width))
+            : null;
+
+        return new self($this->transform, $width, $height, $this->fit, $this->ratio, $this->focus, $this->operations, $this->format, $this->quality);
+    }
+
+    /**
      * The canonical key: equal for specs that render the same way. It names derivatives on
      * disk, and uses the syntax of v2 URLs: `w800,h450,fit-contain.webp`, `_.auto`.
      */

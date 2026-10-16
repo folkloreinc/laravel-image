@@ -14,7 +14,7 @@ use Folklore\Image\Specs\ImageSpec;
 use Folklore\Image\Storage\DerivativeKey;
 use Folklore\Image\Storage\RenderLock;
 use Folklore\Image\Storage\StoredDerivative;
-use Folklore\Image\Tests\Doubles\InMemoryDerivativeStore;
+use Folklore\Image\Testing\InMemoryDerivativeStore;
 use Folklore\Image\Tests\TestCase;
 use Illuminate\Cache\ArrayStore;
 

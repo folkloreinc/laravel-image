@@ -12,7 +12,7 @@ use Folklore\Image\Specs\ImageSpec;
 use Folklore\Image\Storage\DerivativeKey;
 use Folklore\Image\Storage\DiskStore;
 use Folklore\Image\Testing\Contracts\DerivativeStoreContractTests;
-use Folklore\Image\Tests\Doubles\InMemoryDerivativeStore;
+use Folklore\Image\Testing\InMemoryDerivativeStore;
 use Folklore\Image\Tests\TestCase;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Contracts\Filesystem\Filesystem;
