@@ -6,6 +6,7 @@ namespace Folklore\Image\Tests\Feature\Storage;
 
 use Folklore\Image\Contracts\DerivativeStore;
 use Folklore\Image\Exceptions\RenderFailed;
+use Folklore\Image\Exceptions\RenderInProgress;
 use Folklore\Image\Rendering\RenderedImage;
 use Folklore\Image\Sources\ImageSource;
 use Folklore\Image\Specs\Format;
@@ -114,7 +115,7 @@ final class RenderLockTest extends TestCase
     {
         $this->locks->lock('folklore-image:render:'.hash('sha256', $this->key()->path()), 60)->get();
 
-        $this->expectException(RenderFailed::class);
+        $this->expectException(RenderInProgress::class);
 
         try {
             $this->lock(wait: 1)->remember(new InMemoryDerivativeStore, $this->key(), $this->render(...));

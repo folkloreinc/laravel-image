@@ -6,7 +6,7 @@ namespace Folklore\Image\Storage;
 
 use Closure;
 use Folklore\Image\Contracts\DerivativeStore;
-use Folklore\Image\Exceptions\RenderFailed;
+use Folklore\Image\Exceptions\RenderInProgress;
 use Folklore\Image\Rendering\RenderedImage;
 use Illuminate\Contracts\Cache\LockProvider;
 use Illuminate\Contracts\Cache\LockTimeoutException;
@@ -35,7 +35,7 @@ final readonly class RenderLock
      *
      * @param  Closure(): RenderedImage  $render
      *
-     * @throws RenderFailed when another request's render of the key didn't finish in time
+     * @throws RenderInProgress when another request's render of the key didn't finish in time
      */
     public function remember(DerivativeStore $store, DerivativeKey $key, Closure $render): StoredDerivative
     {
@@ -49,7 +49,7 @@ final readonly class RenderLock
         try {
             $lock->block($this->wait);
         } catch (LockTimeoutException $exception) {
-            throw new RenderFailed("Timed out waiting for another render of {$key->path()}.", previous: $exception);
+            throw new RenderInProgress("Timed out waiting for another render of {$key->path()}.", previous: $exception);
         }
 
         try {
