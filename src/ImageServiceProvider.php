@@ -8,6 +8,7 @@ use Folklore\Image\Contracts\DerivativeStore;
 use Folklore\Image\Contracts\Renderer;
 use Folklore\Image\Contracts\Signer;
 use Folklore\Image\Contracts\UrlCodec;
+use Folklore\Image\Rendering\Derivatives;
 use Folklore\Image\Rendering\InterventionRenderer;
 use Folklore\Image\Sources\DiskResolver;
 use Folklore\Image\Sources\SourceResolvers;
@@ -24,6 +25,8 @@ use Illuminate\Contracts\Config\Repository;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Contracts\Filesystem\Factory as FilesystemFactory;
 use Illuminate\Contracts\Foundation\CachesConfiguration;
+use Illuminate\Routing\Route;
+use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
 use InvalidArgumentException;
 
@@ -43,6 +46,7 @@ final class ImageServiceProvider extends ServiceProvider
         $this->app->singleton(UrlCodec::class, V2Codec::class);
         $this->app->singleton(Signer::class, fn (Container $app) => new HmacSigner($app->make(ImageConfig::class)->signerKeys()));
         $this->app->singleton(PresetRegistry::class, fn (Container $app) => new PresetRegistry($app, $app->make(ImageConfig::class)->presets()));
+        $this->app->singleton(Derivatives::class);
         $this->app->singleton(SourceResolvers::class, function (Container $app): SourceResolvers {
             $resolvers = new SourceResolvers($app, $app->make(ImageConfig::class)->resolvers());
             $resolvers->extend('disk', fn (Container $app) => $app->make(DiskResolver::class));
@@ -57,6 +61,9 @@ final class ImageServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        $app = $this->app;
+        Router::macro('image', fn (?string $prefix = null): Route => $app->make(ImageManager::class)->routes($prefix));
+
         if ($this->app->runningInConsole()) {
             $this->publishes([__DIR__.'/../config/image.php' => $this->app->configPath('image.php')], 'image-config');
         }
