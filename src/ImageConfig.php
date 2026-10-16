@@ -183,21 +183,6 @@ final readonly class ImageConfig
     }
 
     /**
-     * How long a render lock lasts, then how long a request waits for it, in seconds.
-     *
-     * @return array{int, int}
-     */
-    public function lockTimes(): array
-    {
-        $seconds = $this->config->get('image.derivatives.lock.seconds', 60);
-        $wait = $this->config->get('image.derivatives.lock.wait', 30);
-
-        return is_int($seconds) && $seconds > 0 && is_int($wait) && $wait >= 0
-            ? [$seconds, $wait]
-            : throw new InvalidImageConfig('image.derivatives.lock.seconds and wait are numbers of seconds.');
-    }
-
-    /**
      * @return array<string, mixed>
      */
     public function presets(): array

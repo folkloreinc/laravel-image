@@ -7,6 +7,7 @@ namespace Folklore\Image\Http;
 use Folklore\Image\Exceptions\InvalidImageSpec;
 use Folklore\Image\Exceptions\InvalidImageUrl;
 use Folklore\Image\Exceptions\RenderFailed;
+use Folklore\Image\Exceptions\RenderInProgress;
 use Folklore\Image\Exceptions\SourceNotFound;
 use Folklore\Image\ImageConfig;
 use Folklore\Image\ImageManager;
@@ -16,7 +17,6 @@ use Folklore\Image\Specs\ImageSpec;
 use Folklore\Image\Storage\DerivativeKey;
 use Folklore\Image\Storage\StoredDerivative;
 use Folklore\Image\Urls\ImageUrl;
-use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -66,10 +66,10 @@ final readonly class ImageController
             $derivative = $this->derivative($url, $source, $spec);
         } catch (SourceNotFound|InvalidImageSpec $exception) {
             throw new NotFoundHttpException($exception->getMessage(), $exception);
+        } catch (RenderInProgress $exception) {
+            throw new HttpException(503, 'The image is being rendered.', $exception, ['Retry-After' => '1']);
         } catch (RenderFailed $exception) {
             throw new HttpException(415, $exception->getMessage(), $exception);
-        } catch (LockTimeoutException $exception) {
-            throw new HttpException(503, 'The image is being rendered.', $exception, ['Retry-After' => '1']);
         }
 
         return $this->respond($request, $url, $source, $derivative, $now);

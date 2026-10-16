@@ -8,7 +8,6 @@ use Folklore\Image\Contracts\DerivativeStore;
 use Folklore\Image\Contracts\Signer;
 use Folklore\Image\Contracts\UrlCodec;
 use Folklore\Image\Facades\Image;
-use Folklore\Image\Rendering\Derivatives;
 use Folklore\Image\Rendering\RenderedImage;
 use Folklore\Image\Sources\ImageSource;
 use Folklore\Image\Specs\ArrayPreset;
@@ -247,7 +246,7 @@ final class ImageRouteTest extends ImageTestCase
         $spec = ArrayPreset::fromArray('card', self::CARD)->spec($this->photo)->withFormat(Format::Jpeg);
         $cache = $this->app?->make(CacheFactory::class)->store()->getStore();
         $this->assertInstanceOf(LockProvider::class, $cache);
-        $lock = $cache->lock(Derivatives::lockName(DerivativeKey::for($this->photo, $spec)), 60);
+        $lock = $cache->lock('folklore-image:render:'.hash('sha256', DerivativeKey::for($this->photo, $spec)->path()), 60);
         $this->assertTrue($lock->get());
 
         $response = $this->get(Image::for($this->photo)->preset('card')->url());
