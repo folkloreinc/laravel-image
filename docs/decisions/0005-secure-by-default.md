@@ -29,5 +29,5 @@ Rendering is expensive. A route that renders any request is an easy way to fill 
 ## Consequences
 
 - A fresh install exposes no image route.
-- Templates and APIs build URLs on the server, where they can be signed. The JS package no longer generates arbitrary URLs ([0008](0008-javascript-package.md)).
+- Templates and APIs build URLs on the server, where they can be signed. 2.x has no JavaScript URL generator ([0008](0008-no-javascript-package.md)).
 - The 1.x catch-all route is only registered by the legacy route, explicitly, during an upgrade ([0007](0007-compatibility-layer.md)).

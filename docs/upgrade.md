@@ -51,7 +51,7 @@
 | `upscale` `null` (crops upscale) | `upscale` `false` on 2.x routes; the legacy route keeps the 1.x behaviour |
 | `sources` (`local`, `filesystem`) | Resolvers (`disk`, `media`) ([decisions/0006](decisions/0006-sources-and-resolvers.md)) |
 | Configurable URL template | Fixed v2 format; the template is kept for 1.x URLs only ([decisions/0004](decisions/0004-specs-and-urls.md)) |
-| npm `laravel-image` 1.x generator | TypeScript package for variants and presets ([decisions/0008](decisions/0008-javascript-package.md)) |
+| npm `laravel-image` 1.x generator | No JavaScript package: the server returns URLs and variants ([decisions/0008](decisions/0008-no-javascript-package.md)) |
 
 ## What is removed
 

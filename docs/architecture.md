@@ -7,7 +7,7 @@ Status: accepted direction for 2.0. The examples show the intended API; names ca
 - **Easy:** a preset and a reference give a URL, a variant list or responsive markup in one line. Defaults are safe and good-looking.
 - **Powerful:** focal points, ratios, non-destructive edits, modern formats, placeholders, custom operations and resolvers.
 - **Robust:** canonical specs, versioned URLs, one render per variant, enforced limits, tested on every driver.
-- **Modern:** typed, immutable value objects and enums, Intervention Image 4 with libvips, TypeScript.
+- **Modern:** typed, immutable value objects and enums, Intervention Image 4 with libvips.
 - **Easy to upgrade:** 1.x URLs keep working, and a compatibility layer keeps the 1.x API until 3.0.
 
 ## Scope
@@ -134,7 +134,7 @@ Orientation, sRGB conversion and metadata stripping always apply, before the tra
 - A preset is a spec plus optional responsive `widths` and `formats`. It can also be a class (`implements Preset`) for presets that depend on the source.
 - Its **version** is a short hash of its definition, part of its URLs.
 - The package ships the channel presets above, commented in the published config.
-- `php artisan image:presets --json` exports the manifest for the JS package.
+- `php artisan image:presets --json` lists them with their versions, for tooling and docs.
 
 ### URLs and signatures
 
@@ -198,7 +198,7 @@ Image::assertRendered(fn (ImageSpec $spec) => $spec->width === 800);
 | Command | Purpose |
 |---|---|
 | `image:doctor` | Driver in use, formats read and written, FFI and libvips, disks, lock store, signing key |
-| `image:presets [--json]` | Presets and their versions; the manifest for the JS package |
+| `image:presets [--json]` | Presets and their versions |
 | `image:warm {reference} [--preset=*]` | Render presets ahead of time |
 | `image:clear {reference} [--stale]` | Delete a source's derivatives, or those of preset versions no longer configured |
 | `image:upgrade [--check]` | Upgrade a 1.x project ([decisions/0007](decisions/0007-compatibility-layer.md)) |
@@ -224,9 +224,9 @@ return [
 
 A published config only needs the keys it changes, as in 1.1.
 
-## JavaScript
+## Front ends
 
-See [decisions/0008](decisions/0008-javascript-package.md). The `laravel-image` npm package, in TypeScript, provides the variant types, `srcset()`, preset URLs for public sources from the manifest, and a v2 URL decoder. It shares the codec fixtures with PHP.
+There is no JavaScript package in 2.x ([decisions/0008](decisions/0008-no-javascript-package.md)). The server builds every URL, and front ends render the `ImageVariant` JSON (or a `srcset` string) they receive with a media or a page.
 
 ## Code layout
 
@@ -247,8 +247,7 @@ src/
   Testing/ImageFake.php
   Console/                     doctor, presets, warm, clear, upgrade
   Compat/                      1.x facade methods, helpers, config reader
-js/src/                        TypeScript package
-tests/fixtures/urls/           codec fixtures shared with Jest
+tests/fixtures/urls/           codec fixtures (JSON), including every 1.x URL format
 ```
 
 Namespace: `Folklore\Image`, PSR-4 from `src/`. The container binds `Folklore\Image\ImageManager` and the contracts; the generic `image` key is only bound by the compatibility layer.

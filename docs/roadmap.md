@@ -1,6 +1,6 @@
 # Roadmap of 2.0
 
-2.0 is built on the `v2.x` branch in slices, each released as a tagged pre-release (`v2.0.0-alpha.N`, then beta and RC) on Packagist and npm. The pilot project, Niche, requires `^2.0@alpha` and pulls each slice from its own needs. 1.x stays maintained on `v1.x` for fixes and security only; a phase 2 (v1.2) item of [#3](https://github.com/folkloreinc/laravel-image/issues/3) is done on `v1.x` only when an existing project needs it.
+2.0 is built on the `v2.x` branch in slices, each released as a tagged pre-release (`v2.0.0-alpha.N`, then beta and RC) on Packagist. The pilot project, Niche, requires `^2.0@alpha` and pulls each slice from its own needs. 1.x stays maintained on `v1.x` for fixes and security only; a phase 2 (v1.2) item of [#3](https://github.com/folkloreinc/laravel-image/issues/3) is done on `v1.x` only when an existing project needs it.
 
 Tracking issues: [#3](https://github.com/folkloreinc/laravel-image/issues/3) (overall plan) and [#59](https://github.com/folkloreinc/laravel-image/issues/59) (kickoff). Each item becomes a sub-issue when its work starts.
 
@@ -17,9 +17,8 @@ Tracking issues: [#3](https://github.com/folkloreinc/laravel-image/issues/3) (ov
 - [x] `v2.x` branch, created from `v1.x`
 - [x] `docs/`: current state, architecture, decisions, this roadmap, upgrade guide
 - [ ] Tooling: PSR-4 from `src/`, PHP 8.3+, Laravel 12+, CI matrix (PHP 8.3 to 8.5 × Laravel 12 and 13 × GD, Imagick and libvips), Pint, Larastan at the maximum level without a baseline for new code
-- [ ] JS tooling: TypeScript, Vitest, ESM build with types
-- [ ] Remove the 1.x code from `v2.x` and start the new layout; keep the 1.x URL fixtures and README examples for the compatibility tests
-- [ ] Release process: changelog, `v2.0.0-alpha.N` tags from green CI, npm `alpha` dist-tag
+- [ ] Remove the 1.x code from `v2.x`, including `js/`, the npm and Babel tooling and `js.yml` ([decisions/0008](decisions/0008-no-javascript-package.md)), and start the new layout; keep the 1.x URL fixtures and README examples for the compatibility tests
+- [ ] Release process: changelog, `v2.0.0-alpha.N` tags from green CI
 - [ ] Contracts and their tests: `ImageSpec` and its enums, `Preset`, `UrlCodec` (v2 syntax and `V1Codec`), `Signer`, `SourceResolver` and `ImageSource`, `Renderer` and `Operation`, `DerivativeStore`, `ImageVariant`, `Image::fake()`
 - [ ] Review the `SourceResolver` contract and the image metadata with `laravel-mediatheque` 2 ([laravel-mediatheque#23](https://github.com/folkloreinc/laravel-mediatheque/issues/23)), and the `transform` shape with Panneau 5 ([laravel-panneau#35](https://github.com/folkloreinc/laravel-panneau/issues/35))
 
@@ -51,7 +50,6 @@ What the pilot's creator MVP needs.
 - [ ] `Image::analyze()`: dimensions, dominant color, ThumbHash; placeholders on variants and in `<x-image>`
 - [ ] `Image::warm()`, `image:warm`, `image:clear`, `image:presets --json`
 - [ ] Events: `ImageRendered`, `ImageRenderFailed`, `DerivativesCleared`
-- [ ] TypeScript package: variant types, `srcset()`, preset URLs from the manifest, v2 decoder, shared fixtures
 - [ ] Docs: responsive images, transforms, testing, security, operations (drivers, libvips and FFI)
 
 ## Alpha 3: more operations

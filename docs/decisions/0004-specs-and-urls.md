@@ -31,7 +31,7 @@ In 1.x, a URL is a template (`{dirname}/{basename}{filters}.{extension}{format_e
 
   `{spec}` is a preset and its version (`card.3f9a`) or canonical options, followed by the source version (`v-…`) and, for signed URLs, the expiry (`exp-…`). `{signature}` is `_` for unsigned URLs.
 
-  The exact syntax is settled by the `UrlCodec` contract tests in phase 0, before alpha 1, and shared with the JS package as JSON fixtures.
+  The exact syntax is settled by the `UrlCodec` contract tests in phase 0, before alpha 1, as JSON fixtures.
 - **`UrlCodec`** is a contract with two implementations: `V2Codec` and `V1Codec`. `V1Codec` decodes every URL 1.x generates, with the project's 1.x `image.url` config, **for as long as 2.x and later versions exist**. It is used by the legacy route ([0007](0007-compatibility-layer.md)).
 - The prefix, the host and the route are configurable. The format itself is not.
 

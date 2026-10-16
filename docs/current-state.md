@@ -18,7 +18,7 @@ What it lacks is what applications rebuild around it, or can't do at all:
 
 - **`v1.x`:** PHP 8.2+, Laravel 9 to 13. Tagged `v1.1.0`. Most projects still require `v1.x-dev`.
 - **`main` and `develop`:** stale.
-- **npm `laravel-image` 1.x:** the JS URL generator.
+- **npm `laravel-image`:** the JS URL generator. The latest published version is 1.0.3 (2022); the 1.1 changes to `js/` were never published.
 
 ## How it works
 
@@ -48,7 +48,7 @@ Two conventions live outside the package:
 
 `laravel-folklore`'s `Entities\Image` and `Entities\ImageSize` rebuild, on top of `Image::url()`: the host, named sizes, WebP conversion, the output dimensions (computed from the original's metadata, without upscaling), the format-to-mime map, and skipping SVG and `original`. Its `ImageSizeResource` returns `{ id, url, width, height, mime }`.
 
-No known project imports the npm package. `laravel-mediatheque` 1.x makes its own thumbnails and doesn't use this package.
+No active project depends on the npm package: the two that declare it are frozen Laravel 5.7 sites on the legacy `folklore/image`, using 1.0.3's React component. `laravel-mediatheque` 1.x makes its own thumbnails and doesn't use this package.
 
 ## Known limits
 

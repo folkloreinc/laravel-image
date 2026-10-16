@@ -11,7 +11,7 @@ One file per decision. A decision is not edited once accepted: a later one repla
 | [0005](0005-secure-by-default.md) | Secure by default: opt-in routes, strict mode, signed URLs | Accepted |
 | [0006](0006-sources-and-resolvers.md) | Sources are resolved, and carry their metadata | Accepted |
 | [0007](0007-compatibility-layer.md) | A compatibility layer for 1.x until 3.0 | Accepted |
-| [0008](0008-javascript-package.md) | A smaller TypeScript package; the server builds the URLs | Accepted |
+| [0008](0008-no-javascript-package.md) | No JavaScript package in 2.x; the server builds the URLs | Accepted |
 
 Template:
 
