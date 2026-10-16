@@ -2,6 +2,7 @@
 
 # Keep development files out of the Composer archives.
 /.github                export-ignore
+/docs                   export-ignore
 /js                     export-ignore
 /tests                  export-ignore
 /.browserslistrc        export-ignore

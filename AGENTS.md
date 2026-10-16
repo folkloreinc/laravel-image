@@ -17,6 +17,8 @@ This applies even when the conversation with the maintainer happens in another l
 
 The plan lives in [#3](https://github.com/folkloreinc/laravel-image/issues/3): phase 1 stabilizes v1.1, phase 2 simplifies v1.2, and phase 3 modernizes v2. Open each piece of work as a **sub-issue of #3**, and update #3 when the scope changes.
 
+**Branch `v2.x`.** 2.0 is developed on `v2.x`, with Niche as the pilot project ([#59](https://github.com/folkloreinc/laravel-image/issues/59)). Read [`docs/`](docs/README.md) first: its architecture and decisions override the 1.x rules below wherever they differ. Pull requests for 2.0 target `v2.x`. Until the 2.0 tooling lands (see [`docs/roadmap.md`](docs/roadmap.md), phase 0), the rest of this file describes 1.x.
+
 ## Branches and releases
 
 - `v1.x` supports **PHP 8.2–8.5 and Laravel 9–13**: active client projects still run PHP 8.2 and Laravel 9. CI tests every supported combination; don't drop a version within `v1.x`.
