@@ -6,6 +6,10 @@ Version 2 is in development on the `v2.x` branch. Its pilot project is Niche. 1.
 
 | Document | Content |
 |---|---|
+| [guides/getting-started.md](guides/getting-started.md) | Install, a first preset, the route, `image:doctor`, testing |
+| [guides/presets.md](guides/presets.md) | Presets, their versions, responsive widths and formats, variants in APIs |
+| [guides/urls-and-signatures.md](guides/urls-and-signatures.md) | The URL syntax, host and prefix, signed and expiring URLs, private sources, strict mode, limits |
+| [guides/delivery-behind-a-cdn.md](guides/delivery-behind-a-cdn.md) | Caching headers, Cloudflare, stream or redirect, several servers |
 | [current-state.md](current-state.md) | Audit of 1.x: how it works, what projects use, known limits |
 | [architecture.md](architecture.md) | Design of 2.0: sources, specs, presets, URLs, rendering, storage, delivery, responsive images, testing |
 | [decisions/](decisions/) | One file per decision |

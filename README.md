@@ -26,6 +26,8 @@ Image::for($media)->variants('card'); // width, height and URL of each variant, 
 - Sources resolved from paths, disks or media ids, with their dimensions, focal point and non-destructive edits.
 - 1.x URLs keep working, and a compatibility layer keeps the 1.x API until 3.0.
 
+The guides of the alpha are in [`docs/guides/`](docs/guides/getting-started.md): [getting started](docs/guides/getting-started.md), [presets](docs/guides/presets.md), [URLs and signatures](docs/guides/urls-and-signatures.md) and [delivery behind a CDN](docs/guides/delivery-behind-a-cdn.md).
+
 The plan is in [`docs/`](docs/README.md): the [architecture](docs/architecture.md), the [decisions](docs/decisions/), the [roadmap](docs/roadmap.md) and the [upgrade guide](docs/upgrade.md). Progress is tracked in [#59](https://github.com/folkloreinc/laravel-image/issues/59).
 
 ## Contributing
