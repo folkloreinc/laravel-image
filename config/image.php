@@ -38,6 +38,30 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Derivatives
+    |--------------------------------------------------------------------------
+    |
+    | Where rendered images are kept: "disk" stores them on a Laravel disk,
+    | under a directory; the name of a class implementing DerivativeStore
+    | uses it instead. A derivative is rendered once: requests that miss it
+    | at the same time wait for a lock on it, from a cache store that every
+    | application server shares (null for the default store).
+    |
+    */
+
+    'derivatives' => [
+        'store' => 'disk',
+        'disk' => env('IMAGE_DERIVATIVES_DISK', 'public'),
+        'path' => 'derivatives',
+        'lock' => [
+            'store' => null,
+            'seconds' => 60,
+            'wait' => 30,
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Memory limit
     |--------------------------------------------------------------------------
     |
