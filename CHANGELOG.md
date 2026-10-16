@@ -8,6 +8,10 @@ All notable changes to `folklore/laravel-image` are documented in this file. The
 
 Changes to 1.x after 1.1.0 are in the changelog of the [`v1.x`](https://github.com/folkloreinc/laravel-image/blob/v1.x/CHANGELOG.md) branch.
 
+## [2.0.0-alpha.1] - 2026-10-16
+
+The first alpha of 2.0: presets and signed URLs for images on any Laravel disk, rendered once and served behind a CDN ([roadmap](docs/roadmap.md), alpha 1). Media ids resolve through the `media` resolver of `laravel-mediatheque` 2, which ships in its next alpha. Require it with `^2.0@alpha`.
+
 ### Breaking changes
 
 - Requires PHP 8.3+ and Laravel 12+ ([decision 0001](docs/decisions/0001-supported-versions.md), #61).
@@ -100,5 +104,6 @@ What sites will notice, and how to keep the previous behaviour where there is a 
 
 - Travis CI, Coveralls, `phpcs.xml` and the Prettier PHP plugin.
 
-[Unreleased]: https://github.com/folkloreinc/laravel-image/compare/v1.1.0...v2.x
+[Unreleased]: https://github.com/folkloreinc/laravel-image/compare/v2.0.0-alpha.1...v2.x
+[2.0.0-alpha.1]: https://github.com/folkloreinc/laravel-image/releases/tag/v2.0.0-alpha.1
 [1.1.0]: https://github.com/folkloreinc/laravel-image/releases/tag/v1.1.0
