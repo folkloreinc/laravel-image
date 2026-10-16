@@ -31,7 +31,7 @@ What the pilot's media library needs first, end to end: images stored on an S3-c
 - [ ] `V2Codec`, the host and the prefix
 - [ ] `disk` resolver; the `media` resolver ships in `laravel-mediatheque` 2's alpha 1
 - [x] Intervention renderer with the `auto` driver (vips, imagick, gd); resize with `fit` and `ratio`; formats and quality per format (#74)
-- [ ] Parity with 1.1 on every derivative: EXIF orientation, sRGB, metadata stripping, HEIC sources
+- [x] Parity with 1.1 on every derivative: EXIF orientation, sRGB, metadata stripping, HEIC sources (#75)
 - [ ] `DiskStore` on any disk, with a lock per variant
 - [ ] `Route::image()` (opt-in), strict mode, enforced limits, signed URLs with an expiry, private sources only through signed URLs
 - [ ] Caching headers: `immutable`, `ETag`, `304`; stream or redirect
