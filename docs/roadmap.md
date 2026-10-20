@@ -21,15 +21,17 @@ Tracking issues: [#3](https://github.com/folkloreinc/laravel-image/issues/3) (ov
 - [x] Release process: changelog, `v2.0.0-alpha.N` tags from green CI, on Packagist (#64)
 - [x] Contracts and their tests: `ImageSpec` and its enums, `Preset`, `UrlCodec` (v2 syntax, [decisions/0009](decisions/0009-v2-url-syntax.md); `V1Codec` in the beta, its fixtures are kept), `Signer`, `SourceResolver` and `ImageSource`, `Renderer` and `Operation`, `DerivativeStore`, `ImageVariant`, `Image::fake()` (#63)
 - [x] Review the `SourceResolver` contract with `laravel-mediatheque` 2 ([review](https://github.com/folkloreinc/laravel-image/issues/59#issuecomment-6219674071)); the points that block alpha 1 are settled in [decisions/0010](decisions/0010-media-resolver.md), the others before the alpha that needs them
-- [ ] Review the `transform` shape with Panneau 5 ([laravel-panneau#35](https://github.com/folkloreinc/laravel-panneau/issues/35)), before alpha 2
+- [x] Review the `transform` shape with Panneau 5 ([laravel-panneau#35](https://github.com/folkloreinc/laravel-panneau/issues/35)): moved to [#88](https://github.com/folkloreinc/laravel-image/issues/88), first item of alpha 2
 
 ## Alpha 1: presets and signed URLs behind a CDN
 
 What the pilot's media library needs first, end to end: images stored on an S3-compatible disk, resolved from a media id, served through a CDN.
 
+Released as [v2.0.0-alpha.1](https://github.com/folkloreinc/laravel-image/releases/tag/v2.0.0-alpha.1) on 2026-10-16 (#78–#87). The `media` resolver shipped in `laravel-mediatheque` [v2.0.0-alpha.2](https://github.com/folkloreinc/laravel-mediatheque/releases/tag/v2.0.0-alpha.2).
+
 - [x] `ImageSpec`, presets from the config with their version, and the `PendingImage` builder (`url()`, `variant()`, `variants()`, `render()`) (#70)
 - [x] `V2Codec`, the host and the prefix (#70)
-- [x] `disk` resolver; the `media` resolver ships in `laravel-mediatheque` 2's alpha 1 (#76)
+- [x] `disk` resolver; the `media` resolver ships in `laravel-mediatheque` 2's alpha 2 (#76)
 - [x] Intervention renderer with the `auto` driver (vips, imagick, gd); resize with `fit` and `ratio`; formats and quality per format (#74)
 - [x] Parity with 1.1 on every derivative: EXIF orientation, sRGB, metadata stripping, HEIC sources (#75)
 - [x] `DiskStore` on any disk, with a lock per variant (#77)
@@ -44,10 +46,11 @@ What the pilot's media library needs first, end to end: images stored on an S3-c
 
 What the pilot's creator MVP needs.
 
+- [ ] First, agree on the `transform`, the focal point and the image metadata with `laravel-mediatheque` 2 and Panneau 5, and record it in a decision ([#88](https://github.com/folkloreinc/laravel-image/issues/88))
 - [ ] Channel presets in the published config: Open Graph 1200×630, square, 4:5, 9:16, email-safe JPEG
 - [ ] Focal point (`focus`), `dpr`, `upscale` policy
-- [ ] Source `transform` (crop, rotate, flip) in Panneau 5's shape, on the media or per usage
-- [ ] With `laravel-mediatheque` 2: metadata names (orientation, ThumbHash, dominant color), the focal point and `transform` on the media, and clearing a media's derivatives when its visibility changes or its original is replaced ([decisions/0010](decisions/0010-media-resolver.md))
+- [ ] Source `transform` (crop, rotate, flip) in Panneau 5's shape (`flipX`, `flipY`), on the media or per usage; the focal point mapped from the upright original into the transformed image (#88)
+- [ ] With `laravel-mediatheque` 2: the `orientation` key, the focal point and `transform` on the media, and clearing a media's derivatives when its visibility changes or its original is replaced ([decisions/0010](decisions/0010-media-resolver.md), #88). The ThumbHash key is settled (`thumbhash`)
 - [ ] Responsive presets (`widths`, `formats`), `srcset()`, `<x-image>` with `<picture>`, AVIF and WebP
 - [ ] `Image::analyze()`: dimensions, dominant color, ThumbHash; placeholders on variants and in `<x-image>`
 - [ ] `Image::warm()`, `image:warm`, `image:clear`, `image:presets --json`
@@ -63,6 +66,8 @@ What the pilot's creator MVP needs.
 - [ ] SVG: served as is, or rasterized when the driver can
 
 ## Beta: upgrade path
+
+Every client site still requires `v1.x-dev` (2026-10-20). The upgrade guide starts from a tagged 1.x release, so sites move to `^1.1` first.
 
 - [ ] Compatibility layer ([decisions/0007](decisions/0007-compatibility-layer.md)): 1.x facade methods and helpers, array filters as presets, `image.sizes` and `app.image_url`, `Image::url()` returning 1.x URLs, `$router->image()`
 - [ ] `V1Codec` and `Route::imageLegacy()`, with the 1.x restrictions and `PublicPathStore`
