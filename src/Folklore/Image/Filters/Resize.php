@@ -39,7 +39,6 @@ class Resize implements FilterWithValueContract
         $thumbnail = $image->copy();
 
         $thumbnail->usePalette($image->palette());
-        $thumbnail->strip();
 
         if (! $crop) {
             $ratio = min($ratios);
@@ -83,7 +82,7 @@ class Resize implements FilterWithValueContract
         } else {
             if ($imageSize->getWidth() < $size->getWidth() && $imageSize->getHeight() < $size->getHeight()) {
                 if (! $upscale) {
-                    return $thumbnail;
+                    return $thumbnail->strip();
                 }
                 $imageSize = $imageSize->scale($ratio);
                 $thumbnail->resize($imageSize);
@@ -93,7 +92,10 @@ class Resize implements FilterWithValueContract
             }
         }
 
-        return $thumbnail;
+        // Strip after resizing: strip() applies the palette's ICC profile, which converts every
+        // pixel when the source embeds another profile (CMYK, Adobe RGB…), so it runs on the
+        // smaller image instead of the full-size original.
+        return $thumbnail->strip();
     }
 
     /**
