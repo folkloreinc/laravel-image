@@ -8,6 +8,10 @@ All notable changes to `folklore/laravel-image` are documented in this file. The
 
 - CI runs fewer jobs: pull requests skip the PHP or JS suite when no file it depends on changed, `prefer-lowest` runs once per Laravel version on its lowest PHP version (19 test jobs instead of 28), superseded pull request runs are cancelled, and Dependabot groups its updates (#57).
 
+### Fixed
+
+- The `resize` filter strips the image after resizing it instead of before, so the ICC conversion of `strip()` runs on the derivative instead of the full-size original. Large CMYK or wide-gamut originals render 3 to 4 times faster with Imagick, and no longer exceed the time limit of the image route (#91).
+
 ## [1.1.0] - 2026-10-07
 
 The first tagged release of `v1.x`: it stabilizes the package, without breaking existing image URLs or public APIs. Sites can require `folklore/laravel-image:^1.1` instead of `v1.x-dev`.
