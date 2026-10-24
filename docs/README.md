@@ -16,7 +16,7 @@ Version 2 is in development on the `v2.x` branch. Its pilot project is Niche. 1.
 | [roadmap.md](roadmap.md) | Phases and alpha slices |
 | [upgrade.md](upgrade.md) | Upgrading a project from 1.x (draft, filled as 2.0 lands) |
 
-Tracking issues: [#3](https://github.com/folkloreinc/laravel-image/issues/3) (overall plan) and [#59](https://github.com/folkloreinc/laravel-image/issues/59) (kickoff).
+Tracking issue: [#3](https://github.com/folkloreinc/laravel-image/issues/3), the index of [roadmap.md](roadmap.md) and of 1.x. The kickoff was [#59](https://github.com/folkloreinc/laravel-image/issues/59) (closed).
 
 Related work:
 

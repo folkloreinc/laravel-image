@@ -40,9 +40,9 @@ Changing a preset changes its version, so its URLs change: CDNs and browsers nev
 ## Preset URLs
 
 ```php
-Image::for($media)->preset('card')->url();                 // _/card.3f9a1c,v-8c1f02/…jpg
-Image::for($media)->preset('card')->width(400)->url();     // _/card.3f9a1c,w400,v-8c1f02/…jpg
-Image::for($media)->preset('card')->avif()->url();         // _/card.3f9a1c,v-8c1f02/…avif
+Image::for($media)->preset('card')->url();                 // _/card.3f9a1c,v-8c1f02ab/…jpg
+Image::for($media)->preset('card')->width(400)->url();     // _/card.3f9a1c,w400,v-8c1f02ab/…jpg
+Image::for($media)->preset('card')->avif()->url();         // _/card.3f9a1c,v-8c1f02ab/…avif
 ```
 
 A preset URL can only change two things: the width, to one of the preset's `widths`, and the format. A width keeps the preset's shape: `og` at a width of 600 is 600×315.
@@ -59,7 +59,7 @@ A variant is a rendering with its URL, its exact dimensions and its type, comput
 
 ```php
 $variant = Image::for($media)->preset('card')->webp()->variant();
-$variant->url;     // https://img.example.com/img/_/card.3f9a1c,v-8c1f02/media/med_01JAB3QX.webp
+$variant->url;     // https://img.example.com/img/_/card.3f9a1c,v-8c1f02ab/media/med_01JAB3QX.webp
 $variant->width;   // 800
 $variant->height;  // 450
 $variant->mime();  // image/webp
@@ -87,7 +87,7 @@ return ImageVariantResource::collection(Image::for($media)->variants('card'));
 ```
 
 ```json
-{ "preset": "card", "url": "https://img.example.com/img/_/card.3f9a1c,w400,v-8c1f02/media/med_01JAB3QX.webp", "width": 400, "height": 225, "mime": "image/webp" }
+{ "preset": "card", "url": "https://img.example.com/img/_/card.3f9a1c,w400,v-8c1f02ab/media/med_01JAB3QX.webp", "width": 400, "height": 225, "mime": "image/webp" }
 ```
 
 Front ends render these URLs as they are: there is no JavaScript URL builder in 2.x, so URLs can be signed and checked on the server.
