@@ -6,6 +6,8 @@
 
 URL-based image manipulation for Laravel, built on [Imagine](https://github.com/php-imagine/Imagine).
 
+> **This is the 1.x branch** (`v1.x`): fixes and security only. Require `folklore/laravel-image:^1.1`. 2.0, on Intervention Image with presets and signed URLs behind a CDN, is developed on [`v2.x`](https://github.com/folkloreinc/laravel-image/tree/v2.x), the default branch, and released as alphas. 1.x URLs keep working in 2.0. The plan of both lines is indexed in [#3](https://github.com/folkloreinc/laravel-image/issues/3).
+
 Describe the manipulation in the image URL, and the package generates the image on the first request. With the route cache on, the result is written next to the original, so your web server serves it as a static file from then on, without booting Laravel.
 
 ```
@@ -154,7 +156,7 @@ Paths that resolve outside a source root answer 404.
 
 ### JavaScript URL generator
 
-The npm package [`laravel-image`](https://www.npmjs.com/package/laravel-image) generates the same URLs in the browser:
+The npm package [`laravel-image`](https://www.npmjs.com/package/laravel-image) generates the same URLs in the browser. npm has its 1.0.3 release, from before 1.1; this branch's JS generator isn't published (no active project uses it, and 2.x has no JS package):
 
 ```js
 import { UrlGenerator } from 'laravel-image';
@@ -164,7 +166,7 @@ urlGenerator.make('/uploads/photo.jpg', 300, 300, { crop: true });
 // /uploads/photo-filters(300x300-crop).jpg
 ```
 
-It accepts the same options as `Image::url()`, including `format`, `pattern` and `host`. If you changed the URL format, pass your `image.url` config to the constructor.
+On this branch, it accepts the same options as `Image::url()`, including `format`, `pattern` and `host`; the published 1.0.3 doesn't have them (#44). If you changed the URL format, pass your `image.url` config to the constructor.
 
 ## Configuration
 
