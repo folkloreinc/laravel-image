@@ -4,6 +4,8 @@ All notable changes to `folklore/laravel-image` are documented in this file. The
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-10-24
+
 ### Changed
 
 - CI runs fewer jobs: pull requests skip the PHP or JS suite when no file it depends on changed, `prefer-lowest` runs once per Laravel version on its lowest PHP version (19 test jobs instead of 28), superseded pull request runs are cancelled, and Dependabot groups its updates (#57).
@@ -77,5 +79,6 @@ What sites will notice, and how to keep the previous behaviour where there is a 
 
 - Travis CI, Coveralls, `phpcs.xml` and the Prettier PHP plugin.
 
-[Unreleased]: https://github.com/folkloreinc/laravel-image/compare/v1.1.0...v1.x
+[Unreleased]: https://github.com/folkloreinc/laravel-image/compare/v1.1.1...v1.x
+[1.1.1]: https://github.com/folkloreinc/laravel-image/releases/tag/v1.1.1
 [1.1.0]: https://github.com/folkloreinc/laravel-image/releases/tag/v1.1.0

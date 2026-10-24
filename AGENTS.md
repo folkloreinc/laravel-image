@@ -15,7 +15,7 @@ This applies even when the conversation with the maintainer happens in another l
 
 ## Roadmap
 
-The plan lives in [#3](https://github.com/folkloreinc/laravel-image/issues/3): phase 1 stabilizes v1.1, phase 2 simplifies v1.2, and phase 3 modernizes v2. Open each piece of work as a **sub-issue of #3**, and update #3 when the scope changes.
+[#3](https://github.com/folkloreinc/laravel-image/issues/3) indexes the plan: phase 1 stabilized v1.1; there is no v1.2 (its items went to 2.0); 2.0 is developed on `v2.x`, the default branch, whose `docs/roadmap.md` is the plan. This branch takes fixes and security only. Open each piece of work as a **sub-issue of #3**.
 
 ## Branches and releases
 
