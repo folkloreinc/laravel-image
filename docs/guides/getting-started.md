@@ -57,7 +57,7 @@ use Illuminate\Support\Facades\Route;
 use Folklore\Image\Facades\Image;
 
 Image::for('uploads/photo.jpg')->preset('card')->url();
-// https://img.example.com/img/_/card.3f9a1c,v-8c1f02/disk/uploads/photo.jpg.jpg
+// https://img.example.com/img/_/card.3f9a1c,v-8c1f02ab/disk/uploads/photo.jpg.jpg
 
 Image::for('uploads/photo.jpg')->preset('card')->width(400)->webp()->url();
 Image::for($media)->variants('card'); // each width in each format, with their dimensions

@@ -2,7 +2,7 @@
 
 `folklore/laravel-image` is a **public** Laravel package that renders images on the fly from a URL: presets, crops, formats and responsive variants. It is published on Packagist. `folklore/laravel-folklore` depends on it, and so do many client sites through it, along with Micromag and Niche.
 
-**This is the `v2.x` branch**, where 2.0 is developed with Niche as the pilot project ([#59](https://github.com/folkloreinc/laravel-image/issues/59)). 1.x is maintained on `v1.x`, whose own `AGENTS.md` describes it.
+**This is the `v2.x` branch**, where 2.0 is developed with Niche as the pilot project. It is the default branch. The plan is [`docs/roadmap.md`](docs/roadmap.md), indexed by [#3](https://github.com/folkloreinc/laravel-image/issues/3). 1.x is maintained on `v1.x`, whose own `AGENTS.md` describes it.
 
 ## Language
 
@@ -17,26 +17,26 @@ This applies even when the conversation with the maintainer happens in another l
 
 ## Design and roadmap
 
-Read [`docs/`](docs/README.md) before changing anything: the [architecture](docs/architecture.md) and the [decisions](docs/decisions/) are the rules for 2.0, and the [roadmap](docs/roadmap.md) lists the phases and alpha slices.
+Read [`docs/`](docs/README.md) before changing anything: the [architecture](docs/architecture.md) and the [decisions](docs/decisions/) are the rules for 2.0, and the [roadmap](docs/roadmap.md) lists the slices, named by theme.
 
 - A decision is not edited once accepted: a new one replaces it and links to it.
-- Open each piece of work as a **sub-issue of #59** (phase 0) or of the alpha it belongs to, and keep the roadmap checkboxes up to date.
+- Open each piece of work as a **sub-issue of #3**, and keep the roadmap checkboxes up to date, with the release that ships each item.
 - Contracts are written with their tests before their implementation, and reviewed against their consumers (`laravel-mediatheque` 2, Panneau 5, `laravel-folklore`).
 
 ## Branches and releases
 
 - `v2.x` supports **PHP 8.3–8.5 and Laravel 12–13** ([decisions/0001](docs/decisions/0001-supported-versions.md)). CI tests every combination, on each image driver.
-- `v2.x` is the development branch of 2.0 until 2.0.0, then becomes the default branch. Composer aliases it as `2.x-dev`.
+- `v2.x` is the development branch of 2.0 and the default branch. Composer aliases it as `2.x-dev`.
 - `v1.x` stays maintained for fixes and security. A fix that applies to both lines goes to `v1.x` first.
-- 2.0 ships as pre-releases (`v2.0.0-alpha.N`, then beta and RC), one per roadmap slice, on Packagist only. A tag is only pushed on a commit of `v2.x` whose CI is green; the `release` workflow checks it and publishes the GitHub release from `CHANGELOG.md`. The steps are in [CONTRIBUTING.md](CONTRIBUTING.md#releasing).
+- 2.0 ships as pre-releases (`v2.0.0-alpha.N`, then beta and RC) when a part of the roadmap is ready, on Packagist only. A tag is only pushed on a commit of `v2.x` whose CI is green; the `release` workflow checks it and publishes the GitHub release from `CHANGELOG.md`. The steps are in [CONTRIBUTING.md](CONTRIBUTING.md#releasing).
 - Every change that users of an alpha will notice goes in the `[Unreleased]` section of `CHANGELOG.md`, in the same pull request, with breaking changes under **Breaking changes**.
-- `main` and `develop` are stale; don't base work on them.
+- Other branches aren't maintained. `develop` stays only while two old projects require it; don't base work on it.
 
 ## Pull requests
 
 Niche requires the 2.0 pre-releases, so **every change goes through a pull request; never push to `v2.x` directly.**
 
-1. Start from an issue (a sub-issue of #59, or a new issue). Read it and its comments first.
+1. Start from an issue (a sub-issue of #3, or a new issue). Read it and its comments first.
 2. Branch from an up-to-date `v2.x`, named `<type>/<issue>-<slug>`: `feature/12-named-presets`, `fix/15-svg-detection`, `docs/…`, `ci/…`, `refactor/…`.
 3. Commit as you go, then push the branch and open a pull request against `v2.x`, with `Closes #<issue>` (or `Part of #<issue>`) in its body. Write the title and body in English, and list the checks you ran.
 4. Merge only when CI is green and the pull request is reviewed. Prefer a merge commit, so formatting-only commits keep their hash in `.git-blame-ignore-revs`.
@@ -57,7 +57,7 @@ src/                  PHP package, PSR-4 `Folklore\\Image\\` (layout in docs/arc
 src/Contracts/        the public contracts; src/Testing/Contracts/ has the tests every implementation runs
 tests/                PHPUnit; tests/Doubles/ has test implementations of the contracts
 tests/fixtures/       JSON fixtures (urls/v1.json, urls/v2.json, specs.json, signatures.json) and test images (images/)
-docs/                 architecture, decisions, roadmap, upgrade guide
+docs/                 architecture, decisions, roadmap, upgrade guide; docs/guides/ has the user guides
 ```
 
 There is no JavaScript package in 2.x ([decisions/0008](docs/decisions/0008-no-javascript-package.md)).

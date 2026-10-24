@@ -1,6 +1,6 @@
 # Architecture of 2.0
 
-Status: accepted direction for 2.0. The examples show the intended API. The contracts are written (`src/Contracts/`, with their tests), and the v2 URL syntax is settled by [decisions/0009](decisions/0009-v2-url-syntax.md); the builder and the implementations land in the alphas ([roadmap.md](roadmap.md)).
+Status: accepted direction for 2.0. The examples show the intended API. 2.0.0-alpha.1 ships the contracts, the builder, the v2 URL syntax ([decisions/0009](decisions/0009-v2-url-syntax.md)), the `disk` resolver, the Intervention renderer, `DiskStore`, `Route::image()`, `ImageVariant` and `ImageVariantResource`, `Image::fake()` and `image:doctor`. The rest (focal point and `transform`, responsive images and `<x-image>`, operations, the compatibility layer) is planned in [roadmap.md](roadmap.md); the [code layout](#code-layout) says what exists.
 
 ## Goals
 
@@ -15,7 +15,7 @@ Status: accepted direction for 2.0. The examples show the intended API. The cont
 | Concern | Owner |
 |---|---|
 | Image renditions on the fly: presets, crops, formats, responsive variants, their URLs and their delivery | This package |
-| Analysis of an image (dimensions, dominant color, placeholder), on request | This package |
+| Analysis of an image (dimensions, placeholder), on request | This package. The dominant color comes from the media library |
 | Ingest, storage of originals, probing at ingest, visibility, media ids and references | `laravel-mediatheque` 2, which provides the `media` resolver |
 | Admin UI for crops and focal points | Panneau 5, which stores a `transform` this package applies |
 | Shared processing server (video, audio…) | Eclair. On-the-fly images stay here |
@@ -57,7 +57,7 @@ Image::for('uploads/photo.jpg')->width(800)->ratio('16:9')->focus(0.3, 0.6)->avi
 Image::for($media)->preset('og')->signed(expires: now()->addHour())->url();
 
 Image::for($media)->variants('card');      // Collection<ImageVariant>
-Image::for($media)->srcset('card');        // "…/card.3f9a1c,w400,v-8c1f/… 400w, … 800w, … 1200w"
+Image::for($media)->srcset('card');        // "…/card.3f9a1c,w400,v-8c1f02ab/… 400w, … 800w, … 1200w"
 Image::for($media)->preset('card')->variant(); // one ImageVariant
 
 Image::for('uploads/photo.jpg')->width(300)->render();          // RenderedImage, in code
@@ -79,10 +79,10 @@ It renders a `<picture>` with AVIF and WebP `<source>` elements, an `<img>` fall
 `ImageVariant` is a readonly value object, serializable to JSON:
 
 ```json
-{ "preset": "card", "url": "https://img.example.com/img/_/card.3f9a1c,v-8c1f/media/med_01JAB3….webp", "width": 800, "height": 450, "mime": "image/webp" }
+{ "preset": "card", "url": "https://img.example.com/img/_/card.3f9a1c,v-8c1f02ab/media/med_01JAB3….webp", "width": 800, "height": 450, "mime": "image/webp" }
 ```
 
-`ImageVariantResource` gives the same shape, and keeps the `{ id, url, width, height, mime }` shape of `laravel-folklore`'s `ImageSize` when asked (`->legacy()`). Panneau 5's media items expose `variants` as a map of named sizes built from it.
+`ImageVariantResource` gives the same shape. `laravel-folklore` 2 builds its own `ImageSize` entities on `variant()`, so this package has no `laravel-folklore` shape. Panneau 5's media items expose `variants` as a map of named sizes built from it.
 
 ## Concepts
 
@@ -158,7 +158,7 @@ Orientation, sRGB conversion and metadata stripping always apply, before the tra
 
 See [decisions/0003](decisions/0003-delivery.md).
 
-- `DerivativeStore`: `DiskStore` (any Laravel disk, the default), `PublicPathStore` (the 1.x static cache), `NullStore` (tests, previews). Derivatives are stored under `{resolver}/{source key}/{source version}/{spec}.{ext}` (`DerivativeKey`), so `image:clear {reference}` removes all of a source's derivatives.
+- `DerivativeStore`: `DiskStore` (any Laravel disk, the default), `PublicPathStore` (the 1.x static cache), `InMemoryDerivativeStore` (tests, previews, in `Testing/`). Derivatives are stored under `{resolver}/{source key}/{source version}/{spec}.{ext}` (`DerivativeKey`), so `image:clear {reference}` removes all of a source's derivatives.
 - Rendering takes a lock on the derivative key (`Cache::lock()`), so concurrent misses render once.
 - The controller streams the derivative, or redirects to the disk URL (`image.delivery.serve`), with long-lived caching headers, an `ETag` and `304` answers.
 - `Image::warm($reference, $presets)` queues the rendering of presets ahead of time; `image:warm` does it from the command line.
@@ -174,7 +174,7 @@ Route::image('img')->middleware('cache.headers'); // GET /img/{signature}/{spec}
 
 ### Analysis and placeholders
 
-`Image::analyze($reference)` returns the dimensions, the dominant color and a ThumbHash placeholder. A media library calls it at ingest and stores the result; variants and `<x-image>` use it when the source provides it.
+`Image::analyze($reference)` returns the dimensions and a ThumbHash placeholder. A media library calls it at ingest and stores the result; variants and `<x-image>` use it when the source provides it. The dominant color is the media library's (the first entry of its `palette`, from `laravel-mediatheque` or Eclair, [#88](https://github.com/folkloreinc/laravel-image/issues/88)).
 
 ### Events
 
@@ -232,24 +232,28 @@ There is no JavaScript package in 2.x ([decisions/0008](decisions/0008-no-javasc
 
 ## Code layout
 
+Existing in 2.0.0-alpha.1; *(planned)* marks what the next slices add.
+
 ```
 src/
   Facades/Image.php
   ImageManager.php             entry point behind the facade
+  ImageConfig.php              the config, read and validated
   PendingImage.php             fluent, immutable builder
+  ImageServiceProvider.php
   Contracts/                   SourceResolver, Renderer, Operation, DerivativeStore, UrlCodec, Signer, Preset
-  Exceptions/                  InvalidImageSpec, InvalidImageUrl, SourceNotFound, …
-  Sources/                     ImageSource, DiskResolver
-  Specs/                       ImageSpec, Transform, Crop, Fit, Flip, Format, Focus, Ratio, Size, ArrayPreset, PresetRegistry
-  Urls/                        ImageUrl, PresetReference, V2Codec, V1Codec, HmacSigner
-  Rendering/                   RenderedImage, InterventionRenderer, Operations/
-  Storage/                     DerivativeKey, StoredDerivative, DiskStore, PublicPathStore, NullStore
-  Http/                        ImageController, LegacyImageController, routes macros
-  Variants/                    ImageVariant, ImageVariantResource, Srcset
-  View/Components/Image.php    <x-image>
-  Testing/                     ImageFake, FakeRenderer, Contracts/ (contract test traits)
-  Console/                     doctor, presets, warm, clear, upgrade
-  Compat/                      1.x facade methods, helpers, config reader
+  Exceptions/                  InvalidImageSpec, InvalidImageUrl, SourceNotFound, RenderInProgress, …
+  Sources/                     ImageSource, DiskResolver, SourceResolvers
+  Specs/                       ImageSpec and its value objects, ArrayPreset, PresetRegistry, Limits
+  Urls/                        ImageUrl, PresetReference, SpecTokens, V2Codec, HmacSigner; V1Codec (planned, beta)
+  Rendering/                   RenderedImage, InterventionRenderer, Derivatives, Srgb; Operations/ (planned)
+  Storage/                     DerivativeKey, StoredDerivative, DiskStore, RenderLock; PublicPathStore (planned, beta)
+  Http/                        ImageController; LegacyImageController (planned, beta)
+  Variants/                    ImageVariant, ImageVariantResource; Srcset (planned)
+  View/Components/Image.php    <x-image> (planned)
+  Testing/                     ImageFake, InMemoryDerivativeStore, FakeRenderer, Contracts/ (contract test traits)
+  Console/                     doctor; presets, warm, clear (planned), upgrade (planned, beta)
+  Compat/                      1.x facade methods, helpers, config reader (planned, beta)
 tests/fixtures/urls/           codec fixtures (JSON): v2.json, and every 1.x URL format in v1.json
 tests/fixtures/                specs.json, signatures.json, images/
 ```

@@ -7,9 +7,9 @@ Image URLs are built on the server, in one spelling only, and signed when they n
 ```
 https://img.example.com/img/{signature}/{spec}/{resolver}/{key}.{extension}
 
-https://img.example.com/img/_/card.3f9a1c,v-8c1f02/media/med_01JAB3QX.webp
-https://img.example.com/img/_/card.3f9a1c,w400,v-8c1f02/media/med_01JAB3QX.avif
-https://img.example.com/img/6tasEwQ9sn9mUqQa56D_4A/w800,h450,v-5e0d9a,exp-1767225600/disk/uploads/2026/photo.jpg.avif
+https://img.example.com/img/_/card.3f9a1c,v-8c1f02ab/media/med_01JAB3QX.webp
+https://img.example.com/img/_/card.3f9a1c,w400,v-8c1f02ab/media/med_01JAB3QX.avif
+https://img.example.com/img/6tasEwQ9sn9mUqQa56D_4A/w800,h450,v-5e0d9a17,exp-1767225600/disk/uploads/2026/photo.jpg.avif
 ```
 
 - `{signature}`: `_` for unsigned URLs, or 22 characters of HMAC-SHA256 over the rest of the path.

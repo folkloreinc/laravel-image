@@ -49,7 +49,8 @@
         "ext-exif": "Turns photos upright from their EXIF orientation",
         "ext-imagick": "Required by the imagick driver",
         "league/flysystem-aws-s3-v3": "Originals and derivatives on S3-compatible disks",
-        "intervention/image-driver-vips": "The libvips driver, the fastest and the lightest on memory (needs libvips and ext-ffi with ffi.enable=true)"
+        "intervention/image-driver-vips": "The libvips driver, the fastest and the lightest on memory (needs libvips and ext-ffi with ffi.enable=true)",
+        "folklore/laravel-mediatheque": "The media resolver (2.x), for the images and video posters of a media library"
     },
     "autoload": {
         "psr-4": {
