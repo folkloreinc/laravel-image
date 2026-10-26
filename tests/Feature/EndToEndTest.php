@@ -39,7 +39,7 @@ final class EndToEndTest extends TestCase
 
     protected function defineRoutes($router): void
     {
-        Image::routes();
+        self::routeImage();
     }
 
     /**

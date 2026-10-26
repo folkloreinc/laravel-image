@@ -4,20 +4,18 @@ declare(strict_types=1);
 
 namespace Folklore\Image;
 
+use BadMethodCallException;
 use Folklore\Image\Contracts\Renderer;
 use Folklore\Image\Contracts\Signer;
 use Folklore\Image\Contracts\SourceResolver;
 use Folklore\Image\Contracts\UrlCodec;
 use Folklore\Image\Exceptions\SourceNotFound;
 use Folklore\Image\Exceptions\UnsupportedReference;
-use Folklore\Image\Http\ImageController;
 use Folklore\Image\Sources\SourceResolvers;
 use Folklore\Image\Specs\PresetRegistry;
 use Folklore\Image\Urls\ImageUrl;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Contracts\Routing\UrlGenerator;
-use Illuminate\Routing\Route;
-use Illuminate\Routing\Router;
 use Illuminate\Support\Carbon;
 
 /**
@@ -48,21 +46,17 @@ class ImageManager
     }
 
     /**
-     * Registers the image route, `GET /{prefix}/{path}`, named `image`. Nothing is served
-     * until a project calls it (docs/decisions/0005-secure-by-default.md), with its own
-     * middleware: `Route::image()->middleware(...)`. Same as Route::image().
+     * The 1.x image route, which comes back with the compatibility layer of the beta, deprecated
+     * (docs/decisions/0011-image-routes-is-the-1x-route.md). Until then it throws, so a 1.x
+     * project that updates doesn't get the 2.x route instead. The 2.x route is Route::image().
      *
-     * @param  string|null  $prefix  the path before image URLs; `image.url.prefix` by default, which
-     *                               is the prefix of the URLs the builder makes
+     * @param  array<string, mixed>|string  $config  the 1.x route options, or the path of a routes file
+     *
+     * @throws BadMethodCallException always, until the compatibility layer
      */
-    public function routes(?string $prefix = null): Route
+    public function routes(array|string $config = []): never
     {
-        $prefix = trim($prefix ?? $this->config()->prefix(), '/');
-
-        return $this->container->make(Router::class)
-            ->get(($prefix === '' ? '' : "{$prefix}/").'{path}', ImageController::class)
-            ->where('path', '.+')
-            ->name('image');
+        throw new BadMethodCallException('Image::routes() registers the 1.x image route, which comes back with the compatibility layer in 2.0 beta. Register the 2.x image route with Route::image().');
     }
 
     /**
