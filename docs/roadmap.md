@@ -46,7 +46,7 @@ Released as [v2.0.0-alpha.1](https://github.com/folkloreinc/laravel-image/releas
 - [x] `Image::routes()` mounts the 1.x route only; the v2 route is `Route::image()` ([#95](https://github.com/folkloreinc/laravel-image/issues/95), [decisions/0011](decisions/0011-image-routes-is-the-1x-route.md)). Breaking for whoever calls `Image::routes()` on alpha.1
 - [x] Serve a stored derivative of an earlier preset version, as decisions 0004 and 0005 say ([#96](https://github.com/folkloreinc/laravel-image/issues/96), [decisions/0012](decisions/0012-earlier-preset-versions.md))
 - [x] Convert to sRGB after resizing, as #92 did on 1.x ([#93](https://github.com/folkloreinc/laravel-image/issues/93))
-- [ ] Declare the `illuminate/*` components and Flysystem the code uses ([#94](https://github.com/folkloreinc/laravel-image/issues/94))
+- [x] Declare the `illuminate/*` components and Flysystem the code uses ([#94](https://github.com/folkloreinc/laravel-image/issues/94))
 
 ## Channels, editing and responsive images
 
