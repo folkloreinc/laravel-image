@@ -8,6 +8,10 @@ All notable changes to `folklore/laravel-image` are documented in this file. The
 
 Changes to 1.x after 1.1.0 are in the changelog of the [`v1.x`](https://github.com/folkloreinc/laravel-image/blob/v1.x/CHANGELOG.md) branch.
 
+## [2.0.0-alpha.2] - 2026-10-26
+
+The second alpha: fixes to alpha 1, and the non-destructive edits of Panneau 5 ([roadmap](docs/roadmap.md)). A media's transform and focal point, which the `media` resolver of `laravel-mediatheque` 2 passes from its next alpha (folkloreinc/laravel-mediatheque#112), render on every driver and give new URLs when they change; a use of the media can have its own edits, over the media's or instead of them. Require it with `^2.0@alpha`.
+
 ### Breaking changes
 
 - `Image::routes()` no longer registers the 2.x route: register it with `Route::image()`. `Image::routes()` is kept for the 1.x route, which comes back with the compatibility layer in the beta; until then it throws a `BadMethodCallException`, so a 1.x project that updates never gets the 2.x route in place of its own ([decision 0011](docs/decisions/0011-image-routes-is-the-1x-route.md), #95).
@@ -131,6 +135,7 @@ What sites will notice, and how to keep the previous behaviour where there is a 
 
 - Travis CI, Coveralls, `phpcs.xml` and the Prettier PHP plugin.
 
-[Unreleased]: https://github.com/folkloreinc/laravel-image/compare/v2.0.0-alpha.1...v2.x
+[Unreleased]: https://github.com/folkloreinc/laravel-image/compare/v2.0.0-alpha.2...v2.x
+[2.0.0-alpha.2]: https://github.com/folkloreinc/laravel-image/releases/tag/v2.0.0-alpha.2
 [2.0.0-alpha.1]: https://github.com/folkloreinc/laravel-image/releases/tag/v2.0.0-alpha.1
 [1.1.0]: https://github.com/folkloreinc/laravel-image/releases/tag/v1.1.0
