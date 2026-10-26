@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Folklore\Image\Specs;
 
 use Folklore\Image\Exceptions\InvalidImageSpec;
+use Folklore\Image\Sources\ImageSource;
 use Folklore\Image\Urls\SpecTokens;
 
 /**
@@ -36,7 +37,11 @@ final readonly class ImageSpec
     /** With a width or a height, gives the other one; alone, crops (or pads) the source to it. */
     public ?Ratio $ratio;
 
-    /** The point to keep when cropping, or null for the source's focal point (or the center). */
+    /**
+     * The point to keep when cropping, relative to the upright original like the source's
+     * focal point (the renderer maps it through the transform), or null for the source's focal
+     * point, or the center.
+     */
     public ?Focus $focus;
 
     /**
@@ -78,6 +83,9 @@ final readonly class ImageSpec
             throw new InvalidImageSpec("The quality is between 1 and 100, not {$quality}.");
         }
 
+        // The focal point of a transform (Panneau's shape) is the spec's focus.
+        $focus ??= $transform?->focalPoint;
+        $transform = $transform?->withoutFocalPoint();
         $this->transform = $transform === null || $transform->isEmpty() ? null : $transform;
         $this->width = $width;
         $this->height = $height;
@@ -134,7 +142,9 @@ final readonly class ImageSpec
     public function toArray(): array
     {
         return array_filter([
-            ...($this->transform?->toArray() ?? []),
+            'crop' => $this->transform?->crop?->toArray(),
+            'rotate' => $this->transform === null || $this->transform->rotate === 0 ? null : $this->transform->rotate,
+            'flip' => $this->transform?->flip?->value,
             'width' => $this->width,
             'height' => $this->height,
             'ratio' => $this->ratio?->toString(),
@@ -159,6 +169,17 @@ final readonly class ImageSpec
     public function withFormat(Format $format): self
     {
         return new self($this->transform, $this->width, $this->height, $this->fit, $this->ratio, $this->focus, $this->operations, $format, $this->quality);
+    }
+
+    /**
+     * The spec as the source is rendered with it: with the source's transform when the spec
+     * has none of its own.
+     */
+    public function forSource(ImageSource $source): self
+    {
+        return $this->transform !== null || $source->transform === null
+            ? $this
+            : new self($source->transform, $this->width, $this->height, $this->fit, $this->ratio, $this->focus, $this->operations, $this->format, $this->quality);
     }
 
     /**

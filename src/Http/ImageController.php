@@ -66,7 +66,7 @@ final readonly class ImageController
             $current = $preset === null || $preset->version() === $url->preset?->version;
             $spec = $current ? $this->spec($url, $source, $preset) : $this->earlierSpec($url);
             $size = $source->size();
-            $this->config->limits()->check($spec, $size === null ? null : $spec->outputSize($size, $this->config->upscale()));
+            $this->config->limits()->check($spec, $size === null ? null : $spec->forSource($source)->outputSize($size, $this->config->upscale()));
 
             $derivative = $current
                 ? $this->derivative($url, $source, $spec, $preset)
@@ -186,7 +186,7 @@ final readonly class ImageController
      */
     private function derivative(ImageUrl $url, ImageSource $source, ImageSpec $spec, ?Preset $preset): StoredDerivative
     {
-        if ($url->version === $source->version) {
+        if ($url->version === $source->urlVersion()) {
             return $this->derivatives->fetch($source, $spec, $preset);
         }
 

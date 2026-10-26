@@ -6,7 +6,11 @@ namespace Folklore\Image\Tests\Unit\Sources;
 
 use Folklore\Image\Exceptions\InvalidImageSource;
 use Folklore\Image\Sources\ImageSource;
+use Folklore\Image\Specs\Crop;
+use Folklore\Image\Specs\Flip;
+use Folklore\Image\Specs\Focus;
 use Folklore\Image\Specs\Size;
+use Folklore\Image\Specs\Transform;
 use Folklore\Image\Tests\TestCase;
 
 final class ImageSourceTest extends TestCase
@@ -47,5 +51,46 @@ final class ImageSourceTest extends TestCase
                 $this->addToAssertionCount(1);
             }
         }
+    }
+
+    public function test_the_focal_point_of_the_transform_is_the_source_s(): void
+    {
+        $source = new ImageSource('media', 'med_01JAB3QX', '8c1f02ab', transform: Transform::fromArray([
+            'crop' => ['x' => 0, 'y' => 0, 'width' => 400, 'height' => 300],
+            'flipX' => true,
+            'focalPoint' => ['x' => 0.3, 'y' => 0.6],
+        ]));
+
+        $this->assertEquals(new Focus(0.3, 0.6), $source->focalPoint);
+        $this->assertEquals(new Transform(new Crop(0, 0, 400, 300), flip: Flip::Horizontal), $source->transform);
+        $this->assertNull((new ImageSource('disk', 'photo.jpg', transform: new Transform(focalPoint: new Focus(0.3, 0.6))))->transform);
+        $this->assertEquals(new Focus(0.1, 0.2), (new ImageSource('disk', 'photo.jpg', focalPoint: new Focus(0.1, 0.2), transform: new Transform(focalPoint: new Focus(0.3, 0.6))))->focalPoint);
+    }
+
+    public function test_the_url_version_changes_with_the_edits(): void
+    {
+        $source = fn (?Transform $transform = null, ?Focus $focalPoint = null, ?string $version = '8c1f02ab') => new ImageSource('media', 'med_01JAB3QX', $version, transform: $transform, focalPoint: $focalPoint);
+        $crop = new Transform(new Crop(0, 0, 400, 300));
+
+        $this->assertSame('8c1f02ab', $source()->urlVersion());
+        $this->assertMatchesRegularExpression('/^8c1f02ab-[0-9a-f]{6}$/', (string) $source($crop)->urlVersion());
+
+        $versions = [
+            $source($crop)->urlVersion(),
+            $source(new Transform(new Crop(0, 0, 400, 301)))->urlVersion(),
+            $source(new Transform(rotate: 90))->urlVersion(),
+            $source(new Transform(flip: Flip::Vertical))->urlVersion(),
+            $source(focalPoint: new Focus(0.3, 0.6))->urlVersion(),
+            $source($crop, new Focus(0.3, 0.6))->urlVersion(),
+            $source($crop, new Focus(0.3, 0.61))->urlVersion(),
+        ];
+        $this->assertSame($versions, array_values(array_unique($versions)), 'Each edit gives another version.');
+        $this->assertSame($source($crop)->urlVersion(), $source(new Transform(new Crop(0, 0, 400, 300)))->urlVersion());
+        $this->assertSame($source($crop, new Focus(0.3, 0.6))->urlVersion(), $source(new Transform(new Crop(0, 0, 400, 300), focalPoint: new Focus(0.3, 0.6)))->urlVersion());
+
+        $this->assertNull($source($crop, version: null)->urlVersion());
+        $long = (string) $source($crop, version: str_repeat('a', 64))->urlVersion();
+        $this->assertTrue(ImageSource::isValidVersion($long));
+        $this->assertNotSame($long, $source($crop, version: str_repeat('a', 63).'b')->urlVersion());
     }
 }

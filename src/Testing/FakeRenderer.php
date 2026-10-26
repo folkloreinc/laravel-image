@@ -29,7 +29,7 @@ final class FakeRenderer implements Renderer
         $this->rendered[] = ['source' => $source, 'spec' => $spec];
 
         $sourceSize = $source->size() ?? new Size($spec->width ?? $spec->height ?? 1, $spec->height ?? $spec->width ?? 1);
-        $size = $spec->outputSize($sourceSize, $this->upscale);
+        $size = $spec->forSource($source)->outputSize($sourceSize, $this->upscale);
 
         return new RenderedImage('', $spec->format->resolve($source->mime), $size->width, $size->height);
     }

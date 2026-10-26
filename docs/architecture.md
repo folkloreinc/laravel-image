@@ -101,7 +101,9 @@ interface SourceResolver
 ```
 
 - `disk`: a Laravel disk and a path, with path containment. The URL key is the path; the version is the file's last modification time (or its ETag on S3-compatible disks), cached.
-- `media` (in `laravel-mediatheque` 2): `med_…`, `media://med_…` or a media model. The URL key is the `uid` (the media's image), or `{uid}/{handle}[/{index}]` for another of its files, such as a video's poster. The version is the first 8 hex characters of the file's SHA-256 checksum, and the disk is the file's mediatheque source ([decisions/0010](decisions/0010-media-resolver.md)). Dimensions, focal point, placeholder and visibility come from the media.
+- `media` (in `laravel-mediatheque` 2): `med_…`, `media://med_…` or a media model. The URL key is the `uid` (the media's image), or `{uid}/{handle}[/{index}]` for another of its files, such as a video's poster. The version is the first 8 hex characters of the file's SHA-256 checksum, and the disk is the file's mediatheque source ([decisions/0010](decisions/0010-media-resolver.md)). Dimensions, orientation, placeholder, visibility and the `transform` (focal point included) come from the media ([decisions/0013](decisions/0013-transform-focal-point-and-metadata.md)).
+
+URLs and derivatives use `ImageSource::urlVersion()`: the resolver's version, followed by a short hash of the source's transform and focal point when it has any, so editing a media gives new URLs ([decisions/0013](decisions/0013-transform-focal-point-and-metadata.md)). When `laravel-mediatheque` 2 is installed, a listener clears a media's derivatives when its visibility changes or its original is replaced.
 
 ### Specs
 
@@ -109,8 +111,8 @@ interface SourceResolver
 
 | Part | Options |
 |---|---|
-| Transform (applied first, in source pixels) | `crop` (x, y, width, height), `rotate` (0, 90, 180, 270), `flip` (horizontal, vertical). From the source's `transform` by default |
-| Resize | `width`, `height`, `fit` (`Fit` enum: `cover`, `contain`, `inside`, `fill`), `ratio`, `focus` (x, y from 0 to 1, from the source's focal point by default), `dpr`, `upscale` (from the config, never from a URL) |
+| Transform (applied first, in pixels of the upright original) | `crop` (x, y, width, height), `rotate` (0, 90, 180, 270, clockwise), `flip` (horizontal, vertical), in this order. From the source's `transform` by default, in Panneau 5's shape (`flipX`, `flipY`, `focalPoint`, [decisions/0013](decisions/0013-transform-focal-point-and-metadata.md)) |
+| Resize | `width`, `height`, `fit` (`Fit` enum: `cover`, `contain`, `inside`, `fill`), `ratio`, `focus` (x, y from 0 to 1, relative to the upright original and mapped through the transform; from the source's focal point by default), `dpr`, `upscale` (from the config, never from a URL) |
 | Operations | `blur`, `grayscale`, `sharpen`, `background`, … and custom ones, in a canonical order |
 | Output | `format` (`Format` enum: `jpeg`, `png`, `gif`, `webp`, `avif`, or `auto` from the source), `quality` (per format from the config by default) |
 
@@ -248,6 +250,7 @@ src/
   Urls/                        ImageUrl, PresetReference, SpecTokens, V2Codec, HmacSigner; V1Codec (planned, beta)
   Rendering/                   RenderedImage, InterventionRenderer, Derivatives, Srgb; Operations/ (planned)
   Storage/                     DerivativeKey, PresetSpecKey, StoredDerivative, DiskStore, RenderLock; PublicPathStore (planned, beta)
+  Listeners/                   ClearMediaDerivatives (with laravel-mediatheque 2)
   Http/                        ImageController, ImageRoute (Route::image()); LegacyImageController (planned, beta)
   Variants/                    ImageVariant, ImageVariantResource; Srcset (planned)
   View/Components/Image.php    <x-image> (planned)

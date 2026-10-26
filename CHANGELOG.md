@@ -12,9 +12,20 @@ Changes to 1.x after 1.1.0 are in the changelog of the [`v1.x`](https://github.c
 
 - `Image::routes()` no longer registers the 2.x route: register it with `Route::image()`. `Image::routes()` is kept for the 1.x route, which comes back with the compatibility layer in the beta; until then it throws a `BadMethodCallException`, so a 1.x project that updates never gets the 2.x route in place of its own ([decision 0011](docs/decisions/0011-image-routes-is-the-1x-route.md), #95).
 - `DerivativeStore` has two new methods, `putPresetSpec()` and `presetSpec()`, which record the spec of each preset version rendered; `DerivativeStoreContractTests` tests them. Stores written for alpha.1 implement them ([decision 0012](docs/decisions/0012-earlier-preset-versions.md), #96).
+- A spec's `focus` (`fp-…` in URLs) is relative to the upright original, like a source's focal point, and follows the spec's transform; in alpha.1 it applied to the image after the transform. Only specs with both a transform and a focal point render differently ([decision 0013](docs/decisions/0013-transform-focal-point-and-metadata.md), #88).
+- The source version in URLs and derivative paths is `ImageSource::urlVersion()`: the resolver's version, followed by a hash of the source's transform and focal point when it has any (`v-8c1f02ab-3f9a1c`). Resolvers still give the version of the file (#88).
+
+### Added
+
+- `Transform::fromArray()` reads Panneau 5's `MediaTransform`: `flipX` and `flipY`, and the `focalPoint`, which a `Transform` now carries. `ImageSource` takes the focal point of its transform as its own, and `ImageSpec` as its `focus` ([decision 0013](docs/decisions/0013-transform-focal-point-and-metadata.md), #88).
+- The focal point is mapped from the upright original into the transformed image: it moves with the crop (and stays inside it), and turns with the rotation and the flips, on every driver (#88).
+- With `laravel-mediatheque` 2 installed, `ClearMediaDerivatives` clears a media's derivatives, and those of its posters and thumbnails, when its visibility changes (`MediaVisibilityChanged`) or its original is replaced (`OriginalReplaced`) (#88).
+- Decision 0013 records the transform shape, the metadata keys (`orientation` from 1 to 8, applied by this package; the dominant color is `palette[0]`) and the mediatheque's side of the contract (#88).
 
 ### Fixed
 
+- Editing a source's transform or focal point gives new URLs. In alpha.1, the URL of an edited media didn't change, so CDNs and browsers kept serving the previous rendering as `immutable` (#88).
+- Variants and limits take the source's transform into account: the dimensions of a cropped or rotated media's variants were those of its whole original (#88).
 - URLs of an earlier version of a preset are served from their stored derivatives, as decisions 0004 and 0005 say, instead of answering 404 once the preset changes: a page cached with them keeps its images. Nothing is rendered for an earlier version, and derivatives rendered by alpha.1 aren't found this way ([decision 0012](docs/decisions/0012-earlier-preset-versions.md), #96).
 
 ## [2.0.0-alpha.1] - 2026-10-16

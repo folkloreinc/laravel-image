@@ -61,13 +61,12 @@ final class ValuesTest extends TestCase
         $this->assertSame(['x' => 0.5, 'y' => 0.0], Focus::fromArray(['x' => 0.5, 'y' => 0])->toArray());
     }
 
-    public function test_transforms_read_panneau_s_shape(): void
+    public function test_transforms_read_the_spec_form(): void
     {
         $transform = Transform::fromArray([
             'crop' => ['x' => 10, 'y' => 20, 'width' => 300, 'height' => 200],
             'rotate' => -90,
             'flip' => 'vertical',
-            'focalPoint' => ['x' => 0.5, 'y' => 0.5],
         ]);
 
         $this->assertEquals(new Crop(10, 20, 300, 200), $transform->crop);

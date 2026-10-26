@@ -20,7 +20,7 @@ browser ──▶ CDN (img.example.com) ──miss──▶ Laravel /img/… ─
 
 `max-age` comes from `image.delivery.max_age`. Every image response has an `ETag`, `Content-Type`, `Content-Length` and `X-Content-Type-Options: nosniff`, and answers `304` when the `ETag` matches. Error responses keep Laravel's `no-cache` headers, so a CDN doesn't keep a 404 for an image that appears later.
 
-URLs change when a preset or an original changes ([presets.md](presets.md#versions)), so nothing needs purging.
+URLs change when a preset, an original or a media's edits change ([presets.md](presets.md#versions)), so nothing needs purging. Making a public media private is the exception: its public URLs stay in the CDN until they expire, unless you purge them.
 
 ## The route
 

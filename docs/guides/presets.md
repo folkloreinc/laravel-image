@@ -21,7 +21,8 @@ The options of a preset:
 | `width`, `height` | pixels |
 | `ratio` | `'16:9'`: with a width or a height, gives the other one; alone, crops the source to it |
 | `fit` | how the image fits a box of two dimensions: `cover` (the default: fills it and crops around the focal point), `contain` (fits inside and pads), `inside` (fits inside, no padding), `fill` (distorts) |
-| `crop`, `rotate`, `flip` | edits applied to the original first: `['x' => …, 'y' => …, 'width' => …, 'height' => …]`, `90`, `'horizontal'` |
+| `crop`, `rotate`, `flip` | edits applied to the upright original first, in this order: `['x' => …, 'y' => …, 'width' => …, 'height' => …]` in pixels, `90` (clockwise), `'horizontal'`. Without them, the source's own edits apply, such as a media's transform from Panneau 5 |
+| `focus` | the point to keep when `cover` crops, `['x' => 0.3, 'y' => 0.6]` from 0 to 1, relative to the upright original even when the image is cropped or rotated; the source's focal point by default, otherwise the center |
 | `format` | `auto` (the default: the source's format when browsers show it, otherwise JPEG), `jpeg`, `png`, `gif`, `webp`, `avif` |
 | `quality` | 1 to 100; the config's quality for the format by default |
 | `widths` | the responsive widths of the preset, for `variants()` and preset URLs |

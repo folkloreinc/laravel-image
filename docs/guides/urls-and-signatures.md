@@ -19,7 +19,7 @@ https://img.example.com/img/6tasEwQ9sn9mUqQa56D_4A/w800,h450,v-5e0d9a17,exp-1767
 
 The exact syntax is [decision 0009](../decisions/0009-v2-url-syntax.md). A path in any other spelling (options in another order, a default written out, `.jpeg`) answers 404, so one image has one URL and one cache entry.
 
-The source's version changes when the original changes, so a replaced image gets new URLs: caches never need purging.
+The source's version changes when the original changes, and when its edits change (a media's crop, rotation, flips or focal point, as a hash after the version: `v-8c1f02ab-3f9a1c`), so a replaced or edited image gets new URLs: caches never need purging.
 
 ## Host and prefix
 
