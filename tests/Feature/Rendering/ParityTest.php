@@ -25,7 +25,10 @@ use PHPUnit\Framework\Attributes\DataProvider;
  * - `metadata/gps.jpg` has EXIF with a camera make and GPS coordinates;
  * - `metadata/adobe-rgb.jpg` has an embedded Adobe RGB (1998) profile and four 40×40
  *   patches; the expected sRGB values come from LittleCMS (relative colorimetric);
- * - `heic/photo.heic` is a 120×80 iPhone photo.
+ * - `heic/photo.heic` is a 120×80 iPhone photo;
+ * - `metadata/adobe-rgb-large.jpg` is `adobe-rgb.jpg` enlarged 25 times (4000×1000), with its
+ *   profile; `metadata/cmyk-large.jpg` is a 4000×1000 CMYK JPEG without a profile, Adobe
+ *   RGB's two stored values on its left and right halves.
  */
 final class ParityTest extends TestCase
 {
@@ -128,6 +131,46 @@ final class ParityTest extends TestCase
             $this->assertFalse($this->hasIccProfile($image), $spec->key());
             foreach (self::ADOBE_RGB_PATCHES as [$x, $y, $stored, $srgb]) {
                 $this->assertColorAt($srgb, $image, $x, $y, 6, $spec->key());
+            }
+        }
+    }
+
+    /**
+     * Each driver's colors for `cmyk-large.jpg`, converted at full size before #93: Imagick
+     * converts without a profile, libvips with its own CMYK profile.
+     */
+    private const array CMYK_LARGE = [
+        'imagick' => [[180, 90, 60], [70, 109, 169]],
+        'vips' => [[180, 111, 80], [86, 108, 142]],
+    ];
+
+    /**
+     * Colors are converted once the image has its output size (#93): crops, resizes and padding
+     * of large sources keep the colors of a conversion at full size.
+     */
+    #[DataProvider('colorManagedDrivers')]
+    public function test_large_sources_keep_their_colors_when_converted_after_resizing(string $driver): void
+    {
+        // Specs, and where the left and right halves of the source are in their output.
+        $specs = [
+            [new ImageSpec(width: 400, format: Format::Png), [[150, 50], [250, 50]]],
+            [ImageSpec::fromArray(['width' => 400, 'height' => 400, 'fit' => 'contain', 'format' => 'png']), [[150, 200], [250, 200]]],
+            [ImageSpec::fromArray(['width' => 200, 'height' => 200, 'format' => 'jpeg', 'quality' => 100]), [[20, 100], [180, 100]]],
+            [ImageSpec::fromArray(['crop' => ['x' => 1000, 'y' => 0, 'width' => 2000, 'height' => 1000], 'width' => 400, 'format' => 'png']), [[100, 100], [300, 100]]],
+        ];
+        $sources = [
+            'metadata/adobe-rgb-large.jpg' => [array_column(self::ADOBE_RGB_PATCHES, 3), 6],
+            'metadata/cmyk-large.jpg' => [self::CMYK_LARGE[$driver], 4],
+        ];
+
+        foreach ($sources as $path => [$expected, $delta]) {
+            foreach ($specs as [$spec, $points]) {
+                $image = $this->render($driver, $path, $spec);
+
+                $this->assertFalse($this->hasIccProfile($image), "{$path} {$spec->key()}");
+                foreach ($points as $half => [$x, $y]) {
+                    $this->assertColorAt($expected[$half], $image, $x, $y, $delta, "{$path} {$spec->key()}");
+                }
             }
         }
     }

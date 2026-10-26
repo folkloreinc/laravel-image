@@ -117,7 +117,7 @@ URLs and derivatives use `ImageSource::urlVersion()`: the resolver's version, fo
 | Operations | `blur`, `grayscale`, `sharpen`, `background`, … and custom ones, in a canonical order |
 | Output | `format` (`Format` enum: `jpeg`, `png`, `gif`, `webp`, `avif`, or `auto` from the source), `quality` (per format from the config by default) |
 
-Orientation, sRGB conversion and metadata stripping always apply, before the transform.
+Orientation, sRGB conversion and metadata stripping always apply: the orientation before the transform, the sRGB conversion once the image has its output size (before padding and operations), so it never runs on every pixel of a large original.
 
 ### Presets
 

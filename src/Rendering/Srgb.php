@@ -30,11 +30,32 @@ final class Srgb
         Interpretation::CMC, Interpretation::XYZ, Interpretation::YXY, Interpretation::HSV, Interpretation::SCRGB,
     ];
 
-    public static function convert(ImageInterface $image): ImageInterface
+    /**
+     * The embedded color profile of an image, read before edits that can drop it, for
+     * convert(): with Imagick, Intervention's crop draws the image onto a new canvas, without
+     * its profile. Null for other drivers, which keep it.
+     */
+    public static function profile(ImageInterface $image): ?string
+    {
+        $native = $image->core()->native();
+        $icc = $native instanceof Imagick ? ($native->getImageProfiles('icc', true)['icc'] ?? null) : null;
+
+        return is_string($icc) && $icc !== '' ? $icc : null;
+    }
+
+    /**
+     * @param  string|null  $profile  the profile the image had before its edits (profile()), applied
+     *                                when the image lost its own
+     */
+    public static function convert(ImageInterface $image, ?string $profile = null): ImageInterface
     {
         $native = $image->core()->native();
 
         if ($native instanceof Imagick) {
+            if ($profile !== null && $native->getImageProfiles('icc', false) === []) {
+                // Without a profile, setting one assigns it, without converting the pixels.
+                $native->profileImage('icc', $profile);
+            }
             self::convertImagick($native);
         } elseif ($native instanceof VipsImage) {
             $image->core()->setNative(self::convertVips($native));
