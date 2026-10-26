@@ -56,7 +56,7 @@ final class ImageRouteTest extends ImageTestCase
 
     protected function defineRoutes($router): void
     {
-        Image::routes();
+        self::routeImage();
     }
 
     public function test_a_preset_url_is_rendered_once_and_cached_for_a_year(): void
@@ -285,8 +285,8 @@ final class ImageRouteTest extends ImageTestCase
 
     public function test_the_route_can_have_its_own_prefix_and_be_in_a_group(): void
     {
-        Image::routes('media');
-        Route::prefix('{locale}')->group(fn () => Image::routes('pictures'));
+        self::routeImage('media');
+        Route::prefix('{locale}')->group(fn () => self::routeImage('pictures'));
         $path = substr(Image::for($this->photo)->preset('card')->url(), strlen('https://img.test/img/'));
 
         $this->get("/media/{$path}")->assertOk();
@@ -295,7 +295,7 @@ final class ImageRouteTest extends ImageTestCase
 
     public function test_the_route_takes_the_projects_middleware(): void
     {
-        Image::routes('guarded')->middleware(DenyMiddleware::class);
+        self::routeImage('guarded')->middleware(DenyMiddleware::class);
         $path = substr(Image::for($this->photo)->preset('card')->url(), strlen('https://img.test/img/'));
 
         $this->get("/guarded/{$path}")->assertUnauthorized();

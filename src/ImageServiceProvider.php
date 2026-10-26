@@ -9,6 +9,7 @@ use Folklore\Image\Contracts\DerivativeStore;
 use Folklore\Image\Contracts\Renderer;
 use Folklore\Image\Contracts\Signer;
 use Folklore\Image\Contracts\UrlCodec;
+use Folklore\Image\Http\ImageRoute;
 use Folklore\Image\Rendering\Derivatives;
 use Folklore\Image\Rendering\InterventionRenderer;
 use Folklore\Image\Sources\DiskResolver;
@@ -63,7 +64,7 @@ final class ImageServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $app = $this->app;
-        Router::macro('image', fn (?string $prefix = null): Route => $app->make(ImageManager::class)->routes($prefix));
+        Router::macro('image', fn (?string $prefix = null): Route => ImageRoute::register($app->make(Router::class), $app->make(ImageConfig::class), $prefix));
 
         if ($this->app->runningInConsole()) {
             $this->commands([DoctorCommand::class]);

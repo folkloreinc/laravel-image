@@ -165,7 +165,7 @@ See [decisions/0003](decisions/0003-delivery.md).
 
 ### Security
 
-See [decisions/0005](decisions/0005-secure-by-default.md). Routes are opt-in, strict mode is on, limits are enforced, private sources need signed URLs that expire, and metadata is stripped.
+See [decisions/0005](decisions/0005-secure-by-default.md) and [0011](decisions/0011-image-routes-is-the-1x-route.md). Routes are opt-in (`Route::image()`; `Image::routes()` is the 1.x route), strict mode is on, limits are enforced, private sources need signed URLs that expire, and metadata is stripped.
 
 ```php
 // routes/web.php
@@ -248,7 +248,7 @@ src/
   Urls/                        ImageUrl, PresetReference, SpecTokens, V2Codec, HmacSigner; V1Codec (planned, beta)
   Rendering/                   RenderedImage, InterventionRenderer, Derivatives, Srgb; Operations/ (planned)
   Storage/                     DerivativeKey, StoredDerivative, DiskStore, RenderLock; PublicPathStore (planned, beta)
-  Http/                        ImageController; LegacyImageController (planned, beta)
+  Http/                        ImageController, ImageRoute (Route::image()); LegacyImageController (planned, beta)
   Variants/                    ImageVariant, ImageVariantResource; Srcset (planned)
   View/Components/Image.php    <x-image> (planned)
   Testing/                     ImageFake, InMemoryDerivativeStore, FakeRenderer, Contracts/ (contract test traits)

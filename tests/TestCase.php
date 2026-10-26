@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Folklore\Image\Tests;
 
 use Folklore\Image\ImageServiceProvider;
+use Illuminate\Routing\Route;
+use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
 use Intervention\Image\Drivers\Gd\Driver as GdDriver;
 use Intervention\Image\Drivers\Imagick\Driver as ImagickDriver;
@@ -34,6 +36,18 @@ abstract class TestCase extends BaseTestCase
         return [
             ImageServiceProvider::class,
         ];
+    }
+
+    /**
+     * Registers the image route as a project does, with `Route::image($prefix)`: through the
+     * Router macro, which static analysis can't see.
+     */
+    protected static function routeImage(?string $prefix = null): Route
+    {
+        $route = app(Router::class)->macroCall('image', [$prefix]);
+        assert($route instanceof Route);
+
+        return $route;
     }
 
     /**

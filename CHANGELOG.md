@@ -8,6 +8,10 @@ All notable changes to `folklore/laravel-image` are documented in this file. The
 
 Changes to 1.x after 1.1.0 are in the changelog of the [`v1.x`](https://github.com/folkloreinc/laravel-image/blob/v1.x/CHANGELOG.md) branch.
 
+### Breaking changes
+
+- `Image::routes()` no longer registers the 2.x route: register it with `Route::image()`. `Image::routes()` is kept for the 1.x route, which comes back with the compatibility layer in the beta; until then it throws a `BadMethodCallException`, so a 1.x project that updates never gets the 2.x route in place of its own ([decision 0011](docs/decisions/0011-image-routes-is-the-1x-route.md), #95).
+
 ## [2.0.0-alpha.1] - 2026-10-16
 
 The first alpha of 2.0: presets and signed URLs for images on any Laravel disk, rendered once and served behind a CDN ([roadmap](docs/roadmap.md), alpha 1). Media ids resolve through the `media` resolver of `laravel-mediatheque` 2, which ships in its next alpha. Require it with `^2.0@alpha`.
@@ -25,7 +29,7 @@ The first alpha of 2.0: presets and signed URLs for images on any Laravel disk, 
 - Private sources only get signed URLs that expire; in strict mode, a free spec only gets a signed URL; limits are checked when a URL is built (#70).
 - `ImageVariantResource`, the JSON shape of a variant in APIs: `{preset, url, width, height, mime}` (#70).
 - Resolvers are registered from the config or with `Image::resolver()`; `Image::useHost()` changes the host of the URLs of a request (#70).
-- `Route::image($prefix)` (or `Image::routes()`), opt-in, with the project's middleware. It serves the canonical v2 paths only; checks signatures and expiry (403); in strict mode, serves presets at their current version and widths, or signed URLs; enforces the limits; serves private sources only through signed URLs that expire; renders each derivative once under a lock (`image.derivatives.lock`); streams it, or redirects to the store's URL (`image.delivery.serve`) (#71).
+- `Route::image($prefix)`, opt-in, with the project's middleware (`Image::routes()` was an alias of it in this alpha only, #95). It serves the canonical v2 paths only; checks signatures and expiry (403); in strict mode, serves presets at their current version and widths, or signed URLs; enforces the limits; serves private sources only through signed URLs that expire; renders each derivative once under a lock (`image.derivatives.lock`); streams it, or redirects to the store's URL (`image.delivery.serve`) (#71).
 - The route renders through the renderer's `RenderLock` (one lock per derivative, `image.derivatives.lock`). A request that waits too long for another request's render answers `503` with `Retry-After`. An end-to-end test covers the disk resolver, the Intervention renderer, the disk store and the route on every driver (#71).
 - Caching headers: `Cache-Control: public, max-age=31536000, immutable` for versioned URLs, a `max-age` no longer than the remaining lifetime of URLs that expire, `private` for private sources, an `ETag` and `304` answers (#71).
 - Guides: [getting started](docs/guides/getting-started.md), [presets](docs/guides/presets.md), [URLs and signatures](docs/guides/urls-and-signatures.md), [delivery behind a CDN](docs/guides/delivery-behind-a-cdn.md) with Cloudflare (#73).

@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Facade;
 
 /**
  * @method static \Folklore\Image\PendingImage for(mixed $reference)
- * @method static \Illuminate\Routing\Route routes(?string $prefix = null)
+ * @method static never routes(array<string, mixed>|string $config = [])
  * @method static void resolver(\Folklore\Image\Contracts\SourceResolver $resolver)
  * @method static void useHost(?string $host)
  * @method static \Folklore\Image\Specs\PresetRegistry presets()
