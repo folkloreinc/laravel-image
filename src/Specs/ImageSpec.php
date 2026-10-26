@@ -227,9 +227,8 @@ final readonly class ImageSpec
      *
      * @param  bool  $upscale  whether the output can be larger than the source (from the config,
      *                         never from a URL). Without upscaling, a box keeps its ratio at the
-     *                         largest size the source allows.
-     *
-     * @throws InvalidImageSpec when the crop is outside the source
+     *                         largest size the source allows. A crop past the edges of the
+     *                         source is clamped to it, and one wholly outside leaves the whole source.
      */
     public function outputSize(Size $source, bool $upscale = false): Size
     {

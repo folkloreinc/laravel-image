@@ -203,18 +203,13 @@ final class InterventionRenderer implements Renderer
     }
 
     /**
-     * Crops (in pixels of the upright original), rotates clockwise, then flips.
+     * Crops (in pixels of the upright original, clamped to it), rotates clockwise, then flips.
      */
     private function transform(ImageInterface $image, Transform $transform): ImageInterface
     {
-        if ($transform->crop !== null) {
-            $crop = $transform->crop;
-            $image = $image->crop(
-                min($crop->width, $image->width() - $crop->x),
-                min($crop->height, $image->height() - $crop->y),
-                $crop->x,
-                $crop->y,
-            );
+        $crop = $transform->cropIn(new Size($image->width(), $image->height()));
+        if ($crop !== null) {
+            $image = $image->crop($crop->width, $crop->height, $crop->x, $crop->y);
         }
         if ($transform->rotate !== 0) {
             $image = $image->rotate($transform->rotate);

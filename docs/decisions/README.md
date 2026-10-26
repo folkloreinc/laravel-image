@@ -17,6 +17,7 @@ One file per decision. A decision is not edited once accepted: a later one repla
 | [0011](0011-image-routes-is-the-1x-route.md) | `Image::routes()` is the 1.x route; the 2.x route is `Route::image()` | Accepted |
 | [0012](0012-earlier-preset-versions.md) | Earlier preset versions are served from a record of their spec | Accepted |
 | [0013](0013-transform-focal-point-and-metadata.md) | The transform, the focal point and the metadata of a media | Accepted |
+| [0014](0014-per-usage-transforms.md) | A transform for one use, over the media's own or from the original | Accepted |
 
 Template:
 

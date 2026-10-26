@@ -13,12 +13,14 @@ use Folklore\Image\Exceptions\InvalidImageSpec;
 use Folklore\Image\Exceptions\InvalidImageUrl;
 use Folklore\Image\Rendering\RenderedImage;
 use Folklore\Image\Sources\ImageSource;
+use Folklore\Image\Specs\Crop;
 use Folklore\Image\Specs\Fit;
 use Folklore\Image\Specs\Format;
 use Folklore\Image\Specs\ImageSpec;
 use Folklore\Image\Specs\PresetRegistry;
 use Folklore\Image\Specs\Ratio;
 use Folklore\Image\Specs\Size;
+use Folklore\Image\Specs\Transform;
 use Folklore\Image\Urls\ImageUrl;
 use Folklore\Image\Variants\ImageVariant;
 use Illuminate\Support\Collection;
@@ -142,6 +144,59 @@ final class PendingImage implements Stringable
     public function avif(): self
     {
         return $this->format(Format::Avif);
+    }
+
+    /**
+     * The edits of the image for this use, such as the transform of an `image` field's value, in
+     * Panneau 5's shape (`crop`, `rotate`, `flipX`, `flipY`, `focalPoint`, `base`) or as a
+     * Transform (docs/decisions/0014-per-usage-transforms.md):
+     *
+     * - without `base`, or with `base: "original"`, its crop and focal point are relative to the
+     *   upright original, and it replaces the source's own transform;
+     * - with `base: "media"`, they are relative to the image the source's transform gives (the
+     *   media's version), and it applies over that transform: both make one transform.
+     *
+     * A crop past the edges of the image it applies to is clamped, and one wholly outside leaves
+     * the whole image. Other keys, such as `baseTransform`, are ignored. The edits are part of the
+     * spec, so each one has its own URL; it is a free spec, which strict mode only serves signed.
+     *
+     *     Image::for($media)->transform($value['transform'])->preset('card')->signed(false)->url();
+     *
+     * @param  array<mixed>|Transform  $transform
+     * @param  string|null  $base  `media` or `original`; an array's `base` key by default
+     *
+     * @throws InvalidImageSpec for an invalid transform or base, or when composing over the source's
+     *                          transform needs its dimensions and its resolver gives none
+     */
+    public function transform(array|Transform $transform, ?string $base = null): self
+    {
+        if (is_array($transform)) {
+            $given = $transform['base'] ?? null;
+            $base ??= is_string($given) || $given === null ? $given : throw new InvalidImageSpec('The base of a transform is media or original.');
+            $transform = Transform::fromArray($transform);
+        }
+
+        $own = $this->source->transform;
+        $size = $this->source->size();
+        $transform = match ($base) {
+            null, 'original' => $transform,
+            'media' => $own === null ? $transform : $transform->over($own, $size),
+            default => throw new InvalidImageSpec("The base of a transform is media or original, not {$base}."),
+        };
+
+        // A spec without edits renders with the source's own: a crop of the whole original
+        // keeps it untouched.
+        if ($own !== null && $transform->crop === null && $transform->rotate === 0 && $transform->flip === null) {
+            $size ?? throw new InvalidImageSpec('Replacing the transform of a source with none needs the dimensions of the original.');
+            $transform = new Transform(new Crop(0, 0, $size->width, $size->height), focalPoint: $transform->focalPoint);
+        }
+
+        return $this->withOptions([
+            'crop' => $transform->crop?->toArray(),
+            'rotate' => $transform->rotate === 0 ? null : $transform->rotate,
+            'flip' => $transform->flip?->value,
+            ...($transform->focalPoint === null ? [] : ['focus' => $transform->focalPoint->toArray()]),
+        ]);
     }
 
     /**

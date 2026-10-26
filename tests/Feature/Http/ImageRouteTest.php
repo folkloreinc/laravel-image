@@ -298,6 +298,19 @@ final class ImageRouteTest extends ImageTestCase
         $this->get($url)->assertNotFound();
     }
 
+    public function test_a_transform_for_one_use_is_served_signed_with_the_composed_edits(): void
+    {
+        $media = new ImageSource('array', 'media.jpg', '8c1f', width: 1200, height: 800, mime: 'image/jpeg', transform: new Transform(rotate: 90));
+        Image::resolver(new ArraySourceResolver($media));
+        $image = Image::for($media)->transform(['base' => 'media', 'crop' => ['x' => 0, 'y' => 0, 'width' => 800, 'height' => 450]])->preset('card');
+
+        $response = $this->get($image->signed(false)->url())->assertOk();
+
+        $this->assertCacheControl($response, ['public', 'max-age=31536000', 'immutable']);
+        Image::assertRendered(fn (ImageSpec $spec) => $spec->key() === 'c-0-0-450-800,r-90,w800,ar-16-9.jpeg');
+        $this->assertSame([800, 450], [$image->signed(false)->variant()->width, $image->signed(false)->variant()->height]);
+    }
+
     public function test_variants_have_the_size_of_the_source_s_transform(): void
     {
         $source = new ImageSource('array', 'edited.jpg', '8c1f', width: 1200, height: 800, mime: 'image/jpeg', transform: Transform::fromArray(['crop' => ['x' => 0, 'y' => 0, 'width' => 600, 'height' => 400], 'rotate' => 90]));

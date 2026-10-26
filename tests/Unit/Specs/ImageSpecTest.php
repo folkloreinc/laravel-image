@@ -84,7 +84,7 @@ final class ImageSpecTest extends TestCase
         ImageSpec::fromArray($case['options']);
     }
 
-    public function test_a_crop_outside_the_source_is_refused(): void
+    public function test_a_crop_outside_the_source_is_clamped_or_leaves_the_whole_source(): void
     {
         $fixtures = self::jsonFixture('specs.json');
         $this->assertIsArray($fixtures['outside']);
@@ -92,14 +92,13 @@ final class ImageSpecTest extends TestCase
         foreach ($fixtures['outside'] as $case) {
             $this->assertIsArray($case);
             $this->assertIsArray($case['options']);
+            $this->assertIsString($case['description']);
             [$width, $height] = $this->dimensions($case['source']);
+            [$outputWidth, $outputHeight] = $this->dimensions($case['output']);
 
-            try {
-                ImageSpec::fromArray($case['options'])->outputSize(new Size($width, $height));
-                $this->fail('The crop was accepted.');
-            } catch (InvalidImageSpec) {
-                $this->addToAssertionCount(1);
-            }
+            $output = ImageSpec::fromArray($case['options'])->outputSize(new Size($width, $height), upscale: true);
+
+            $this->assertSame([$outputWidth, $outputHeight], [$output->width, $output->height], $case['description']);
         }
     }
 

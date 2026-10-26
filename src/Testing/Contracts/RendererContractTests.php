@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Folklore\Image\Testing\Contracts;
 
 use Folklore\Image\Contracts\Renderer;
-use Folklore\Image\Exceptions\InvalidImageSpec;
 use Folklore\Image\Sources\ImageSource;
 use Folklore\Image\Specs\Crop;
 use Folklore\Image\Specs\Fit;
@@ -101,11 +100,22 @@ trait RendererContractTests
         }
     }
 
-    public function test_a_crop_outside_the_source_is_refused(): void
+    public function test_a_crop_past_the_edges_of_the_source_is_clamped_to_it(): void
     {
         $source = $this->landscapeSource();
-        $this->expectException(InvalidImageSpec::class);
+        [$width, $height] = [(int) $source->width, (int) $source->height];
 
-        $this->renderer()->render($source, new ImageSpec(transform: new Transform(crop: new Crop((int) $source->width, 0, 10, 10))));
+        $image = $this->renderer()->render($source, new ImageSpec(transform: new Transform(crop: new Crop($width - 100, $height - 50, 400, 400)), format: Format::Png));
+
+        $this->assertSame([100, 50], [$image->width, $image->height]);
+    }
+
+    public function test_a_crop_wholly_outside_the_source_leaves_the_whole_source(): void
+    {
+        $source = $this->landscapeSource();
+
+        $image = $this->renderer()->render($source, new ImageSpec(transform: new Transform(crop: new Crop((int) $source->width, 0, 10, 10)), format: Format::Png));
+
+        $this->assertSame([$source->width, $source->height], [$image->width, $image->height]);
     }
 }

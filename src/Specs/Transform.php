@@ -87,29 +87,90 @@ final readonly class Transform
     {
         [$x, $y] = [$focus->x, $focus->y];
 
-        if ($this->crop !== null) {
-            $width = max(1, min($this->crop->width, $source->width - $this->crop->x));
-            $height = max(1, min($this->crop->height, $source->height - $this->crop->y));
-            $x = max(0, min(1, ($x * $source->width - $this->crop->x) / $width));
-            $y = max(0, min(1, ($y * $source->height - $this->crop->y) / $height));
+        $crop = $this->cropIn($source);
+        if ($crop !== null) {
+            $x = max(0, min(1, ($x * $source->width - $crop->x) / $crop->width));
+            $y = max(0, min(1, ($y * $source->height - $crop->y) / $crop->height));
         }
 
-        // Clockwise: the top left corner goes to the top right at 90°.
-        [$x, $y] = match ($this->rotate) {
-            90 => [1 - $y, $x],
-            180 => [1 - $x, 1 - $y],
-            270 => [$y, 1 - $x],
-            default => [$x, $y],
-        };
-
-        if ($this->flip === Flip::Horizontal || $this->flip === Flip::Both) {
-            $x = 1 - $x;
-        }
-        if ($this->flip === Flip::Vertical || $this->flip === Flip::Both) {
-            $y = 1 - $y;
-        }
+        [$quarterTurns, $mirrored] = $this->turn();
+        [$x, $y] = self::turnPoint([$x, $y], $quarterTurns, $mirrored);
 
         return new Focus($x, $y);
+    }
+
+    /**
+     * The crop as it applies to a source of this size: clamped to the source when it goes past
+     * its edges, or null when there is none or it is wholly outside, which leaves the whole
+     * source rather than failing (an edit made on another version of the image).
+     */
+    public function cropIn(Size $source): ?Crop
+    {
+        if ($this->crop === null || $this->crop->x >= $source->width || $this->crop->y >= $source->height) {
+            return null;
+        }
+
+        return new Crop(
+            $this->crop->x,
+            $this->crop->y,
+            min($this->crop->width, $source->width - $this->crop->x),
+            min($this->crop->height, $source->height - $this->crop->y),
+        );
+    }
+
+    /**
+     * This transform, made over the image another one gives (Panneau 5's `base: "media"`), as
+     * one transform of the upright original of this size: its crop and focal point, relative to
+     * that image, are mapped back to the original, and the quarter turns and flips of both add
+     * up (docs/decisions/0014-per-usage-transforms.md).
+     *
+     * A crop past the edges of the base's image is clamped to it, and one wholly outside leaves
+     * the whole image. The focal point of the result is this transform's, mapped back, or none.
+     *
+     * @param  Size|null  $source  the size of the upright original; needed when the base turns,
+     *                             flips or crops the image and this transform has a crop or a
+     *                             focal point to map back
+     *
+     * @throws InvalidImageSpec when the size of the original is needed but unknown
+     */
+    public function over(self $base, ?Size $source): self
+    {
+        [$baseTurns, $baseMirrored] = $base->turn();
+        if ($base->crop === null && $baseTurns === 0 && ! $baseMirrored) {
+            return $this;
+        }
+
+        [$turns, $mirrored] = self::compose($base->turn(), $this->turn());
+        [$rotate, $flip] = self::fromTurn($turns, $mirrored);
+        if ($this->crop === null && $this->focalPoint === null) {
+            return new self($base->crop, $rotate, $flip);
+        }
+        if ($source === null) {
+            throw new InvalidImageSpec('A transform over the media\'s own needs the dimensions of the original.');
+        }
+
+        // The part of the original the base keeps, and the size of the image it gives.
+        $region = $base->cropIn($source) ?? new Crop(0, 0, $source->width, $source->height);
+        $image = $baseTurns % 2 === 0 ? new Size($region->width, $region->height) : new Size($region->height, $region->width);
+
+        $crop = $this->cropIn($image);
+        if ($crop !== null) {
+            $crop = self::unturnCrop($crop, $image, $baseTurns, $baseMirrored);
+            $crop = new Crop($region->x + $crop->x, $region->y + $crop->y, $crop->width, $crop->height);
+        } elseif ($base->crop !== null) {
+            $crop = $region;
+        }
+
+        $focalPoint = null;
+        if ($this->focalPoint !== null) {
+            [$x, $y] = self::unturnPoint([$this->focalPoint->x, $this->focalPoint->y], $baseTurns, $baseMirrored);
+            $focalPoint = new Focus(
+                max(0, min(1, ($region->x + $x * $region->width) / $source->width)),
+                max(0, min(1, ($region->y + $y * $region->height) / $source->height)),
+            );
+        }
+
+        return new self($crop, $rotate, $flip, $focalPoint);
     }
 
     public function isEmpty(): bool
@@ -118,24 +179,13 @@ final readonly class Transform
     }
 
     /**
-     * The size of a source of this size after the transform.
-     *
-     * @throws InvalidImageSpec when the crop is outside the source
+     * The size of a source of this size after the transform. A crop is clamped to the source,
+     * and one wholly outside leaves the whole source (cropIn()).
      */
     public function apply(Size $source): Size
     {
-        $size = $source;
-
-        if ($this->crop !== null) {
-            if ($this->crop->x >= $source->width || $this->crop->y >= $source->height) {
-                throw new InvalidImageSpec('The crop starts outside the source.');
-            }
-
-            $size = new Size(
-                min($this->crop->width, $source->width - $this->crop->x),
-                min($this->crop->height, $source->height - $this->crop->y),
-            );
-        }
+        $crop = $this->cropIn($source);
+        $size = $crop === null ? $source : new Size($crop->width, $crop->height);
 
         return $this->rotate % 180 === 0 ? $size : $size->swapped();
     }
@@ -181,5 +231,117 @@ final readonly class Transform
             $flipY => Flip::Vertical,
             default => null,
         };
+    }
+
+    /**
+     * The rotation and the flip as quarter turns clockwise, then an optional mirror left to
+     * right: a flip top to bottom is a half turn and a mirror, both flips a half turn.
+     *
+     * @return array{int, bool}
+     */
+    private function turn(): array
+    {
+        $turns = intdiv($this->rotate, 90);
+
+        return match ($this->flip) {
+            null => [$turns, false],
+            Flip::Horizontal => [$turns, true],
+            Flip::Vertical => [($turns + 2) % 4, true],
+            Flip::Both => [($turns + 2) % 4, false],
+        };
+    }
+
+    /**
+     * The rotation and the flip of quarter turns and a mirror, with a flip top to bottom
+     * rather than three quarter turns and a mirror.
+     *
+     * @return array{int, ?Flip}
+     */
+    private static function fromTurn(int $turns, bool $mirrored): array
+    {
+        return match (true) {
+            ! $mirrored => [$turns * 90, null],
+            $turns < 2 => [$turns * 90, Flip::Horizontal],
+            default => [($turns - 2) * 90, Flip::Vertical],
+        };
+    }
+
+    /**
+     * The quarter turns and mirror of applying one, then the other.
+     *
+     * @param  array{int, bool}  $first
+     * @param  array{int, bool}  $then
+     * @return array{int, bool}
+     */
+    private static function compose(array $first, array $then): array
+    {
+        // A point off every axis of symmetry tells the eight apart.
+        $point = self::turnPoint(self::turnPoint([0.1, 0.3], ...$first), ...$then);
+        foreach ([false, true] as $mirrored) {
+            foreach (range(0, 3) as $turns) {
+                if (self::turnPoint([0.1, 0.3], $turns, $mirrored) === $point) {
+                    return [$turns, $mirrored];
+                }
+            }
+        }
+
+        throw new \LogicException('Quarter turns and mirrors always compose.');
+    }
+
+    /**
+     * Where a point, from 0 to 1 on each axis, goes with quarter turns clockwise, then a mirror.
+     *
+     * @param  array{float, float}  $point
+     * @return array{float, float}
+     */
+    private static function turnPoint(array $point, int $turns, bool $mirrored): array
+    {
+        [$x, $y] = $point;
+        for ($turn = 0; $turn < $turns; $turn++) {
+            // Clockwise: the top left corner goes to the top right.
+            [$x, $y] = [round(1 - $y, 6), $x];
+        }
+
+        return $mirrored ? [round(1 - $x, 6), $y] : [$x, $y];
+    }
+
+    /**
+     * Where a point of the turned image was before the turns and the mirror.
+     *
+     * @param  array{float, float}  $point
+     * @return array{float, float}
+     */
+    private static function unturnPoint(array $point, int $turns, bool $mirrored): array
+    {
+        [$x, $y] = $point;
+        if ($mirrored) {
+            $x = 1 - $x;
+        }
+        for ($turn = 0; $turn < $turns; $turn++) {
+            [$x, $y] = [$y, 1 - $x];
+        }
+
+        return [$x, $y];
+    }
+
+    /**
+     * The rectangle a crop of the turned image covers in the image before the turns and the
+     * mirror, in whole pixels.
+     */
+    private static function unturnCrop(Crop $crop, Size $image, int $turns, bool $mirrored): Crop
+    {
+        [$x, $y, $width, $height] = [$crop->x, $crop->y, $crop->width, $crop->height];
+        [$imageWidth, $imageHeight] = [$image->width, $image->height];
+
+        if ($mirrored) {
+            $x = $imageWidth - $x - $width;
+        }
+        for ($turn = 0; $turn < $turns; $turn++) {
+            // A quarter turn clockwise takes (x, y) of a w×h image to (h - y, x) of an h×w one.
+            [$x, $y, $width, $height] = [$y, $imageWidth - $x - $width, $height, $width];
+            [$imageWidth, $imageHeight] = [$imageHeight, $imageWidth];
+        }
+
+        return new Crop($x, $y, $width, $height);
     }
 }

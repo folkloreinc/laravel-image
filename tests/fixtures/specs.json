@@ -936,7 +936,7 @@
     ],
     "outside": [
         {
-            "description": "a crop that starts outside the source",
+            "description": "a crop that starts outside the source leaves the whole source",
             "options": {
                 "crop": {
                     "x": 1200,
@@ -948,6 +948,49 @@
             "source": [
                 1200,
                 800
+            ],
+            "output": [
+                1200,
+                800
+            ]
+        },
+        {
+            "description": "a crop past the edges of the source is clamped to it",
+            "options": {
+                "crop": {
+                    "x": 1000,
+                    "y": 600,
+                    "width": 400,
+                    "height": 400
+                }
+            },
+            "source": [
+                1200,
+                800
+            ],
+            "output": [
+                200,
+                200
+            ]
+        },
+        {
+            "description": "a crop wholly outside, rotated, gives the whole source turned",
+            "options": {
+                "crop": {
+                    "x": 0,
+                    "y": 900,
+                    "width": 100,
+                    "height": 100
+                },
+                "rotate": 90
+            },
+            "source": [
+                1200,
+                800
+            ],
+            "output": [
+                800,
+                1200
             ]
         }
     ]
