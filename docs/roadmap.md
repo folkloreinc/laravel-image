@@ -41,7 +41,7 @@ Released as [v2.0.0-alpha.1](https://github.com/folkloreinc/laravel-image/releas
 - [x] `image:doctor` (#72)
 - [x] Docs: getting started, presets, URLs and signatures, delivery behind a CDN (#73)
 
-## Fixes to 2.0.0-alpha.1 (next)
+## Fixes to 2.0.0-alpha.1 (2.0.0-alpha.2)
 
 - [x] `Image::routes()` mounts the 1.x route only; the v2 route is `Route::image()` ([#95](https://github.com/folkloreinc/laravel-image/issues/95), [decisions/0011](decisions/0011-image-routes-is-the-1x-route.md)). Breaking for whoever calls `Image::routes()` on alpha.1
 - [x] Serve a stored derivative of an earlier preset version, as decisions 0004 and 0005 say ([#96](https://github.com/folkloreinc/laravel-image/issues/96), [decisions/0012](decisions/0012-earlier-preset-versions.md))
@@ -52,10 +52,10 @@ Released as [v2.0.0-alpha.1](https://github.com/folkloreinc/laravel-image/releas
 
 What the pilot's creator MVP needs.
 
-- [x] First, agree on the `transform`, the focal point and the image metadata with `laravel-mediatheque` 2 and Panneau 5, and record it in a decision ([#88](https://github.com/folkloreinc/laravel-image/issues/88), [decisions/0013](decisions/0013-transform-focal-point-and-metadata.md)); the mediatheque's side is folkloreinc/laravel-mediatheque#107
+- [x] First, agree on the `transform`, the focal point and the image metadata with `laravel-mediatheque` 2 and Panneau 5, and record it in a decision ([#88](https://github.com/folkloreinc/laravel-image/issues/88), [decisions/0013](decisions/0013-transform-focal-point-and-metadata.md)); the mediatheque's side is folkloreinc/laravel-mediatheque#107 (2.0.0-alpha.2)
 - [ ] Channel presets in the published config: Open Graph 1200×630, square, 4:5, 9:16, email-safe JPEG
 - [ ] Focal point (`focus`), `dpr`, `upscale` policy
-- [x] Source `transform` (crop, rotate, flip) in Panneau 5's shape (`flipX`, `flipY`), on the media or per usage, with a per-usage transform over the media's own ([#90](https://github.com/folkloreinc/laravel-image/issues/90), [decisions/0014](decisions/0014-per-usage-transforms.md)); the focal point mapped from the upright original into the transformed image, and the edits in the version of URLs (#88)
+- [x] Source `transform` (crop, rotate, flip) in Panneau 5's shape (`flipX`, `flipY`), on the media or per usage, with a per-usage transform over the media's own ([#90](https://github.com/folkloreinc/laravel-image/issues/90), [decisions/0014](decisions/0014-per-usage-transforms.md)); the focal point mapped from the upright original into the transformed image, and the edits in the version of URLs (#88) (2.0.0-alpha.2)
 - [ ] With `laravel-mediatheque` 2: the `orientation` key, the focal point and `transform` on the media (folkloreinc/laravel-mediatheque#107), and clearing a media's derivatives when its visibility changes or its original is replaced (the listener is done, #88) ([decisions/0013](decisions/0013-transform-focal-point-and-metadata.md)). The ThumbHash key is settled (`thumbhash`)
 - [ ] Responsive presets (`widths`, `formats`), `srcset()`, `<x-image>` with `<picture>`, AVIF and WebP
 - [ ] `Image::analyze()`: dimensions and ThumbHash (the dominant color comes from the media library, #88); placeholders on variants and in `<x-image>`
