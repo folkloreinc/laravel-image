@@ -17,6 +17,7 @@ use Folklore\Image\Specs\ArrayPreset;
 use Folklore\Image\Specs\Fit;
 use Folklore\Image\Specs\Format;
 use Folklore\Image\Specs\ImageSpec;
+use Folklore\Image\Specs\Transform;
 use Folklore\Image\Tests\Doubles\ArraySourceResolver;
 use Folklore\Image\Variants\ImageVariant;
 use Illuminate\Support\Carbon;
@@ -246,6 +247,83 @@ final class PendingImageTest extends ImageTestCase
             $this->assertDoesNotMatchRegularExpression('#/img/_/#', $variant->url);
             $this->assertStringContainsString(',exp-1800003600/', $variant->url);
         }
+    }
+
+    public function test_a_transform_for_one_use_is_in_the_spec_and_has_its_own_url(): void
+    {
+        $media = new ImageSource('array', 'media.jpg', '8c1f', width: 1200, height: 800, mime: 'image/jpeg', transform: new Transform(rotate: 90));
+        Image::resolver(new ArraySourceResolver($media));
+        $cover = ['base' => 'media', 'crop' => ['x' => 0, 'y' => 0, 'width' => 800, 'height' => 450]];
+        $square = ['base' => 'media', 'crop' => ['x' => 0, 'y' => 0, 'width' => 800, 'height' => 800]];
+
+        $coverImage = Image::for($media)->transform($cover)->preset('card');
+
+        // The media's version is 800×1200: its top 800×450 is the left 450×800 of the original.
+        $this->assertSame('c-0-0-450-800,r-90,w800,ar-16-9.jpeg', $coverImage->spec()->key());
+        $urls = [
+            $coverImage->signed(false)->url(),
+            Image::for($media)->transform($square)->preset('card')->signed(false)->url(),
+            Image::for($media)->preset('card')->url(),
+        ];
+        $this->assertSame($urls, array_values(array_unique($urls)));
+        $this->assertStringContainsString('/c-0-0-450-800,r-90,w800,ar-16-9,v-8c1f-', $urls[0]);
+
+        $this->expectException(InvalidImageUrl::class);
+        $coverImage->url();
+    }
+
+    public function test_keys_a_renderer_doesn_t_know_change_nothing(): void
+    {
+        $media = new ImageSource('array', 'media.jpg', '8c1f', width: 1200, height: 800, mime: 'image/jpeg', transform: new Transform(rotate: 90));
+        $transform = ['base' => 'media', 'crop' => ['x' => 0, 'y' => 0, 'width' => 800, 'height' => 450]];
+
+        $this->assertSame(
+            Image::for($media)->transform($transform)->spec()->key(),
+            Image::for($media)->transform([...$transform, 'baseTransform' => ['rotate' => 180], 'tool' => ['straighten' => 2]])->spec()->key(),
+        );
+    }
+
+    public function test_a_transform_over_a_source_without_one_is_a_transform_from_the_original(): void
+    {
+        $photo = new ImageSource('array', 'photo.jpg', '8c1f', width: 1200, height: 800, mime: 'image/jpeg');
+        $transform = ['crop' => ['x' => 10, 'y' => 20, 'width' => 300, 'height' => 200], 'flipX' => true, 'focalPoint' => ['x' => 0.3, 'y' => 0.6]];
+
+        $this->assertSame(
+            Image::for($photo)->transform($transform)->width(100)->ratio('1:1')->spec()->key(),
+            Image::for($photo)->transform(['base' => 'media', ...$transform])->width(100)->ratio('1:1')->spec()->key(),
+        );
+        $this->assertSame(
+            Image::for($photo)->transform($transform)->width(100)->spec()->key(),
+            Image::for($photo)->transform(['base' => 'original', ...$transform])->width(100)->spec()->key(),
+        );
+    }
+
+    public function test_an_empty_transform_for_one_use_leaves_the_original_untouched(): void
+    {
+        $media = new ImageSource('array', 'media.jpg', '8c1f', width: 1200, height: 800, mime: 'image/jpeg', transform: new Transform(rotate: 90));
+
+        $this->assertSame('c-0-0-1200-800,w300.jpeg', Image::for($media)->transform([])->width(300)->spec()->key());
+        // Over the media's, nothing more: the media's own edits.
+        $this->assertSame('r-90,w300.jpeg', Image::for($media)->transform(['base' => 'media'])->width(300)->spec()->key());
+        $this->assertSame([300, 450], [Image::for($media)->width(300)->signed()->variant()->width, Image::for($media)->width(300)->signed()->variant()->height]);
+        $this->assertSame([300, 200], [Image::for($media)->transform([])->width(300)->signed()->variant()->width, Image::for($media)->transform([])->width(300)->signed()->variant()->height]);
+    }
+
+    public function test_a_transform_s_base_is_media_or_original(): void
+    {
+        $this->expectException(InvalidImageSpec::class);
+
+        Image::for(self::PHOTO)->transform(['base' => 'library']);
+    }
+
+    public function test_composing_over_a_source_s_transform_needs_its_dimensions(): void
+    {
+        $unsized = new ImageSource('array', 'unsized.jpg', '8c1f', mime: 'image/jpeg', transform: new Transform(rotate: 90));
+
+        $this->assertSame('r-180.jpeg', Image::for($unsized)->transform(['base' => 'media', 'rotate' => 90])->spec()->key());
+
+        $this->expectException(InvalidImageSpec::class);
+        Image::for($unsized)->transform(['base' => 'media', 'crop' => ['x' => 0, 'y' => 0, 'width' => 10, 'height' => 10]]);
     }
 
     public function test_render_uses_the_renderer(): void

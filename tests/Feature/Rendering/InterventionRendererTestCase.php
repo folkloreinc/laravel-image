@@ -8,6 +8,7 @@ use Folklore\Image\Contracts\Operation;
 use Folklore\Image\Exceptions\InvalidImageSpec;
 use Folklore\Image\Exceptions\RenderFailed;
 use Folklore\Image\Exceptions\SourceNotFound;
+use Folklore\Image\Facades\Image;
 use Folklore\Image\Rendering\InterventionRenderer;
 use Folklore\Image\Rendering\RenderedImage;
 use Folklore\Image\Sources\ImageSource;
@@ -23,6 +24,8 @@ use Folklore\Image\Testing\Contracts\RendererContractTests;
 use Folklore\Image\Tests\Doubles\InvertOperation;
 use Folklore\Image\Tests\TestCase;
 use Illuminate\Contracts\Filesystem\Factory as FilesystemFactory;
+use Illuminate\Support\Facades\Storage;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 /**
  * The InterventionRenderer on one driver. Each driver has its own test case, so a CI job
@@ -255,6 +258,106 @@ abstract class InterventionRendererTestCase extends TestCase
 
         $this->assertColorAt(self::RED, $image, 10, 20);
         $this->assertColorAt(self::BLUE, $image, 10, 80);
+    }
+
+    /**
+     * The media's own edits (on a crop of the original) and edits for one use, each rotation and
+     * each flip on both sides.
+     *
+     * @return array<string, array{array<string, mixed>, array<string, mixed>}>
+     */
+    public static function compositions(): array
+    {
+        $edits = [
+            'nothing' => [],
+            '90°' => ['rotate' => 90],
+            '180°' => ['rotate' => 180],
+            '270°' => ['rotate' => 270],
+            'flipX' => ['flipX' => true],
+            'flipY' => ['flipY' => true],
+        ];
+
+        $cases = [];
+        foreach ($edits as $mediaName => $media) {
+            foreach ($edits as $usageName => $usage) {
+                $cases["media {$mediaName}, use {$usageName}"] = [['crop' => ['x' => 100, 'y' => 50, 'width' => 600, 'height' => 400], ...$media], $usage];
+            }
+        }
+
+        return $cases;
+    }
+
+    /**
+     * @param  array<string, mixed>  $media
+     * @param  array<string, mixed>  $usage
+     */
+    #[DataProvider('compositions')]
+    public function test_a_transform_over_the_media_s_renders_as_both_one_after_the_other(array $media, array $usage): void
+    {
+        $source = $this->landscapeSource();
+        $edited = new ImageSource('disk', 'landscape.jpg', disk: 'fixtures', path: 'landscape.jpg', width: 800, height: 500, mime: 'image/jpeg', transform: Transform::fromArray($media));
+
+        // The media's version, stored as a file, then the edits for this use on it.
+        $version = $this->renderer()->render($source, new ImageSpec(transform: Transform::fromArray($media), format: Format::Png));
+        Storage::fake('versions')->put('version.png', $version->contents);
+        $crop = ['x' => intdiv($version->width, 10), 'y' => intdiv($version->height, 5), 'width' => intdiv($version->width * 3, 5), 'height' => intdiv($version->height, 2)];
+        $expected = $this->renderer()->render(
+            new ImageSource('disk', 'version.png', disk: 'versions', path: 'version.png', width: $version->width, height: $version->height, mime: 'image/png'),
+            new ImageSpec(transform: Transform::fromArray(['crop' => $crop, ...$usage]), format: Format::Png),
+        );
+
+        $spec = Image::for($edited)->transform(['base' => 'media', 'crop' => $crop, ...$usage])->png()->spec();
+        $composed = $this->renderer()->render($edited, $spec);
+
+        $this->assertSame($this->dimensions($expected), $this->dimensions($composed), $spec->key());
+        foreach ([[0.15, 0.15], [0.85, 0.15], [0.15, 0.85], [0.85, 0.85], [0.5, 0.5]] as [$x, $y]) {
+            $at = [(int) ($x * $composed->width), (int) ($y * $composed->height)];
+            $this->assertColorAt(array_slice($this->rgbaAt($expected, ...$at), 0, 3), $composed, ...$at);
+        }
+    }
+
+    public function test_a_transform_for_one_use_replaces_the_media_s_without_a_base(): void
+    {
+        // A sideways original, turned upright by the media; the crop of the original's top left.
+        $edited = new ImageSource('disk', 'landscape.jpg', disk: 'fixtures', path: 'landscape.jpg', width: 800, height: 500, mime: 'image/jpeg', transform: new Transform(rotate: 90));
+
+        $replaced = $this->renderer()->render($edited, Image::for($edited)->transform(['crop' => ['x' => 0, 'y' => 0, 'width' => 400, 'height' => 250]])->png()->spec());
+        $over = $this->renderer()->render($edited, Image::for($edited)->transform(['base' => 'media', 'crop' => ['x' => 0, 'y' => 0, 'width' => 250, 'height' => 400]])->png()->spec());
+        $original = $this->renderer()->render($edited, Image::for($edited)->transform(['focalPoint' => ['x' => 0.5, 'y' => 0.5]])->png()->spec());
+
+        $this->assertSame([400, 250], $this->dimensions($replaced));
+        $this->assertColorAt(self::RED, $replaced, 200, 125);
+        // The top left of the upright version is the bottom left of the original.
+        $this->assertSame([250, 400], $this->dimensions($over));
+        $this->assertColorAt(self::BLUE, $over, 125, 200);
+        // Without edits of its own, the original as it is.
+        $this->assertSame([800, 500], $this->dimensions($original));
+        $this->assertColorAt(self::RED, $original, 20, 20);
+    }
+
+    public function test_the_focal_point_of_a_transform_over_the_media_s_stays_on_its_subject(): void
+    {
+        // The top left of the upright version is blue: a tall strip around it is blue above yellow.
+        $edited = new ImageSource('disk', 'landscape.jpg', disk: 'fixtures', path: 'landscape.jpg', width: 800, height: 500, mime: 'image/jpeg', transform: new Transform(rotate: 90));
+
+        $spec = Image::for($edited)->transform(['base' => 'media', 'focalPoint' => ['x' => 0, 'y' => 0]])->size(20, 100)->png()->spec();
+        $image = $this->renderer()->render($edited, $spec);
+
+        $this->assertColorAt(self::BLUE, $image, 10, 20);
+        $this->assertColorAt(self::YELLOW, $image, 10, 80);
+    }
+
+    public function test_a_crop_over_the_media_s_is_clamped_to_its_version(): void
+    {
+        $edited = new ImageSource('disk', 'landscape.jpg', disk: 'fixtures', path: 'landscape.jpg', width: 800, height: 500, mime: 'image/jpeg', transform: new Transform(rotate: 90));
+
+        $clamped = $this->renderer()->render($edited, Image::for($edited)->transform(['base' => 'media', 'crop' => ['x' => 400, 'y' => 700, 'width' => 300, 'height' => 300]])->png()->spec());
+        $outside = $this->renderer()->render($edited, Image::for($edited)->transform(['base' => 'media', 'crop' => ['x' => 600, 'y' => 0, 'width' => 10, 'height' => 10]])->png()->spec());
+
+        // The bottom right 100×100 of the upright version: green, at the top right of the original.
+        $this->assertSame([100, 100], $this->dimensions($clamped));
+        $this->assertColorAt(self::GREEN, $clamped, 50, 50);
+        $this->assertSame([500, 800], $this->dimensions($outside));
     }
 
     public function test_the_quality_comes_from_the_spec_then_the_config(): void

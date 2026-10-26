@@ -143,4 +143,95 @@ final class TransformTest extends TestCase
         $this->assertSame($own, $own->forSource($source));
         $this->assertEquals(new Size(100, 75), (new ImageSpec(width: 100))->forSource($source)->outputSize(new Size(800, 500)));
     }
+
+    public function test_a_transform_over_none_is_itself(): void
+    {
+        $usage = new Transform(new Crop(10, 20, 100, 50), 90, Flip::Horizontal, new Focus(0.3, 0.6));
+
+        $this->assertSame($usage, $usage->over(new Transform(focalPoint: new Focus(0.5, 0.5)), null));
+    }
+
+    /**
+     * Transforms made over another one, on an 800×500 original, and the one transform they make.
+     *
+     * @return array<string, array{Transform, Transform, Transform}>
+     */
+    public static function compositions(): array
+    {
+        return [
+            // The media's version is 500×800; its top left 250×400 is the bottom left of the original.
+            'a crop over a quarter turn' => [new Transform(rotate: 90), new Transform(new Crop(0, 0, 250, 400)), new Transform(new Crop(0, 250, 400, 250), 90)],
+            'a crop over a crop' => [new Transform(new Crop(100, 50, 600, 400)), new Transform(new Crop(10, 20, 300, 200)), new Transform(new Crop(110, 70, 300, 200))],
+            'a crop over a mirror' => [new Transform(flip: Flip::Horizontal), new Transform(new Crop(0, 0, 100, 50)), new Transform(new Crop(700, 0, 100, 50), flip: Flip::Horizontal)],
+            'a crop over a flip top to bottom' => [new Transform(flip: Flip::Vertical), new Transform(new Crop(0, 0, 100, 50)), new Transform(new Crop(0, 450, 100, 50), flip: Flip::Vertical)],
+            'a crop over a half turn and a crop' => [new Transform(new Crop(100, 50, 600, 400), 180), new Transform(new Crop(0, 0, 100, 50)), new Transform(new Crop(600, 400, 100, 50), 180)],
+            'a crop over three quarter turns' => [new Transform(rotate: 270), new Transform(new Crop(0, 0, 250, 400)), new Transform(new Crop(400, 0, 400, 250), 270)],
+            'quarter turns add up' => [new Transform(rotate: 90), new Transform(rotate: 270), new Transform],
+            'quarter turns add up past a full turn' => [new Transform(rotate: 270), new Transform(rotate: 180), new Transform(rotate: 90)],
+            'two mirrors cancel out' => [new Transform(flip: Flip::Horizontal), new Transform(flip: Flip::Horizontal), new Transform],
+            'a quarter turn over a mirror' => [new Transform(flip: Flip::Horizontal), new Transform(rotate: 90), new Transform(rotate: 90, flip: Flip::Vertical)],
+            'a mirror over a quarter turn' => [new Transform(rotate: 90), new Transform(flip: Flip::Horizontal), new Transform(rotate: 90, flip: Flip::Horizontal)],
+            'both flips are a half turn' => [new Transform(flip: Flip::Vertical), new Transform(flip: Flip::Horizontal), new Transform(rotate: 180)],
+            'the base\'s crop stays without a crop over it' => [new Transform(new Crop(100, 50, 600, 400), 90), new Transform(rotate: 90), new Transform(new Crop(100, 50, 600, 400), 180)],
+            'a crop past the edges is clamped' => [new Transform(rotate: 90), new Transform(new Crop(400, 700, 300, 300)), new Transform(new Crop(700, 0, 100, 100), 90)],
+            'a crop wholly outside leaves the whole image' => [new Transform(rotate: 90), new Transform(new Crop(600, 0, 10, 10)), new Transform(rotate: 90)],
+            'a crop wholly outside leaves the base\'s crop' => [new Transform(new Crop(100, 50, 600, 400)), new Transform(new Crop(0, 400, 10, 10)), new Transform(new Crop(100, 50, 600, 400))],
+        ];
+    }
+
+    #[DataProvider('compositions')]
+    public function test_a_transform_over_another_makes_one_transform_of_the_original(Transform $base, Transform $usage, Transform $expected): void
+    {
+        $this->assertEquals($expected, $usage->over($base, new Size(800, 500)));
+    }
+
+    /**
+     * @return array<string, array{Transform, array{float, float}, array{float, float}}>
+     */
+    public static function focalPointsOver(): array
+    {
+        return [
+            // The top left of the turned image is the bottom left of the original.
+            'over a quarter turn' => [new Transform(rotate: 90), [0, 0], [0, 1]],
+            'over a crop' => [new Transform(new Crop(200, 100, 400, 300)), [0.5, 0.5], [0.5, 0.5]],
+            'over a crop, at its corner' => [new Transform(new Crop(200, 100, 400, 300)), [0, 0], [0.25, 0.2]],
+            'over a mirror' => [new Transform(flip: Flip::Horizontal), [0.2, 0.1], [0.8, 0.1]],
+            'over a crop and a half turn' => [new Transform(new Crop(200, 100, 400, 300), 180), [0, 0], [0.75, 0.8]],
+        ];
+    }
+
+    /**
+     * @param  array{float, float}  $point
+     * @param  array{float, float}  $expected
+     */
+    #[DataProvider('focalPointsOver')]
+    public function test_the_focal_point_over_another_transform_is_mapped_back_to_the_original(Transform $base, array $point, array $expected): void
+    {
+        $composed = (new Transform(focalPoint: new Focus(...$point)))->over($base, new Size(800, 500));
+
+        $this->assertNotNull($composed->focalPoint);
+        $this->assertEqualsWithDelta($expected, [$composed->focalPoint->x, $composed->focalPoint->y], 0.001);
+        // Mapped forward again, it is where it was given.
+        $forward = $composed->focus($composed->focalPoint, new Size(800, 500));
+        $this->assertEqualsWithDelta($point, [$forward->x, $forward->y], 0.011);
+    }
+
+    public function test_a_transform_over_another_needs_the_size_of_the_original_to_map_a_crop(): void
+    {
+        $this->assertEquals(new Transform(rotate: 180), (new Transform(rotate: 90))->over(new Transform(rotate: 90), null));
+
+        $this->expectException(InvalidImageSpec::class);
+        (new Transform(new Crop(0, 0, 10, 10)))->over(new Transform(rotate: 90), null);
+    }
+
+    public function test_a_crop_outside_the_source_is_clamped_or_left_out(): void
+    {
+        $source = new Size(800, 500);
+
+        $this->assertEquals(new Crop(700, 400, 100, 100), (new Transform(new Crop(700, 400, 300, 300)))->cropIn($source));
+        $this->assertNull((new Transform(new Crop(800, 0, 10, 10)))->cropIn($source));
+        $this->assertNull((new Transform(new Crop(0, 500, 10, 10)))->cropIn($source));
+        $this->assertNull((new Transform(rotate: 90))->cropIn($source));
+        $this->assertEquals(new Size(500, 800), (new Transform(new Crop(0, 500, 10, 10), 90))->apply($source));
+    }
 }

@@ -55,6 +55,7 @@ use Folklore\Image\Facades\Image;
 Image::for($media)->preset('card')->url();
 Image::for('uploads/photo.jpg')->width(800)->ratio('16:9')->focus(0.3, 0.6)->avif()->url();
 Image::for($media)->preset('og')->signed(expires: now()->addHour())->url();
+Image::for($media)->transform($value['transform'])->preset('card')->signed(false)->url(); // edits for one use
 
 Image::for($media)->variants('card');      // Collection<ImageVariant>
 Image::for($media)->srcset('card');        // "…/card.3f9a1c,w400,v-8c1f02ab/… 400w, … 800w, … 1200w"
@@ -111,7 +112,7 @@ URLs and derivatives use `ImageSource::urlVersion()`: the resolver's version, fo
 
 | Part | Options |
 |---|---|
-| Transform (applied first, in pixels of the upright original) | `crop` (x, y, width, height), `rotate` (0, 90, 180, 270, clockwise), `flip` (horizontal, vertical), in this order. From the source's `transform` by default, in Panneau 5's shape (`flipX`, `flipY`, `focalPoint`, [decisions/0013](decisions/0013-transform-focal-point-and-metadata.md)) |
+| Transform (applied first, in pixels of the upright original) | `crop` (x, y, width, height), `rotate` (0, 90, 180, 270, clockwise), `flip` (horizontal, vertical), in this order. From the source's `transform` by default, in Panneau 5's shape (`flipX`, `flipY`, `focalPoint`, [decisions/0013](decisions/0013-transform-focal-point-and-metadata.md)), or `transform()` for one use, over the source's (`base: "media"`) or instead of it ([decisions/0014](decisions/0014-per-usage-transforms.md)). A crop is clamped to the image |
 | Resize | `width`, `height`, `fit` (`Fit` enum: `cover`, `contain`, `inside`, `fill`), `ratio`, `focus` (x, y from 0 to 1, relative to the upright original and mapped through the transform; from the source's focal point by default), `dpr`, `upscale` (from the config, never from a URL) |
 | Operations | `blur`, `grayscale`, `sharpen`, `background`, … and custom ones, in a canonical order |
 | Output | `format` (`Format` enum: `jpeg`, `png`, `gif`, `webp`, `avif`, or `auto` from the source), `quality` (per format from the config by default) |

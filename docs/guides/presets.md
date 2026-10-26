@@ -32,6 +32,19 @@ Images are never larger than their original, unless `image.upscale` is on.
 
 A preset that depends on the source is a class that implements `Folklore\Image\Contracts\Preset`, registered by its class name in the config, or in code with `Image::presets()->register(new MyPreset)`.
 
+## Edits for one use
+
+A media can have its own edits (its `transform`, from Panneau 5's editor), which every preset applies. A use of the media, such as the value of an `image` field, can have its own, in the same shape:
+
+```php
+Image::for($media)->transform($value['transform'])->preset('card')->signed(false)->url();
+```
+
+- **Without `base`** (or with `base: "original"`), the crop and the focal point are in pixels of, and relative to, the upright original, and the transform replaces the media's for this use.
+- **With `base: "media"`**, they are relative to the media's version, and the transform applies over the media's: both make one transform, which changes when the media's changes.
+
+A crop past the edges of the image is clamped to it, and a crop wholly outside leaves the whole image. Keys the renderer doesn't know, such as `baseTransform`, are ignored. The edits are part of the URL, so each use gets its own; it is a free spec, which strict mode only serves signed: `signed(false)` gives a URL that never expires, cached like a preset's ([decisions/0014](../decisions/0014-per-usage-transforms.md)).
+
 ## Versions
 
 Each preset has a version: the first 6 hexadecimal characters of a hash of its definition, written in its URLs (`card.3f9a1c`). The order of the options and their defaults don't change it.
