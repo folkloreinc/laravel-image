@@ -78,8 +78,8 @@ final readonly class ImageUrl
         $format = ($format ?? ($spec instanceof ImageSpec ? $spec->format : Format::Auto))->resolve($source->mime);
 
         return $spec instanceof ImageSpec
-            ? self::forSpec($source->resolver, $source->key, $spec->withFormat($format), $source->version, $expires)
-            : self::forPreset($source->resolver, $source->key, $spec, $format, $width, $source->version, $expires);
+            ? self::forSpec($source->resolver, $source->key, $spec->withFormat($format), $source->urlVersion(), $expires)
+            : self::forPreset($source->resolver, $source->key, $spec, $format, $width, $source->urlVersion(), $expires);
     }
 
     public function withSignature(?string $signature): self

@@ -13,9 +13,10 @@ One file per decision. A decision is not edited once accepted: a later one repla
 | [0007](0007-compatibility-layer.md) | A compatibility layer for 1.x until 3.0 | Accepted |
 | [0008](0008-no-javascript-package.md) | No JavaScript package in 2.x; the server builds the URLs | Accepted |
 | [0009](0009-v2-url-syntax.md) | The v2 URL syntax | Accepted |
-| [0010](0010-media-resolver.md) | The `media` resolver: versions, keys and disks | Accepted; the resolver shipped in `laravel-mediatheque` 2.0.0-alpha.2, and the points left "for alpha 2" are in [#88](https://github.com/folkloreinc/laravel-image/issues/88) |
+| [0010](0010-media-resolver.md) | The `media` resolver: versions, keys and disks | Accepted; the resolver shipped in `laravel-mediatheque` 2.0.0-alpha.2, and the points left "for alpha 2" are settled by 0013 |
 | [0011](0011-image-routes-is-the-1x-route.md) | `Image::routes()` is the 1.x route; the 2.x route is `Route::image()` | Accepted |
 | [0012](0012-earlier-preset-versions.md) | Earlier preset versions are served from a record of their spec | Accepted |
+| [0013](0013-transform-focal-point-and-metadata.md) | The transform, the focal point and the metadata of a media | Accepted |
 
 Template:
 

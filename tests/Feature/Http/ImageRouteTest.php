@@ -14,6 +14,7 @@ use Folklore\Image\Specs\ArrayPreset;
 use Folklore\Image\Specs\Format;
 use Folklore\Image\Specs\ImageSpec;
 use Folklore\Image\Specs\Ratio;
+use Folklore\Image\Specs\Transform;
 use Folklore\Image\Storage\DerivativeKey;
 use Folklore\Image\Testing\ImageFake;
 use Folklore\Image\Testing\InMemoryDerivativeStore;
@@ -269,6 +270,45 @@ final class ImageRouteTest extends ImageTestCase
         $spec = ArrayPreset::fromArray('card', self::CARD)->spec($this->photo)->withFormat(Format::Jpeg);
         $this->store->put(new DerivativeKey('array', 'photos/2026/photo.jpg', '0ld', $spec), new RenderedImage('old', Format::Jpeg, 800, 450));
         $this->assertSame('old', $this->get($old)->assertOk()->streamedContent());
+    }
+
+    public function test_editing_the_transform_or_the_focal_point_of_a_source_gives_new_urls(): void
+    {
+        $edited = fn (array $transform) => new ImageSource('array', 'edited.jpg', '8c1f', width: 1200, height: 800, mime: 'image/jpeg', transform: Transform::fromArray($transform));
+        $first = $edited(['crop' => ['x' => 0, 'y' => 0, 'width' => 600, 'height' => 400], 'focalPoint' => ['x' => 0.2, 'y' => 0.3]]);
+        Image::resolver(new ArraySourceResolver($first));
+        $url = Image::for($first)->preset('card')->url();
+
+        $this->assertMatchesRegularExpression('#,v-8c1f-[0-9a-f]{6}/array/edited\.jpg\.jpg$#', $url);
+        $response = $this->get($url)->assertOk();
+        $this->assertCacheControl($response, ['public', 'max-age=31536000', 'immutable']);
+        Image::assertRendered(fn (ImageSpec $spec, ImageSource $source) => $source->transform?->crop?->width === 600);
+
+        $recropped = $edited(['crop' => ['x' => 0, 'y' => 0, 'width' => 800, 'height' => 400], 'focalPoint' => ['x' => 0.2, 'y' => 0.3]]);
+        $refocused = $edited(['crop' => ['x' => 0, 'y' => 0, 'width' => 600, 'height' => 400], 'focalPoint' => ['x' => 0.7, 'y' => 0.3]]);
+        $urls = [$url, Image::for($recropped)->preset('card')->url(), Image::for($refocused)->preset('card')->url(), Image::for($this->photo)->preset('card')->url()];
+        $this->assertSame($urls, array_values(array_unique($urls)));
+
+        // Once the media is edited, its earlier URL is only served from the store.
+        Image::resolver(new ArraySourceResolver($recropped));
+        $this->get($urls[1])->assertOk();
+        $this->get($url)->assertOk();
+        $this->assertCount(2, $this->fake->renderedImages());
+        $this->store->clear($recropped);
+        $this->get($url)->assertNotFound();
+    }
+
+    public function test_variants_have_the_size_of_the_source_s_transform(): void
+    {
+        $source = new ImageSource('array', 'edited.jpg', '8c1f', width: 1200, height: 800, mime: 'image/jpeg', transform: Transform::fromArray(['crop' => ['x' => 0, 'y' => 0, 'width' => 600, 'height' => 400], 'rotate' => 90]));
+        Image::resolver(new ArraySourceResolver($source));
+
+        $variant = Image::for($source)->width(300)->signed()->variant();
+
+        // 600×400, turned to 400×600, at a width of 300.
+        $this->assertSame([300, 450], [$variant->width, $variant->height]);
+        $this->get($variant->url)->assertOk();
+        Image::assertRendered(fn (ImageSpec $spec, ImageSource $rendered) => $rendered->transform?->rotate === 90);
     }
 
     public function test_redirects_to_the_store(): void

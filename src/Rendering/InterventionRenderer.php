@@ -78,9 +78,7 @@ final class InterventionRenderer implements Renderer
 
     public function render(ImageSource $source, ImageSpec $spec): RenderedImage
     {
-        if ($spec->transform === null && $source->transform !== null) {
-            $spec = $spec->with($source->transform->toArray());
-        }
+        $spec = $spec->forSource($source);
         $unknown = array_diff(array_keys($spec->operations), array_keys($this->operations));
         if ($unknown !== []) {
             throw new InvalidImageSpec('Unknown operations: '.implode(', ', $unknown).'.');
@@ -95,12 +93,16 @@ final class InterventionRenderer implements Renderer
             // Decoding turns the image upright from its EXIF orientation, and the encoders strip
             // the metadata. Colors are converted to sRGB before anything else.
             $image = Srgb::convert($this->decode($source));
-            $output = $spec->outputSize(new Size($image->width(), $image->height()), $this->upscale);
+            $upright = new Size($image->width(), $image->height());
+            $output = $spec->outputSize($upright, $this->upscale);
 
+            // The focal point is relative to the upright original: it follows the transform.
+            $focus = $spec->focus ?? $source->focalPoint;
             if ($spec->transform !== null) {
                 $image = $this->transform($image, $spec->transform);
+                $focus = $focus === null ? null : $spec->transform->focus($focus, $upright);
             }
-            $image = $this->resize($image, $spec, $output, $spec->focus ?? $source->focalPoint ?? new Focus(0.5, 0.5));
+            $image = $this->resize($image, $spec, $output, $focus ?? new Focus(0.5, 0.5));
             foreach ($this->operations as $name => $operation) {
                 if (array_key_exists($name, $spec->operations)) {
                     $image = $operation->apply($image, $operation->arguments($spec->operations[$name]));

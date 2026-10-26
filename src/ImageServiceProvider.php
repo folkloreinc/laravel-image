@@ -10,6 +10,7 @@ use Folklore\Image\Contracts\Renderer;
 use Folklore\Image\Contracts\Signer;
 use Folklore\Image\Contracts\UrlCodec;
 use Folklore\Image\Http\ImageRoute;
+use Folklore\Image\Listeners\ClearMediaDerivatives;
 use Folklore\Image\Rendering\Derivatives;
 use Folklore\Image\Rendering\InterventionRenderer;
 use Folklore\Image\Sources\DiskResolver;
@@ -25,6 +26,7 @@ use Illuminate\Contracts\Cache\LockProvider;
 use Illuminate\Contracts\Cache\Repository as Cache;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Contracts\Container\Container;
+use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Contracts\Filesystem\Factory as FilesystemFactory;
 use Illuminate\Contracts\Foundation\CachesConfiguration;
 use Illuminate\Routing\Route;
@@ -65,6 +67,12 @@ final class ImageServiceProvider extends ServiceProvider
     {
         $app = $this->app;
         Router::macro('image', fn (?string $prefix = null): Route => ImageRoute::register($app->make(Router::class), $app->make(ImageConfig::class), $prefix));
+
+        // With laravel-mediatheque 2, a media's derivatives are cleared when its visibility
+        // changes or its original is replaced.
+        foreach (ClearMediaDerivatives::installedEvents() as $event) {
+            $app->make(Dispatcher::class)->listen($event, ClearMediaDerivatives::class);
+        }
 
         if ($this->app->runningInConsole()) {
             $this->commands([DoctorCommand::class]);

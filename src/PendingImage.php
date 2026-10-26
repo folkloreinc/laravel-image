@@ -332,7 +332,7 @@ final class PendingImage implements Stringable
     {
         $source = $this->source->size();
 
-        return $source === null ? null : $spec->outputSize($source, $this->manager->config()->upscale());
+        return $source === null ? null : $spec->forSource($this->source)->outputSize($source, $this->manager->config()->upscale());
     }
 
     private function expiry(ImageConfig $config): ?int

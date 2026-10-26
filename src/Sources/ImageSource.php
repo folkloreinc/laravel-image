@@ -15,18 +15,27 @@ use Folklore\Image\Specs\Transform;
  */
 final readonly class ImageSource
 {
+    /** The default focal point, relative to the upright original: the resolver's, or its transform's. */
+    public ?Focus $focalPoint;
+
+    /** The default non-destructive edits (crop, rotate, flip), without the focal point. */
+    public ?Transform $transform;
+
     /**
      * @param  string  $resolver  the name of the resolver that resolves the key back to this source
      * @param  string  $key  the opaque part of URLs: a media id (`med_01JAB3…`), or the path for a disk source
      * @param  string|null  $version  changes when the original changes, so its URLs change too: a hash of the
-     *                                file, of its modification time or the media's own version
+     *                                file, of its modification time or the media's own version. URLs and
+     *                                derivatives use urlVersion(), which adds the edits
      * @param  string|null  $disk  the Laravel disk of the original, read only when rendering
      * @param  string|null  $path  the path of the original on that disk
      * @param  int|null  $width  the width of the upright original (after its EXIF orientation), when known
      * @param  int|null  $height  the height of the upright original, when known
      * @param  int|null  $orientation  the EXIF orientation of the original file, from 1 to 8, when known
-     * @param  Focus|null  $focalPoint  the default focal point, from the media or its transform
-     * @param  Transform|null  $transform  the default non-destructive edits (Panneau 5's crop, rotate and flip)
+     * @param  Focus|null  $focalPoint  the default focal point, relative to the upright original; the
+     *                                  transform's when null
+     * @param  Transform|null  $transform  the default non-destructive edits, in Panneau 5's shape
+     *                                     (Transform::fromArray()), focal point included
      * @param  string|null  $placeholder  a ThumbHash of the image, when the media library stores one
      * @param  bool  $private  private sources are only served through signed URLs that expire
      */
@@ -40,8 +49,8 @@ final readonly class ImageSource
         public ?int $height = null,
         public ?string $mime = null,
         public ?int $orientation = null,
-        public ?Focus $focalPoint = null,
-        public ?Transform $transform = null,
+        ?Focus $focalPoint = null,
+        ?Transform $transform = null,
         public ?string $placeholder = null,
         public bool $private = false,
     ) {
@@ -60,6 +69,32 @@ final readonly class ImageSource
         if ($orientation !== null && ($orientation < 1 || $orientation > 8)) {
             throw new InvalidImageSource("An EXIF orientation is between 1 and 8, not {$orientation}.");
         }
+
+        $this->focalPoint = $focalPoint ?? $transform?->focalPoint;
+        $transform = $transform?->withoutFocalPoint();
+        $this->transform = $transform === null || $transform->isEmpty() ? null : $transform;
+    }
+
+    /**
+     * The version in URLs and derivative keys: the resolver's version, followed by a short hash
+     * of the edits (transform and focal point) when there are any, so changing them gives new
+     * URLs (docs/decisions/0013-transform-focal-point-and-metadata.md). A source without a
+     * version has none.
+     */
+    public function urlVersion(): ?string
+    {
+        if ($this->version === null || ($this->transform === null && $this->focalPoint === null)) {
+            return $this->version;
+        }
+
+        $edits = json_encode([
+            'transform' => $this->transform?->toArray(),
+            'focalPoint' => $this->focalPoint?->toArray(),
+        ], JSON_THROW_ON_ERROR);
+        $version = $this->version.'-'.substr(hash('sha256', $edits), 0, 6);
+
+        // Versions are at most 64 characters: a longer one becomes a hash of the whole.
+        return strlen($version) <= 64 ? $version : substr(hash('sha256', $this->version.'|'.$edits), 0, 32);
     }
 
     /**

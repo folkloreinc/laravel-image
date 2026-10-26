@@ -39,7 +39,7 @@ final readonly class DerivativeKey
      */
     public static function for(ImageSource $source, ImageSpec $spec): self
     {
-        return new self($source->resolver, $source->key, $source->version, $spec->withFormat($spec->format->resolve($source->mime)));
+        return new self($source->resolver, $source->key, $source->urlVersion(), $spec->withFormat($spec->format->resolve($source->mime)));
     }
 
     public function path(): string

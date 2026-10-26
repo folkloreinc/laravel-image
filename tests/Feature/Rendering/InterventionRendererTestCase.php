@@ -218,6 +218,45 @@ abstract class InterventionRendererTestCase extends TestCase
         $this->assertColorAt(self::GREEN, $fromSpec, 200, 125);
     }
 
+    public function test_the_focal_point_of_the_source_follows_its_rotation(): void
+    {
+        // The red corner, at the top left of the upright original, is at the top right once
+        // rotated: a tall strip keeps red above green, not blue above yellow.
+        $source = new ImageSource('disk', 'landscape.jpg', disk: 'fixtures', path: 'landscape.jpg', width: 800, height: 500, mime: 'image/jpeg', transform: Transform::fromArray([
+            'rotate' => 90,
+            'focalPoint' => ['x' => 0, 'y' => 0],
+        ]));
+
+        $image = $this->renderer()->render($source, new ImageSpec(width: 20, height: 100, format: Format::Png));
+
+        $this->assertSame([20, 100], $this->dimensions($image));
+        $this->assertColorAt(self::RED, $image, 10, 20);
+        $this->assertColorAt(self::GREEN, $image, 10, 80);
+    }
+
+    public function test_the_focus_of_the_spec_follows_its_flip(): void
+    {
+        // The left edge of the upright original is the right edge once flipped: red above blue.
+        $spec = new ImageSpec(transform: new Transform(flip: Flip::Horizontal), width: 20, height: 100, focus: new Focus(0, 0.5), format: Format::Png);
+
+        $image = $this->render($spec);
+
+        $this->assertColorAt(self::RED, $image, 10, 20);
+        $this->assertColorAt(self::BLUE, $image, 10, 80);
+    }
+
+    public function test_the_focal_point_follows_the_crop(): void
+    {
+        // 320 px from the left of the original is 20 px from the left of the crop: red above
+        // blue. Read relative to the crop, 0.4 would give green above yellow.
+        $spec = new ImageSpec(transform: new Transform(new Crop(300, 0, 500, 500)), width: 20, height: 100, focus: new Focus(0.4, 0.5), format: Format::Png);
+
+        $image = $this->render($spec);
+
+        $this->assertColorAt(self::RED, $image, 10, 20);
+        $this->assertColorAt(self::BLUE, $image, 10, 80);
+    }
+
     public function test_the_quality_comes_from_the_spec_then_the_config(): void
     {
         $low = $this->renderer(quality: ['jpeg' => 10])->render($this->source('image.jpg'), new ImageSpec(format: Format::Jpeg));

@@ -29,7 +29,7 @@ final readonly class PresetSpecKey
 
     public static function for(ImageSource $source, PresetReference $preset): self
     {
-        return new self($source->resolver, $source->key, $source->version, $preset);
+        return new self($source->resolver, $source->key, $source->urlVersion(), $preset);
     }
 
     public function path(): string
