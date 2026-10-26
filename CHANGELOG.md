@@ -24,6 +24,10 @@ Changes to 1.x after 1.1.0 are in the changelog of the [`v1.x`](https://github.c
 - With `laravel-mediatheque` 2 installed, `ClearMediaDerivatives` clears a media's derivatives, and those of its posters and thumbnails, when its visibility changes (`MediaVisibilityChanged`) or its original is replaced (`OriginalReplaced`) (#88).
 - Decision 0013 records the transform shape, the metadata keys (`orientation` from 1 to 8, applied by this package; the dominant color is `palette[0]`) and the mediatheque's side of the contract (#88).
 
+### Changed
+
+- `composer.json` requires `illuminate/config`, `illuminate/filesystem` and `league/flysystem` (^3.25.1, as Laravel 12 and 13), which the code uses. A Laravel application already installs them (#94).
+
 ### Fixed
 
 - Colors are converted to sRGB once the image is cropped and resized, as #92 did on 1.x, instead of on the whole original: with Imagick, a 6000×4000 Adobe RGB photo renders at 800 px in 0.5 s instead of 4.2 s, with the same colors on every driver (#93).

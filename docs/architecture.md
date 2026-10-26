@@ -266,7 +266,7 @@ Namespace: `Folklore\Image`, PSR-4 from `src/`. The container binds `Folklore\Im
 
 ## Dependencies
 
-- Required: `illuminate/*` components the code uses, `intervention/image` ^4.
+- Required: the `illuminate/*` components the code uses (`config`, `console`, `contracts`, `filesystem`, `http`, `routing`, `support`), `league/flysystem` ^3.25.1 (as Laravel 12 and 13), `intervention/image` ^4.
 - Suggested: `intervention/image-driver-vips` (libvips), `ext-imagick`, `league/flysystem-aws-s3-v3` (S3-compatible disks), `folklore/laravel-mediatheque` (the `media` resolver).
 - Removed: `imagine/imagine`, `contao/imagine-svg`, `guzzlehttp/guzzle`.
 
