@@ -91,8 +91,9 @@ final class InterventionRenderer implements Renderer
 
         try {
             // Decoding turns the image upright from its EXIF orientation, and the encoders strip
-            // the metadata. Colors are converted to sRGB before anything else.
-            $image = Srgb::convert($this->decode($source));
+            // the metadata.
+            $image = $this->decode($source);
+            $profile = Srgb::profile($image);
             $upright = new Size($image->width(), $image->height());
             $output = $spec->outputSize($upright, $this->upscale);
 
@@ -103,6 +104,14 @@ final class InterventionRenderer implements Renderer
                 $focus = $focus === null ? null : $spec->transform->focus($focus, $upright);
             }
             $image = $this->resize($image, $spec, $output, $focus ?? new Focus(0.5, 0.5));
+
+            // Colors are converted to sRGB once the image has its output size, so the conversion
+            // doesn't run on every pixel of a large original (#93), and before the padding and
+            // the operations, which work in sRGB.
+            $image = Srgb::convert($image, $profile);
+            if ($spec->hasBox() && $spec->fit === Fit::Contain) {
+                $image = $image->resizeCanvas($output->width, $output->height, 'ffffff00');
+            }
             foreach ($this->operations as $name => $operation) {
                 if (array_key_exists($name, $spec->operations)) {
                     $image = $operation->apply($image, $operation->arguments($spec->operations[$name]));
@@ -225,7 +234,8 @@ final class InterventionRenderer implements Renderer
 
     /**
      * Resizes the image to the output size the spec computed. Cover crops the source to the
-     * output's ratio around the focal point first; contain pads it to the output size.
+     * output's ratio around the focal point first; contain fits it inside the output size,
+     * which render() then pads it to.
      */
     private function resize(ImageInterface $image, ImageSpec $spec, Size $output, Focus $focus): ImageInterface
     {
@@ -247,7 +257,7 @@ final class InterventionRenderer implements Renderer
             $inner = $source->scaled(min($output->width / $source->width, $output->height / $source->height));
             $inner = new Size(min($inner->width, $output->width), min($inner->height, $output->height));
 
-            return $this->resizeTo($image, $inner)->resizeCanvas($output->width, $output->height, 'ffffff00');
+            return $this->resizeTo($image, $inner);
         }
 
         return $this->resizeTo($image, $output);

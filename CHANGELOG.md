@@ -26,6 +26,7 @@ Changes to 1.x after 1.1.0 are in the changelog of the [`v1.x`](https://github.c
 
 ### Fixed
 
+- Colors are converted to sRGB once the image is cropped and resized, as #92 did on 1.x, instead of on the whole original: with Imagick, a 6000×4000 Adobe RGB photo renders at 800 px in 0.5 s instead of 4.2 s, with the same colors on every driver (#93).
 - Editing a source's transform or focal point gives new URLs. In alpha.1, the URL of an edited media didn't change, so CDNs and browsers kept serving the previous rendering as `immutable` (#88).
 - Variants and limits take the source's transform into account: the dimensions of a cropped or rotated media's variants were those of its whole original (#88).
 - URLs of an earlier version of a preset are served from their stored derivatives, as decisions 0004 and 0005 say, instead of answering 404 once the preset changes: a page cached with them keeps its images. Nothing is rendered for an earlier version, and derivatives rendered by alpha.1 aren't found this way ([decision 0012](docs/decisions/0012-earlier-preset-versions.md), #96).
