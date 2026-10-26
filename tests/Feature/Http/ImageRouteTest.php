@@ -107,7 +107,7 @@ final class ImageRouteTest extends ImageTestCase
         Image::assertRendered(fn (ImageSpec $spec) => $spec->key() === 'w400,ar-16-9.avif');
     }
 
-    public function test_presets_are_only_served_at_their_current_version_and_widths(): void
+    public function test_presets_are_only_rendered_at_their_current_version_and_widths(): void
     {
         $version = ArrayPreset::fromArray('card', self::CARD)->version();
 
@@ -116,6 +116,58 @@ final class ImageRouteTest extends ImageTestCase
         $this->get("/img/_/missing.{$version},v-8c1f/array/photos/2026/photo.jpg.jpg")->assertNotFound();
         $this->get("/img/_/card.{$version},w500,v-8c1f/array/photos/2026/photo.jpg.jpg")->assertNotFound();
         $this->get("/img/_/card.{$version},w800,v-8c1f/array/photos/2026/photo.jpg.jpg")->assertNotFound();
+        $this->assertCount(1, $this->fake->renderedImages());
+    }
+
+    public function test_an_earlier_version_of_a_preset_is_served_while_its_derivative_is_stored(): void
+    {
+        $old = Image::for($this->photo)->preset('card')->webp()->url();
+        $oldAtWidth = Image::for($this->photo)->preset('card')->width(400)->webp()->url();
+        $neverRendered = Image::for($this->photo)->preset('card')->width(1200)->webp()->url();
+        $contents = $this->get($old)->assertOk()->streamedContent();
+        $this->get($oldAtWidth)->assertOk();
+
+        Image::presets()->register(ArrayPreset::fromArray('card', ['width' => 600, 'ratio' => '1:1', 'widths' => [300, 600]]));
+        $new = Image::for($this->photo)->preset('card')->webp()->url();
+        $this->assertNotSame($old, $new);
+
+        $response = $this->get($old)->assertOk();
+        $this->assertSame($contents, $response->streamedContent());
+        $this->assertCacheControl($response, ['public', 'max-age=31536000', 'immutable']);
+        $this->get($oldAtWidth)->assertOk();
+        $this->assertCount(2, $this->fake->renderedImages(), 'Earlier versions are served from the store.');
+
+        // Nothing is rendered for an earlier version: a derivative that isn't stored answers 404.
+        $this->get($neverRendered)->assertNotFound();
+        $this->get(str_replace('.webp', '.avif', $old))->assertNotFound();
+
+        $this->get($new)->assertOk();
+        Image::assertRendered(fn (ImageSpec $spec) => $spec->key() === 'w600,ar-1-1.webp');
+    }
+
+    public function test_an_earlier_version_of_a_preset_without_its_spec_recorded_answers_404(): void
+    {
+        // A derivative stored without its preset spec, as alpha 1 stored them.
+        $spec = ArrayPreset::fromArray('card', self::CARD)->spec($this->photo)->withFormat(Format::Jpeg);
+        $this->store->put(new DerivativeKey('array', 'photos/2026/photo.jpg', '8c1f', $spec), new RenderedImage('stored', Format::Jpeg, 800, 450));
+        $old = Image::for($this->photo)->preset('card')->url();
+        $this->get($old)->assertOk();
+
+        Image::presets()->register(ArrayPreset::fromArray('card', ['width' => 600]));
+
+        $this->get($old)->assertNotFound();
+        Image::assertNothingRendered();
+    }
+
+    public function test_earlier_versions_of_a_preset_are_cleared_with_the_source(): void
+    {
+        $old = Image::for($this->photo)->preset('card')->url();
+        $this->get($old)->assertOk();
+        Image::presets()->register(ArrayPreset::fromArray('card', ['width' => 600]));
+
+        $this->store->clear($this->photo);
+
+        $this->get($old)->assertNotFound();
     }
 
     public function test_non_canonical_paths_are_refused(): void

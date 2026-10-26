@@ -64,12 +64,14 @@ final class EndToEndTest extends TestCase
         $this->assertSame(['immutable', 'max-age=31536000', 'public'], $this->cacheControl($response));
         $this->assertSame([800, 450], $this->dimensions($response->streamedContent()));
 
+        // The derivative, and the preset's spec at its version (docs/decisions/0012).
         $stored = $this->derivatives->allFiles('cache');
-        $this->assertCount(1, $stored);
-        $this->assertMatchesRegularExpression('#^cache/disk/photos/landscape\.jpg/[A-Za-z0-9_-]+/w800,ar-16-9\.jpg$#', $stored[0]);
+        $this->assertCount(2, $stored);
+        $this->assertMatchesRegularExpression('#^cache/disk/photos/landscape\.jpg/[A-Za-z0-9_-]+/presets/card\.[a-f0-9]{6}\.json$#', $stored[0]);
+        $this->assertMatchesRegularExpression('#^cache/disk/photos/landscape\.jpg/[A-Za-z0-9_-]+/w800,ar-16-9\.jpg$#', $stored[1]);
 
         // The second request reads the stored derivative instead of rendering it again.
-        $this->derivatives->put($stored[0], 'stored');
+        $this->derivatives->put($stored[1], 'stored');
         $this->assertSame('stored', $this->get($variant->url)->assertOk()->streamedContent());
 
         $etag = (string) $response->headers->get('ETag');
@@ -132,7 +134,7 @@ final class EndToEndTest extends TestCase
 
         $response->assertRedirect();
         $this->assertStringStartsWith('https://bucket.test/cache/disk/photos/landscape.jpg/', (string) $response->headers->get('Location'));
-        $this->assertCount(1, $this->derivatives->allFiles('cache'));
+        $this->assertCount(2, $this->derivatives->allFiles('cache'));
     }
 
     private function useDriver(string $driver): void

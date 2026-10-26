@@ -6,7 +6,9 @@ namespace Folklore\Image\Contracts;
 
 use Folklore\Image\Rendering\RenderedImage;
 use Folklore\Image\Sources\ImageSource;
+use Folklore\Image\Specs\ImageSpec;
 use Folklore\Image\Storage\DerivativeKey;
+use Folklore\Image\Storage\PresetSpecKey;
 use Folklore\Image\Storage\StoredDerivative;
 
 /**
@@ -27,7 +29,21 @@ interface DerivativeStore
     public function put(DerivativeKey $key, RenderedImage $image): StoredDerivative;
 
     /**
-     * Deletes every derivative of a source, all versions included.
+     * Records the spec a preset had at its version, for a version of a source, when one of its
+     * derivatives is rendered. A URL of that preset version is still served from the stored
+     * derivatives once the preset changes (docs/decisions/0012-earlier-preset-versions.md).
+     * It replaces what the key had.
+     */
+    public function putPresetSpec(PresetSpecKey $key, ImageSpec $spec): void;
+
+    /**
+     * The spec recorded for a preset version and a source version, or null.
+     */
+    public function presetSpec(PresetSpecKey $key): ?ImageSpec;
+
+    /**
+     * Deletes every derivative of a source, all versions included, and the preset specs
+     * recorded for it.
      *
      * @return int the number of derivatives deleted
      */

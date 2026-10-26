@@ -58,7 +58,8 @@ return [
     |
     | Each preset has a version, a short hash of its definition, in its URLs:
     | changing a preset gives it new URLs, so caches never serve the old
-    | rendering for the new one.
+    | rendering for the new one. URLs of an earlier version are served while
+    | their derivatives are stored, and never rendered again.
     |
     */
 
@@ -104,8 +105,9 @@ return [
     | Strict mode
     |--------------------------------------------------------------------------
     |
-    | Strict mode only serves presets at their current version, and signed
-    | URLs. Without it, unsigned URLs can ask for any spec within the limits.
+    | Strict mode only serves presets at their current version (or an earlier
+    | version while its derivative is stored), and signed URLs. Without it,
+    | unsigned URLs can ask for any spec within the limits.
     |
     */
 

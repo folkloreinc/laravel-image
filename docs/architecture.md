@@ -158,7 +158,7 @@ Orientation, sRGB conversion and metadata stripping always apply, before the tra
 
 See [decisions/0003](decisions/0003-delivery.md).
 
-- `DerivativeStore`: `DiskStore` (any Laravel disk, the default), `PublicPathStore` (the 1.x static cache), `InMemoryDerivativeStore` (tests, previews, in `Testing/`). Derivatives are stored under `{resolver}/{source key}/{source version}/{spec}.{ext}` (`DerivativeKey`), so `image:clear {reference}` removes all of a source's derivatives.
+- `DerivativeStore`: `DiskStore` (any Laravel disk, the default), `PublicPathStore` (the 1.x static cache), `InMemoryDerivativeStore` (tests, previews, in `Testing/`). Derivatives are stored under `{resolver}/{source key}/{source version}/{spec}.{ext}` (`DerivativeKey`), so `image:clear {reference}` removes all of a source's derivatives. Next to them, the store records the spec of each preset version it renders (`PresetSpecKey`), so URLs of an earlier preset version find their derivatives ([decisions/0012](decisions/0012-earlier-preset-versions.md)).
 - Rendering takes a lock on the derivative key (`Cache::lock()`), so concurrent misses render once.
 - The controller streams the derivative, or redirects to the disk URL (`image.delivery.serve`), with long-lived caching headers, an `ETag` and `304` answers.
 - `Image::warm($reference, $presets)` queues the rendering of presets ahead of time; `image:warm` does it from the command line.
@@ -247,7 +247,7 @@ src/
   Specs/                       ImageSpec and its value objects, ArrayPreset, PresetRegistry, Limits
   Urls/                        ImageUrl, PresetReference, SpecTokens, V2Codec, HmacSigner; V1Codec (planned, beta)
   Rendering/                   RenderedImage, InterventionRenderer, Derivatives, Srgb; Operations/ (planned)
-  Storage/                     DerivativeKey, StoredDerivative, DiskStore, RenderLock; PublicPathStore (planned, beta)
+  Storage/                     DerivativeKey, PresetSpecKey, StoredDerivative, DiskStore, RenderLock; PublicPathStore (planned, beta)
   Http/                        ImageController, ImageRoute (Route::image()); LegacyImageController (planned, beta)
   Variants/                    ImageVariant, ImageVariantResource; Srcset (planned)
   View/Components/Image.php    <x-image> (planned)

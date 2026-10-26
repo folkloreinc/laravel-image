@@ -70,6 +70,7 @@ Their responses are `Cache-Control: private`, so a CDN doesn't keep them, and th
 Strict mode (`image.strict`, on by default) serves:
 
 - presets at their current version, at one of their widths;
+- presets at an earlier version, while the derivative is stored (nothing is rendered for an earlier version);
 - signed URLs, whatever their spec.
 
 In strict mode, `url()` throws instead of building an unsigned free spec, which the route would refuse. Without strict mode, unsigned URLs can ask for any spec within the limits; use it only for development, or when every page that builds URLs is trusted.
@@ -87,7 +88,8 @@ Limits apply to every URL, signed or not, on the requested size and on the size 
 | Request | Answer |
 |---|---|
 | A canonical URL the route serves | `200`, or `304` when the `ETag` matches |
-| A path in another spelling, an unknown preset or preset version, a width that isn't one of the preset's | `404` |
+| A path in another spelling, an unknown preset, a width that isn't one of the preset's | `404` |
+| An earlier version of a preset whose derivative isn't stored | `404` |
 | An unsigned free spec in strict mode, a URL over the limits | `404` |
 | An unknown resolver or key, an old version of the source that isn't stored any more | `404` |
 | A private source without a signed URL that expires | `404` |

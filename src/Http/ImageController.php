@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Folklore\Image\Http;
 
+use Folklore\Image\Contracts\Preset;
 use Folklore\Image\Exceptions\InvalidImageSpec;
 use Folklore\Image\Exceptions\InvalidImageUrl;
 use Folklore\Image\Exceptions\RenderFailed;
@@ -15,6 +16,7 @@ use Folklore\Image\Rendering\Derivatives;
 use Folklore\Image\Sources\ImageSource;
 use Folklore\Image\Specs\ImageSpec;
 use Folklore\Image\Storage\DerivativeKey;
+use Folklore\Image\Storage\PresetSpecKey;
 use Folklore\Image\Storage\StoredDerivative;
 use Folklore\Image\Urls\ImageUrl;
 use Illuminate\Http\RedirectResponse;
@@ -33,6 +35,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  * 2. checks the signature and the expiry (403);
  * 3. resolves the source; a private source needs a signed URL that expires (404);
  * 4. strict mode: a preset at its current version, at one of its widths, or a signed URL (404);
+ *    an earlier version of a preset is served only while its derivative is stored;
  * 5. checks the limits (404);
  * 6. serves the stored derivative, or renders and stores it under a lock;
  * 7. streams it, or redirects to it, with caching headers, an ETag and 304 answers.
@@ -59,11 +62,15 @@ final readonly class ImageController
         try {
             $source = $this->images->resolvers()->named($url->resolver)->resolveKey($url->key);
             $this->checkPrivacy($url, $source);
-            $spec = $this->spec($url, $source);
+            $preset = $this->preset($url);
+            $current = $preset === null || $preset->version() === $url->preset?->version;
+            $spec = $current ? $this->spec($url, $source, $preset) : $this->earlierSpec($url);
             $size = $source->size();
             $this->config->limits()->check($spec, $size === null ? null : $spec->outputSize($size, $this->config->upscale()));
 
-            $derivative = $this->derivative($url, $source, $spec);
+            $derivative = $current
+                ? $this->derivative($url, $source, $spec, $preset)
+                : $this->stored($url, $source, $spec, 'This version of the preset is not stored.');
         } catch (SourceNotFound|InvalidImageSpec $exception) {
             throw new NotFoundHttpException($exception->getMessage(), $exception);
         } catch (RenderInProgress $exception) {
@@ -113,22 +120,30 @@ final readonly class ImageController
     }
 
     /**
+     * The preset a preset URL names, at any of its versions, or null for a free spec.
+     */
+    private function preset(ImageUrl $url): ?Preset
+    {
+        if ($url->preset === null) {
+            return null;
+        }
+
+        return $this->images->presets()->find($url->preset->name)
+            ?? throw new InvalidImageSpec("No preset {$url->preset->toString()}.");
+    }
+
+    /**
      * The spec of the URL: a preset at its current version and one of its widths, or a free
      * spec, which strict mode only serves signed.
      */
-    private function spec(ImageUrl $url, ImageSource $source): ImageSpec
+    private function spec(ImageUrl $url, ImageSource $source, ?Preset $preset): ImageSpec
     {
-        if ($url->preset === null) {
+        if ($preset === null) {
             if ($url->signature === null && $this->config->strict()) {
                 throw new InvalidImageSpec('Strict mode only serves presets, and signed URLs.');
             }
 
             return $url->spec ?? new ImageSpec(format: $url->format);
-        }
-
-        $preset = $this->images->presets()->find($url->preset->name);
-        if ($preset === null || $preset->version() !== $url->preset->version) {
-            throw new InvalidImageSpec("No preset {$url->preset->toString()}.");
         }
 
         $spec = $preset->spec($source);
@@ -144,17 +159,47 @@ final readonly class ImageController
     }
 
     /**
-     * The stored derivative. A URL of another version of the source is only served while its
-     * derivative is stored: the original it was rendered from is gone.
+     * The spec of an earlier version of a preset, as the store recorded it when a derivative of
+     * this version of the source was rendered (docs/decisions/0012-earlier-preset-versions.md).
+     * Its widths are not known any more: the derivative must be stored.
      */
-    private function derivative(ImageUrl $url, ImageSource $source, ImageSpec $spec): StoredDerivative
+    private function earlierSpec(ImageUrl $url): ImageSpec
     {
-        if ($url->version === $source->version) {
-            return $this->derivatives->fetch($source, $spec);
+        $preset = $url->preset ?? throw new InvalidImageSpec('Not a preset URL.');
+        $spec = $this->derivatives->presetSpec(new PresetSpecKey($url->resolver, $url->key, $url->version, $preset))
+            ?? throw new InvalidImageSpec("No preset {$preset->toString()}.");
+
+        if ($url->width !== null) {
+            if ($url->width === $spec->width) {
+                throw new InvalidImageSpec("{$url->width} is the width of the {$preset->name} preset itself.");
+            }
+            $spec = $spec->atWidth($url->width);
         }
 
+        return $spec->withFormat($url->format);
+    }
+
+    /**
+     * The derivative of the source's current version, rendered and stored when needed. A URL
+     * of another version of the source is only served while its derivative is stored: the
+     * original it was rendered from is gone.
+     */
+    private function derivative(ImageUrl $url, ImageSource $source, ImageSpec $spec, ?Preset $preset): StoredDerivative
+    {
+        if ($url->version === $source->version) {
+            return $this->derivatives->fetch($source, $spec, $preset);
+        }
+
+        return $this->stored($url, $source, $spec, 'This version of the source is gone.');
+    }
+
+    /**
+     * A derivative already stored, without rendering it.
+     */
+    private function stored(ImageUrl $url, ImageSource $source, ImageSpec $spec, string $missing): StoredDerivative
+    {
         return $this->derivatives->find(new DerivativeKey($source->resolver, $source->key, $url->version, $spec))
-            ?? throw new SourceNotFound('This version of the source is gone.');
+            ?? throw new SourceNotFound($missing);
     }
 
     private function respond(Request $request, ImageUrl $url, ImageSource $source, StoredDerivative $derivative, int $now): Response|StreamedResponse|RedirectResponse

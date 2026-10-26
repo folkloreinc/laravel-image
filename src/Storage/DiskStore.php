@@ -5,17 +5,21 @@ declare(strict_types=1);
 namespace Folklore\Image\Storage;
 
 use Folklore\Image\Contracts\DerivativeStore;
+use Folklore\Image\Exceptions\InvalidImageSpec;
 use Folklore\Image\Rendering\RenderedImage;
 use Folklore\Image\Sources\ImageSource;
+use Folklore\Image\Specs\ImageSpec;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Filesystem\FilesystemAdapter;
+use JsonException;
 use League\Flysystem\FilesystemException;
 use League\Flysystem\Local\LocalFilesystemAdapter;
 use RuntimeException;
 
 /**
  * Keeps derivatives on any Laravel disk (docs/decisions/0003-delivery.md), under a directory,
- * at the paths of DerivativeKey: `derivatives/media/med_01JAB3QX/8c1f/w800,h450.webp`.
+ * at the paths of DerivativeKey: `derivatives/media/med_01JAB3QX/8c1f/w800,h450.webp`, and
+ * the preset specs at the paths of PresetSpecKey, as JSON.
  *
  * Derivatives never change for their key, so they are written with a long-lived
  * `Cache-Control` for disks that serve them directly. Rendering takes a lock on the key
@@ -79,6 +83,30 @@ final readonly class DiskStore implements DerivativeStore
         });
     }
 
+    public function putPresetSpec(PresetSpecKey $key, ImageSpec $spec): void
+    {
+        $path = $this->prefixed($key->path());
+
+        if ($this->disk->put($path, json_encode($spec->toArray(), JSON_THROW_ON_ERROR), ['ContentType' => 'application/json']) === false) {
+            throw new RuntimeException("The preset spec {$path} can't be written.");
+        }
+    }
+
+    /**
+     * The spec recorded for the key, or null when there is none or it can't be read.
+     */
+    public function presetSpec(PresetSpecKey $key): ?ImageSpec
+    {
+        try {
+            $contents = $this->disk->get($this->prefixed($key->path()));
+            $spec = $contents === null ? null : json_decode($contents, true, flags: JSON_THROW_ON_ERROR);
+
+            return is_array($spec) ? ImageSpec::fromArray($spec) : null;
+        } catch (FilesystemException|JsonException|InvalidImageSpec) {
+            return null;
+        }
+    }
+
     public function clear(ImageSource $source): int
     {
         $directory = $this->prefixed(DerivativeKey::directoryOf($source));
@@ -89,7 +117,8 @@ final readonly class DiskStore implements DerivativeStore
         }
         $this->disk->deleteDirectory($directory);
 
-        return count($files);
+        // Derivatives have the extension of an image format; preset specs are JSON.
+        return count(array_filter($files, fn (string $file) => ! str_ends_with($file, '.json')));
     }
 
     public function url(DerivativeKey $key): ?string
