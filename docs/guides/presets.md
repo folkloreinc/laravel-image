@@ -35,7 +35,9 @@ A preset that depends on the source is a class that implements `Folklore\Image\C
 
 Each preset has a version: the first 6 hexadecimal characters of a hash of its definition, written in its URLs (`card.3f9a1c`). The order of the options and their defaults don't change it.
 
-Changing a preset changes its version, so its URLs change: CDNs and browsers never serve the old rendering for the new definition, and nothing needs purging. URLs of the old version answer 404 once the preset changes, so a page cached with the old URLs shows broken images until it is rendered again. Change presets with a deploy that clears the cached pages, or add a new preset instead.
+Changing a preset changes its version, so its URLs change: CDNs and browsers never serve the old rendering for the new definition, and nothing needs purging.
+
+URLs of an earlier version keep being served from the derivatives already stored, so a page cached with them keeps its images. Nothing is rendered for an earlier version: a variant of it that was never rendered, or whose derivatives were cleared, answers 404 ([decisions/0012](../decisions/0012-earlier-preset-versions.md)). Derivatives rendered by 2.0.0-alpha.1 don't count: their earlier versions answer 404.
 
 ## Preset URLs
 

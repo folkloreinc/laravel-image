@@ -12,6 +12,7 @@ use Folklore\Image\Sources\ImageSource;
 use Folklore\Image\Specs\Format;
 use Folklore\Image\Specs\ImageSpec;
 use Folklore\Image\Storage\DerivativeKey;
+use Folklore\Image\Storage\PresetSpecKey;
 use Folklore\Image\Storage\RenderLock;
 use Folklore\Image\Storage\StoredDerivative;
 use Folklore\Image\Testing\InMemoryDerivativeStore;
@@ -80,6 +81,16 @@ final class RenderLockTest extends TestCase
             public function put(DerivativeKey $key, RenderedImage $image): StoredDerivative
             {
                 return $this->store->put($key, $image);
+            }
+
+            public function putPresetSpec(PresetSpecKey $key, ImageSpec $spec): void
+            {
+                $this->store->putPresetSpec($key, $spec);
+            }
+
+            public function presetSpec(PresetSpecKey $key): ?ImageSpec
+            {
+                return $this->store->presetSpec($key);
             }
 
             public function clear(ImageSource $source): int

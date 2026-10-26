@@ -10,6 +10,8 @@ use Folklore\Image\Sources\ImageSource;
 use Folklore\Image\Specs\Format;
 use Folklore\Image\Specs\ImageSpec;
 use Folklore\Image\Storage\DerivativeKey;
+use Folklore\Image\Storage\PresetSpecKey;
+use Folklore\Image\Urls\PresetReference;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -89,6 +91,40 @@ trait DerivativeStoreContractTests
         foreach ($ofOthers as $key) {
             $this->assertNotNull($store->get($key), $key->path());
         }
+    }
+
+    public function test_a_preset_spec_is_recorded_per_preset_version_and_source_version(): void
+    {
+        $store = $this->store();
+        $source = new ImageSource('disk', 'uploads/photo.jpg', 'v1', mime: 'image/jpeg');
+        $key = PresetSpecKey::for($source, new PresetReference('card', '3f9a1c'));
+        $spec = ImageSpec::fromArray(['width' => 800, 'ratio' => '16:9', 'focus' => [0.3, 0.6], 'operations' => ['blur' => 5], 'quality' => 70]);
+
+        $this->assertNull($store->presetSpec($key));
+        $store->putPresetSpec($key, $spec);
+
+        $this->assertSame($spec->key(), $store->presetSpec($key)?->key());
+        $this->assertNull($store->presetSpec(PresetSpecKey::for($source, new PresetReference('card', '000000'))));
+        $this->assertNull($store->presetSpec(PresetSpecKey::for(new ImageSource('disk', 'uploads/photo.jpg', 'v2'), new PresetReference('card', '3f9a1c'))));
+
+        $store->putPresetSpec($key, new ImageSpec(width: 400));
+        $this->assertSame('w400.auto', $store->presetSpec($key)?->key());
+    }
+
+    public function test_clearing_a_source_deletes_its_preset_specs_and_counts_only_derivatives(): void
+    {
+        $store = $this->store();
+        $source = new ImageSource('disk', 'uploads/photo.jpg', 'v1', mime: 'image/jpeg');
+        $other = new ImageSource('disk', 'uploads/other.jpg', 'v1', mime: 'image/jpeg');
+        $preset = new PresetReference('card', '3f9a1c');
+        $store->put($this->derivativeKey(), $this->renderedImage());
+        $store->putPresetSpec(PresetSpecKey::for($source, $preset), new ImageSpec(width: 200));
+        $store->putPresetSpec(PresetSpecKey::for($other, $preset), new ImageSpec(width: 200));
+
+        $this->assertSame(1, $store->clear($source));
+
+        $this->assertNull($store->presetSpec(PresetSpecKey::for($source, $preset)));
+        $this->assertNotNull($store->presetSpec(PresetSpecKey::for($other, $preset)));
     }
 
     public function test_a_url_is_null_or_a_string(): void

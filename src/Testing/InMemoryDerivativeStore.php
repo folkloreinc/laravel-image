@@ -7,7 +7,9 @@ namespace Folklore\Image\Testing;
 use Folklore\Image\Contracts\DerivativeStore;
 use Folklore\Image\Rendering\RenderedImage;
 use Folklore\Image\Sources\ImageSource;
+use Folklore\Image\Specs\ImageSpec;
 use Folklore\Image\Storage\DerivativeKey;
+use Folklore\Image\Storage\PresetSpecKey;
 use Folklore\Image\Storage\StoredDerivative;
 
 /**
@@ -18,6 +20,9 @@ final class InMemoryDerivativeStore implements DerivativeStore
 {
     /** @var array<string, array{key: DerivativeKey, contents: string}> */
     private array $derivatives = [];
+
+    /** @var array<string, ImageSpec> */
+    private array $presetSpecs = [];
 
     /**
      * @param  string|null  $url  the base of the URLs of url(), for tests of redirects; null gives none
@@ -40,6 +45,16 @@ final class InMemoryDerivativeStore implements DerivativeStore
         return $this->stored($key, $image->contents);
     }
 
+    public function putPresetSpec(PresetSpecKey $key, ImageSpec $spec): void
+    {
+        $this->presetSpecs[$key->path()] = $spec;
+    }
+
+    public function presetSpec(PresetSpecKey $key): ?ImageSpec
+    {
+        return $this->presetSpecs[$key->path()] ?? null;
+    }
+
     public function clear(ImageSource $source): int
     {
         $directory = DerivativeKey::directoryOf($source).'/';
@@ -47,6 +62,11 @@ final class InMemoryDerivativeStore implements DerivativeStore
 
         foreach ($paths as $path) {
             unset($this->derivatives[$path]);
+        }
+        foreach (array_keys($this->presetSpecs) as $path) {
+            if (str_starts_with($path, $directory)) {
+                unset($this->presetSpecs[$path]);
+            }
         }
 
         return count($paths);

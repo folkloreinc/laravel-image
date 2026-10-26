@@ -11,6 +11,11 @@ Changes to 1.x after 1.1.0 are in the changelog of the [`v1.x`](https://github.c
 ### Breaking changes
 
 - `Image::routes()` no longer registers the 2.x route: register it with `Route::image()`. `Image::routes()` is kept for the 1.x route, which comes back with the compatibility layer in the beta; until then it throws a `BadMethodCallException`, so a 1.x project that updates never gets the 2.x route in place of its own ([decision 0011](docs/decisions/0011-image-routes-is-the-1x-route.md), #95).
+- `DerivativeStore` has two new methods, `putPresetSpec()` and `presetSpec()`, which record the spec of each preset version rendered; `DerivativeStoreContractTests` tests them. Stores written for alpha.1 implement them ([decision 0012](docs/decisions/0012-earlier-preset-versions.md), #96).
+
+### Fixed
+
+- URLs of an earlier version of a preset are served from their stored derivatives, as decisions 0004 and 0005 say, instead of answering 404 once the preset changes: a page cached with them keeps its images. Nothing is rendered for an earlier version, and derivatives rendered by alpha.1 aren't found this way ([decision 0012](docs/decisions/0012-earlier-preset-versions.md), #96).
 
 ## [2.0.0-alpha.1] - 2026-10-16
 

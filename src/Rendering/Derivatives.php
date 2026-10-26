@@ -5,12 +5,15 @@ declare(strict_types=1);
 namespace Folklore\Image\Rendering;
 
 use Folklore\Image\Contracts\DerivativeStore;
+use Folklore\Image\Contracts\Preset;
 use Folklore\Image\Contracts\Renderer;
 use Folklore\Image\Exceptions\RenderFailed;
 use Folklore\Image\Exceptions\RenderInProgress;
 use Folklore\Image\Sources\ImageSource;
 use Folklore\Image\Specs\ImageSpec;
+use Folklore\Image\Specs\PresetRegistry;
 use Folklore\Image\Storage\DerivativeKey;
+use Folklore\Image\Storage\PresetSpecKey;
 use Folklore\Image\Storage\RenderLock;
 use Folklore\Image\Storage\StoredDerivative;
 use Illuminate\Contracts\Container\Container;
@@ -29,18 +32,41 @@ final readonly class Derivatives
 
     /**
      * The stored derivative of a source and a spec, rendered and stored first when needed,
-     * under the RenderLock of its key.
+     * under the RenderLock of its key. When the spec is a preset's, rendering also records the
+     * preset's spec at its version, so URLs of this version keep finding their derivatives once
+     * the preset changes (docs/decisions/0012-earlier-preset-versions.md).
      *
      * @throws RenderFailed when the source can't be rendered
      * @throws RenderInProgress when another request is still rendering it
      */
-    public function fetch(ImageSource $source, ImageSpec $spec): StoredDerivative
+    public function fetch(ImageSource $source, ImageSpec $spec, ?Preset $preset = null): StoredDerivative
     {
+        $store = $this->store();
+
         return $this->container->make(RenderLock::class)->remember(
-            $this->store(),
+            $store,
             DerivativeKey::for($source, $spec),
-            fn () => $this->container->make(Renderer::class)->render($source, $spec),
+            function () use ($store, $source, $spec, $preset) {
+                $rendered = $this->container->make(Renderer::class)->render($source, $spec);
+                if ($preset !== null) {
+                    $store->putPresetSpec(
+                        PresetSpecKey::for($source, PresetRegistry::reference($preset)),
+                        $preset->spec($source),
+                    );
+                }
+
+                return $rendered;
+            },
         );
+    }
+
+    /**
+     * The spec a preset had at an earlier version, recorded when a derivative of that source
+     * version was rendered from it, or null.
+     */
+    public function presetSpec(PresetSpecKey $key): ?ImageSpec
+    {
+        return $this->store()->presetSpec($key);
     }
 
     /**
