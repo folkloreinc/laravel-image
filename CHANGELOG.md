@@ -8,7 +8,9 @@ All notable changes to `folklore/laravel-image` are documented in this file. The
 
 Changes to 1.x after 1.1.0 are in the changelog of the [`v1.x`](https://github.com/folkloreinc/laravel-image/blob/v1.x/CHANGELOG.md) branch.
 
-The compatibility layer of 1.x ([decision 0007](docs/decisions/0007-compatibility-layer.md), [docs/upgrade.md](docs/upgrade.md), #107): a 1.x project requires `^2.0` and keeps its URLs and its code.
+## [2.0.0-alpha.3] - 2026-10-29
+
+The third alpha: the compatibility layer of 1.x ([decision 0007](docs/decisions/0007-compatibility-layer.md), [docs/upgrade.md](docs/upgrade.md), #107). A 1.x project requires `^2.0@alpha` and keeps its URLs and its code.
 
 ### Breaking changes
 
@@ -158,7 +160,8 @@ What sites will notice, and how to keep the previous behaviour where there is a 
 
 - Travis CI, Coveralls, `phpcs.xml` and the Prettier PHP plugin.
 
-[Unreleased]: https://github.com/folkloreinc/laravel-image/compare/v2.0.0-alpha.2...v2.x
+[Unreleased]: https://github.com/folkloreinc/laravel-image/compare/v2.0.0-alpha.3...v2.x
+[2.0.0-alpha.3]: https://github.com/folkloreinc/laravel-image/releases/tag/v2.0.0-alpha.3
 [2.0.0-alpha.2]: https://github.com/folkloreinc/laravel-image/releases/tag/v2.0.0-alpha.2
 [2.0.0-alpha.1]: https://github.com/folkloreinc/laravel-image/releases/tag/v2.0.0-alpha.1
 [1.1.0]: https://github.com/folkloreinc/laravel-image/releases/tag/v1.1.0
