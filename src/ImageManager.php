@@ -66,6 +66,18 @@ class ImageManager
     {
         Deprecations::report('Image::routes() is deprecated: register Route::imageLegacy() for 1.x URLs, and Route::image() for 2.x URLs.');
 
+        $this->loadLegacyRoutes($config);
+    }
+
+    /**
+     * Loads the routes file of `image.routes.map`, as 1.x did at boot.
+     *
+     * @internal
+     *
+     * @param  array<string, mixed>|string  $config  options over `image.routes`, or the path of a routes file
+     */
+    public function loadLegacyRoutes(array|string $config = []): void
+    {
         $config = [...$this->container->make(LegacyConfig::class)->routes(), ...(is_string($config) ? ['map' => $config] : $config)];
         $group = array_intersect_key($config, array_flip(['domain', 'prefix', 'as', 'namespace', 'middleware']));
         $map = $config['map'] ?? null;

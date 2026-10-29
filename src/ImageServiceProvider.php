@@ -9,6 +9,7 @@ use Folklore\Image\Compat\LegacyConfig;
 use Folklore\Image\Compat\LegacyFilters;
 use Folklore\Image\Compat\LegacySources;
 use Folklore\Image\Console\DoctorCommand;
+use Folklore\Image\Console\UpgradeCommand;
 use Folklore\Image\Contracts\DerivativeStore;
 use Folklore\Image\Contracts\Renderer;
 use Folklore\Image\Contracts\Signer;
@@ -95,9 +96,9 @@ final class ImageServiceProvider extends ServiceProvider
             [...LegacyImageRoute::DEFAULTS, ...LegacyConfig::options($config)],
         ));
 
-        // A 1.x config with a routes file: 1.x loaded it at boot.
-        if ($app->make(LegacyConfig::class)->routes()['map'] ?? null) {
-            $app->make(ImageManager::class)->routes();
+        // The routes file of a 1.x config, which 1.x loaded at boot, and image:upgrade keeps.
+        if (is_string($app->make(LegacyConfig::class)->routes()['map'] ?? null)) {
+            $app->make(ImageManager::class)->loadLegacyRoutes();
         }
 
         // With laravel-mediatheque 2, a media's derivatives are cleared when its visibility
@@ -107,7 +108,7 @@ final class ImageServiceProvider extends ServiceProvider
         }
 
         if ($this->app->runningInConsole()) {
-            $this->commands([DoctorCommand::class]);
+            $this->commands([DoctorCommand::class, UpgradeCommand::class]);
             $this->publishes([__DIR__.'/../config/image.php' => $this->app->configPath('image.php')], 'image-config');
         }
     }
