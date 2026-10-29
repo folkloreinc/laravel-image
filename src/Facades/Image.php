@@ -10,7 +10,9 @@ use Illuminate\Support\Facades\Facade;
 
 /**
  * @method static \Folklore\Image\PendingImage for(mixed $reference)
- * @method static never routes(array<string, mixed>|string $config = [])
+ * @method static void routes(array<string, mixed>|string $config = [])
+ * @method static string|null url(?string $src, int|array<int|string, mixed>|null $width = null, ?int $height = null, array<int|string, mixed> $filters = [])
+ * @method static \Folklore\Image\ImageManager filter(string $name, mixed $filter)
  * @method static void resolver(\Folklore\Image\Contracts\SourceResolver $resolver)
  * @method static void useHost(?string $host)
  * @method static \Folklore\Image\Specs\PresetRegistry presets()

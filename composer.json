@@ -58,12 +58,18 @@
     "autoload": {
         "psr-4": {
             "Folklore\\Image\\": "src/"
-        }
+        },
+        "files": [
+            "src/helpers.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {
             "Folklore\\Image\\Tests\\": "tests/"
-        }
+        },
+        "exclude-from-classmap": [
+            "tests/fixtures/"
+        ]
     },
     "scripts": {
         "test": "vendor/bin/phpunit",

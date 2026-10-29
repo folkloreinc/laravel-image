@@ -118,8 +118,9 @@ return [
     | Limits
     |--------------------------------------------------------------------------
     |
-    | Enforced on every image URL, signed or not: requests over a limit answer
-    | 404. Null is no limit.
+    | Enforced on every URL of Route::image(), signed or not: requests over a
+    | limit answer 404. Null is no limit. The legacy route of 1.x URLs keeps
+    | the 1.x restrictions of image.restrictions instead (docs/upgrade.md).
     |
     */
 
@@ -197,11 +198,12 @@ return [
     |--------------------------------------------------------------------------
     |
     | Whether derivatives can be larger than their original. A URL can never
-    | change it.
+    | change it. Null never upscales on Route::image(), and keeps 1.x's
+    | behaviour on the legacy route, where crops upscale and resizes don't.
     |
     */
 
-    'upscale' => false,
+    'upscale' => null,
 
     /*
     |--------------------------------------------------------------------------
@@ -214,5 +216,19 @@ return [
     */
 
     'memory_limit' => '256M',
+
+    /*
+    |--------------------------------------------------------------------------
+    | 1.x compatibility
+    |--------------------------------------------------------------------------
+    |
+    | Whether the `image` key of the container is this package's manager, as
+    | in 1.x, for app('image') and $app['image'] (docs/upgrade.md). It
+    | replaces Laravel's own `image` service. Null binds it for a 1.x config,
+    | with keys such as sizes, filters, sources or routes.
+    |
+    */
+
+    'bind_image' => null,
 
 ];

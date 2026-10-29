@@ -9,8 +9,8 @@ use Folklore\Image\Tests\TestCase;
 /**
  * The 1.x URLs that 2.x must keep decoding (docs/decisions/0004-specs-and-urls.md)
  * and serving through the compatibility layer (docs/decisions/0007-compatibility-layer.md).
- * The 1.x code isn't on this branch anymore: until V1Codec lands, these tests only keep
- * the fixtures complete and well-formed. Never remove a case.
+ * These tests keep the fixtures complete and well-formed; V1CodecTest decodes them,
+ * LegacyApiTest generates them and LegacyRenderingTest serves them. Never remove a case.
  */
 final class V1UrlFixturesTest extends TestCase
 {

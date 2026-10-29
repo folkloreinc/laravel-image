@@ -283,7 +283,7 @@ final class PendingImage implements Stringable
      */
     public function url(): string
     {
-        return $this->manager->url($this->imageUrl(), $this->host);
+        return $this->manager->fullUrl($this->imageUrl(), $this->host);
     }
 
     /**

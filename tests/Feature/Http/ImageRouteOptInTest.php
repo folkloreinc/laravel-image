@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Folklore\Image\Tests\Feature\Http;
 
-use BadMethodCallException;
 use Folklore\Image\Facades\Image;
+use Folklore\Image\Http\LegacyImageController;
 use Folklore\Image\Tests\Feature\ImageTestCase;
 use Illuminate\Routing\Route as RoutingRoute;
 use Illuminate\Routing\Router;
@@ -36,11 +36,16 @@ final class ImageRouteOptInTest extends ImageTestCase
         $this->get('/media/'.substr(Image::for($this->photo)->preset('card')->url(), strlen('https://img.test/img/')))->assertOk();
     }
 
-    public function test_image_routes_throws_instead_of_registering_the_2x_route(): void
+    public function test_image_routes_registers_the_legacy_route_not_the_2x_route(): void
     {
-        $this->expectException(BadMethodCallException::class);
-        $this->expectExceptionMessage('Register the 2.x image route with Route::image().');
+        Image::fake();
 
         Image::routes();
+
+        $route = Route::getRoutes()->getByName('image');
+        $this->assertInstanceOf(RoutingRoute::class, $route);
+        $this->assertSame(LegacyImageController::class, $route->getControllerClass());
+        $this->get(Image::for($this->photo)->preset('card')->url())->assertNotFound();
+        Image::assertNothingRendered();
     }
 }

@@ -65,7 +65,7 @@ What the pilot's creator MVP needs.
 
 ## More operations
 
-- [ ] The 1.x filters as operations: `blur`, `grayscale`, `negative`, `gamma`, `colorize`, `interlace` (progressive output)
+- [ ] The 1.x filters as operations: `blur`, `gamma`, `colorize`, `interlace` (progressive output); `grayscale` and `negative` are done (#107)
 - [ ] New operations: `sharpen`, `background` and padding, `trim`
 - [ ] Animated GIF and WebP: keep the animation, or the first frame
 - [ ] Custom operations through `Image::operation()`, and preset classes
@@ -75,11 +75,12 @@ What the pilot's creator MVP needs.
 
 Every client site still requires `v1.x-dev` (2026-10-20). The upgrade guide starts from a tagged 1.x release, so sites move to `^1.1` first.
 
-- [ ] Compatibility layer ([decisions/0007](decisions/0007-compatibility-layer.md)): 1.x facade methods and helpers, array filters as presets, `image.sizes` and `app.image_url`, `Image::url()` returning 1.x URLs, `$router->image()`
-- [ ] `V1Codec` and `Route::imageLegacy()`, with the 1.x restrictions and `PublicPathStore`
-- [ ] `image:upgrade` with `--check`
+- [x] Compatibility layer ([decisions/0007](decisions/0007-compatibility-layer.md)): 1.x facade methods and helpers, array filters as presets, `image.sizes` and `app.image_url`, `Image::url()` returning 1.x URLs, `$router->image()`, the `image` container key (#107)
+- [ ] `Image::make()` and `image($path)`, returning an Intervention image
+- [x] `V1Codec` and `Route::imageLegacy()`, with the 1.x restrictions and `PublicPathStore` (#107)
+- [x] `image:upgrade` with `--check` (#107)
 - [ ] Rector rules
-- [ ] `Image::routes()` and `$router->image()` mount the legacy route (#95)
+- [x] `Image::routes()` and `$router->image()` mount the legacy route (#95, #107)
 - [ ] One active project upgrades, following [upgrade.md](upgrade.md) as written. `laravel-folklore` 2 already builds its `ImageSize` on `variant()`
 - [ ] [upgrade.md](upgrade.md) complete
 

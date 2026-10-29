@@ -14,7 +14,7 @@ Version 2 is in development on the `v2.x` branch. Its pilot project is Niche. 1.
 | [architecture.md](architecture.md) | Design of 2.0: sources, specs, presets, URLs, rendering, storage, delivery, responsive images, testing |
 | [decisions/](decisions/) | One file per decision |
 | [roadmap.md](roadmap.md) | Phases and alpha slices |
-| [upgrade.md](upgrade.md) | Upgrading a project from 1.x (draft, filled as 2.0 lands) |
+| [upgrade.md](upgrade.md) | Upgrading a project from 1.x: `image:upgrade`, the legacy route, the 1.x config |
 
 Tracking issue: [#3](https://github.com/folkloreinc/laravel-image/issues/3), the index of [roadmap.md](roadmap.md) and of 1.x. The kickoff was [#59](https://github.com/folkloreinc/laravel-image/issues/59) (closed).
 

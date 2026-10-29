@@ -4,21 +4,31 @@ declare(strict_types=1);
 
 namespace Folklore\Image;
 
+use Folklore\Image\Compat\Deprecations;
+use Folklore\Image\Compat\LegacyConfig;
+use Folklore\Image\Compat\LegacyFilters;
+use Folklore\Image\Compat\LegacySources;
 use Folklore\Image\Console\DoctorCommand;
+use Folklore\Image\Console\UpgradeCommand;
 use Folklore\Image\Contracts\DerivativeStore;
 use Folklore\Image\Contracts\Renderer;
 use Folklore\Image\Contracts\Signer;
 use Folklore\Image\Contracts\UrlCodec;
 use Folklore\Image\Http\ImageRoute;
+use Folklore\Image\Http\LegacyImageRoute;
+use Folklore\Image\Http\LegacyRestrictions;
 use Folklore\Image\Listeners\ClearMediaDerivatives;
 use Folklore\Image\Rendering\Derivatives;
 use Folklore\Image\Rendering\InterventionRenderer;
+use Folklore\Image\Rendering\Operations\Grayscale;
+use Folklore\Image\Rendering\Operations\Negative;
 use Folklore\Image\Sources\DiskResolver;
 use Folklore\Image\Sources\SourceResolvers;
 use Folklore\Image\Specs\PresetRegistry;
 use Folklore\Image\Storage\DiskStore;
 use Folklore\Image\Storage\RenderLock;
 use Folklore\Image\Urls\HmacSigner;
+use Folklore\Image\Urls\V1Codec;
 use Folklore\Image\Urls\V2Codec;
 use Illuminate\Config\Repository as Config;
 use Illuminate\Contracts\Cache\Factory as CacheFactory;
@@ -29,6 +39,7 @@ use Illuminate\Contracts\Container\Container;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Contracts\Filesystem\Factory as FilesystemFactory;
 use Illuminate\Contracts\Foundation\CachesConfiguration;
+use Illuminate\Foundation\Application;
 use Illuminate\Routing\Route;
 use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
@@ -49,7 +60,7 @@ final class ImageServiceProvider extends ServiceProvider
         $this->app->singleton(ImageManager::class);
         $this->app->singleton(UrlCodec::class, V2Codec::class);
         $this->app->singleton(Signer::class, fn (Container $app) => new HmacSigner($app->make(ImageConfig::class)->signerKeys()));
-        $this->app->singleton(PresetRegistry::class, fn (Container $app) => new PresetRegistry($app, $app->make(ImageConfig::class)->presets()));
+        $this->app->singleton(PresetRegistry::class, fn (Container $app) => new PresetRegistry($app, self::presets($app)));
         $this->app->singleton(Derivatives::class);
         $this->app->singleton(SourceResolvers::class, function (Container $app): SourceResolvers {
             $resolvers = new SourceResolvers($app, $app->make(ImageConfig::class)->resolvers());
@@ -61,12 +72,34 @@ final class ImageServiceProvider extends ServiceProvider
         $this->app->singleton(DiskResolver::class, fn (Container $app) => self::diskResolver($app));
         $this->app->singleton(DerivativeStore::class, fn (Container $app) => self::derivativeStore($app));
         $this->app->singleton(RenderLock::class, fn (Container $app) => self::renderLock($app));
+
+        $this->registerCompatibility();
     }
 
     public function boot(): void
     {
         $app = $this->app;
-        Router::macro('image', fn (?string $prefix = null): Route => ImageRoute::register($app->make(Router::class), $app->make(ImageConfig::class), $prefix));
+        Router::macro('image', function (?string $prefix = null, ?array $config = null) use ($app): Route {
+            if ($config === null) {
+                return ImageRoute::register($app->make(Router::class), $app->make(ImageConfig::class), $prefix);
+            }
+
+            // The 1.x macro, `$router->image('{pattern}', [...])`, registers the legacy route.
+            Deprecations::report('$router->image($path, $config) is deprecated: register Route::imageLegacy($path, $config) for 1.x URLs.');
+
+            return LegacyImageRoute::register($app->make(Router::class), $app->make(V1Codec::class), $prefix ?? '{pattern}', LegacyConfig::options($config));
+        });
+        Router::macro('imageLegacy', fn (string $path = '{pattern}', array $config = []): Route => LegacyImageRoute::register(
+            $app->make(Router::class),
+            $app->make(V1Codec::class),
+            $path,
+            [...LegacyImageRoute::DEFAULTS, ...LegacyConfig::options($config)],
+        ));
+
+        // The routes file of a 1.x config, which 1.x loaded at boot, and image:upgrade keeps.
+        if (is_string($app->make(LegacyConfig::class)->routes()['map'] ?? null)) {
+            $app->make(ImageManager::class)->loadLegacyRoutes();
+        }
 
         // With laravel-mediatheque 2, a media's derivatives are cleared when its visibility
         // changes or its original is replaced.
@@ -75,9 +108,53 @@ final class ImageServiceProvider extends ServiceProvider
         }
 
         if ($this->app->runningInConsole()) {
-            $this->commands([DoctorCommand::class]);
+            $this->commands([DoctorCommand::class, UpgradeCommand::class]);
             $this->publishes([__DIR__.'/../config/image.php' => $this->app->configPath('image.php')], 'image-config');
         }
+    }
+
+    /**
+     * The compatibility layer of 1.x (docs/decisions/0007-compatibility-layer.md): its config,
+     * named filters, URLs, sources and restrictions, and the `image` key of the container, as
+     * 1.x bound it, when the config is a 1.x config or `image.bind_image` is true.
+     */
+    private function registerCompatibility(): void
+    {
+        $this->app->singleton(LegacyConfig::class, fn (Container $app) => new LegacyConfig($app->make(Repository::class)));
+        $this->app->singleton(LegacyFilters::class, fn (Container $app) => new LegacyFilters($app->make(PresetRegistry::class), $app->make(LegacyConfig::class)->filters()));
+        $this->app->singleton(V1Codec::class, fn (Container $app) => new V1Codec(
+            $app->make(LegacyFilters::class),
+            LegacySources::resolverName($app->make(LegacyConfig::class)->defaultSource()),
+            $app->make(LegacyConfig::class)->urlOptions(),
+        ));
+        $this->app->singleton(LegacySources::class);
+        $this->app->singleton(LegacyRestrictions::class, fn (Container $app) => new LegacyRestrictions($app->make(LegacyConfig::class)->restrictions()));
+
+        // Once every provider is registered: Laravel 13 has its own `image` service, deferred,
+        // which would replace the alias once loaded.
+        $this->app->booting(function (object $app): void {
+            if (! $app instanceof Application || ! $app->make(LegacyConfig::class)->bindsImage()) {
+                return;
+            }
+
+            $services = $app->getDeferredServices();
+            unset($services['image']);
+            $app->setDeferredServices($services);
+            $app->alias(ImageManager::class, 'image');
+        });
+    }
+
+    /**
+     * The presets of `image.presets`, or, when it is empty, the named sizes of the 1.x
+     * `image.sizes`.
+     *
+     * @return array<string, mixed>
+     */
+    private static function presets(Container $app): array
+    {
+        $presets = $app->make(ImageConfig::class)->presets();
+
+        return $presets !== [] ? $presets : $app->make(LegacyConfig::class)->sizePresets();
     }
 
     /**
@@ -191,8 +268,9 @@ final class ImageServiceProvider extends ServiceProvider
             $app->make(FilesystemFactory::class),
             $config->string('image.renderer.driver', 'auto'),
             quality: $quality,
-            upscale: $config->boolean('image.upscale', false),
+            upscale: $app->make(ImageConfig::class)->upscale(),
             memoryLimit: is_string($memoryLimit) && $memoryLimit !== '' ? $memoryLimit : null,
+            operations: ['grayscale' => new Grayscale, 'negative' => new Negative],
         );
     }
 }

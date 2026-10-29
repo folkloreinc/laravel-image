@@ -235,7 +235,7 @@ There is no JavaScript package in 2.x ([decisions/0008](decisions/0008-no-javasc
 
 ## Code layout
 
-Existing in 2.0.0-alpha.1; *(planned)* marks what the next slices add.
+Existing on `v2.x`; *(planned)* marks what the next slices add.
 
 ```
 src/
@@ -248,16 +248,16 @@ src/
   Exceptions/                  InvalidImageSpec, InvalidImageUrl, SourceNotFound, RenderInProgress, …
   Sources/                     ImageSource, DiskResolver, SourceResolvers
   Specs/                       ImageSpec and its value objects, ArrayPreset, PresetRegistry, Limits
-  Urls/                        ImageUrl, PresetReference, SpecTokens, V2Codec, HmacSigner; V1Codec (planned, beta)
-  Rendering/                   RenderedImage, InterventionRenderer, Derivatives, Srgb; Operations/ (planned)
-  Storage/                     DerivativeKey, PresetSpecKey, StoredDerivative, DiskStore, RenderLock; PublicPathStore (planned, beta)
+  Urls/                        ImageUrl, PresetReference, SpecTokens, V2Codec, V1Codec, HmacSigner
+  Rendering/                   RenderedImage, InterventionRenderer, Derivatives, Srgb; Operations/ (grayscale, negative; more planned)
+  Storage/                     DerivativeKey, PresetSpecKey, StoredDerivative, DiskStore, RenderLock, PublicPathStore
   Listeners/                   ClearMediaDerivatives (with laravel-mediatheque 2)
-  Http/                        ImageController, ImageRoute (Route::image()); LegacyImageController (planned, beta)
+  Http/                        ImageController, ImageRoute (Route::image()); LegacyImageController, LegacyImageRoute (Route::imageLegacy()), LegacyRestrictions
   Variants/                    ImageVariant, ImageVariantResource; Srcset (planned)
   View/Components/Image.php    <x-image> (planned)
   Testing/                     ImageFake, InMemoryDerivativeStore, FakeRenderer, Contracts/ (contract test traits)
-  Console/                     doctor; presets, warm, clear (planned), upgrade (planned, beta)
-  Compat/                      1.x facade methods, helpers, config reader (planned, beta)
+  Console/                     doctor, upgrade; presets, warm, clear (planned)
+  Compat/                      the 1.x config reader, named filters, sources and deprecations; helpers.php, Facade.php and ServiceProvider.php are the 1.x names
 tests/fixtures/urls/           codec fixtures (JSON): v2.json, and every 1.x URL format in v1.json
 tests/fixtures/                specs.json, signatures.json, images/
 ```

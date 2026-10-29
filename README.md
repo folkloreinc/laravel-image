@@ -24,7 +24,9 @@ Image::for($media)->variants('card'); // width, height and URL of each variant, 
 - Sources resolved from disks, and from media ids with `laravel-mediatheque` 2's `media` resolver.
 - `ImageVariantResource`, `Image::fake()` and `image:doctor`.
 
-**Planned** ([roadmap](docs/roadmap.md)): focal point and non-destructive edits (`transform`), channel presets, responsive images with `srcset()` and `<x-image>`, more operations, and for the beta, a compatibility layer that keeps 1.x URLs and the 1.x API working until 3.0.
+**Upgrading from 1.x:** 1.x URLs keep working through `Route::imageLegacy()`, and a compatibility layer keeps the 1.x API working, deprecated, until 3.0. `php artisan image:upgrade --check` lists what a project uses; [docs/upgrade.md](docs/upgrade.md) has the steps.
+
+**Planned** ([roadmap](docs/roadmap.md)): focal point and non-destructive edits (`transform`), channel presets, responsive images with `srcset()` and `<x-image>`, more operations, and the Rector rules of the upgrade.
 
 The guides of the alpha are in [`docs/guides/`](docs/guides/getting-started.md): [getting started](docs/guides/getting-started.md), [presets](docs/guides/presets.md), [URLs and signatures](docs/guides/urls-and-signatures.md) and [delivery behind a CDN](docs/guides/delivery-behind-a-cdn.md).
 
