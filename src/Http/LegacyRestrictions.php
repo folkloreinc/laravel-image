@@ -54,16 +54,18 @@ final readonly class LegacyRestrictions
      *
      * @param  array<string, mixed>  $route  the options of the route
      * @param  array<string, mixed>  $filters  the filters of the URL
+     * @param  list<string>  $sizes  names of the URL that are sizes too: presets, which 1.x
+     *                               expanded to their size
      * @return list<string>
      */
-    public function violations(array $route, array $filters): array
+    public function violations(array $route, array $filters, array $sizes = []): array
     {
         $settings = $this->settings($route);
         $violations = [];
 
         $keys = array_keys($filters);
-        $sizeKeys = array_values(array_intersect($keys, self::SIZE_KEYS));
-        $filterKeys = array_values(array_diff($keys, self::SIZE_KEYS));
+        $sizeKeys = array_values(array_intersect($keys, [...self::SIZE_KEYS, ...$sizes]));
+        $filterKeys = array_values(array_diff($keys, $sizeKeys));
 
         if (($route['allow_size'] ?? true) === false && $sizeKeys !== []) {
             $violations[] = 'A size is not allowed on this route.';

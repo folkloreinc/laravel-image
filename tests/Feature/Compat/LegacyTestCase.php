@@ -37,6 +37,7 @@ abstract class LegacyTestCase extends TestCase
             ['id' => 'large', 'maxWidth' => 1400, 'maxHeight' => 1400],
             ['id' => 'bigthumbnail', 'maxWidth' => 1080, 'maxHeight' => 1080, 'crop' => true],
             ['id' => 'facebook', 'width' => 1200, 'height' => 630, 'crop' => true],
+            ['id' => 'square', 'width' => 300, 'height' => 300, 'crop' => false],
         ],
         'source' => 'public',
         'sources' => [

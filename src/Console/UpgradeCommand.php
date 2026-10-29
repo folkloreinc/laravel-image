@@ -50,6 +50,9 @@ final class UpgradeCommand extends Command
         '/Folklore\\\\Image\\\\(Facade|ServiceProvider)\b/' => 'deprecated: use Folklore\Image\Facades\Image; package discovery registers the provider',
     ];
 
+    /** The default route of 1.x, registered when the routes file was missing. */
+    private const array DEFAULT_ROUTE = ['as' => 'image', 'expires' => 2678400, 'headers' => [], 'cache' => true];
+
     /** Keys of the 2.x config: a config with one of them is upgraded. */
     private const array KEYS_2X = ['renderer', 'presets', 'resolvers', 'derivatives', 'delivery', 'signing', 'limits', 'strict', 'bind_image'];
 
@@ -60,7 +63,8 @@ final class UpgradeCommand extends Command
     private const string IMAGE_KEY = '/app\(\s*[\'"]image[\'"]\s*\)|\[\s*[\'"]image[\'"]\s*\]|resolve\(\s*[\'"]image[\'"]\s*\)|\bimage\(\)\s*->/';
 
     protected $signature = 'image:upgrade
-        {--check : List what the project uses, without changing anything}';
+        {--check : List what the project uses, without changing anything}
+        {--force : Upgrade even when values of the config would be lost}';
 
     protected $description = 'Upgrade a 1.x project: convert config/image.php and the image routes';
 
@@ -70,7 +74,7 @@ final class UpgradeCommand extends Command
         $project = is_file($file) ? self::load($file) : [];
 
         if ($this->option('check')) {
-            return $this->check($app, $project);
+            return $this->check($app, $project, $file);
         }
 
         if (! self::isLegacy($project)) {
@@ -79,17 +83,28 @@ final class UpgradeCommand extends Command
             return self::SUCCESS;
         }
 
-        $routes = $this->routesFile($project);
+        $losses = $this->losses($project, $file);
+        if ($losses !== [] && ! $this->option('force')) {
+            $this->components->error('Upgrading would lose parts of config/image.php:');
+            foreach ($losses as $what => $why) {
+                $this->components->twoColumnDetail($what, $why);
+            }
+            $this->line('  Move them first, or run image:upgrade --force to write the values they have on this machine.');
+
+            return self::FAILURE;
+        }
+
+        $routes = $this->routesFile($app, $project);
         $converted = $this->convert($app, $project);
-        file_put_contents($file, $this->exportConfig($app, $converted));
-        $this->components->info('config/image.php is in the 2.x shape.');
+        $this->write($app, $file, $this->exportConfig($app, $converted));
+        $this->components->info('config/image.php is in the 2.x shape. The 1.x file is config/image.php.1x.');
 
         if ($routes !== null) {
-            $calls = $this->recordRoutes($routes);
+            $calls = is_file($routes) ? $this->recordRoutes($routes) : [['{pattern}', [...self::DEFAULT_ROUTE, 'cache_path' => $app->publicPath()]]];
             if ($calls === null) {
-                $this->components->warn("{$routes} registers other routes: replace its \$router->image() calls with Route::imageLegacy() yourself.");
+                $this->components->warn(self::relative($app, $routes).' does more than call $router->image(): it is left as it is. Replace its $router->image() calls with Route::imageLegacy() yourself.');
             } else {
-                file_put_contents($routes, $this->exportRoutes($app, $calls, $project));
+                $this->write($app, $routes, $this->exportRoutes($app, $calls));
                 $this->components->info(self::relative($app, $routes).' registers the legacy route.');
             }
         }
@@ -105,7 +120,7 @@ final class UpgradeCommand extends Command
     /**
      * @param  array<mixed>  $project
      */
-    private function check(Application $app, array $project): int
+    private function check(Application $app, array $project, string $file): int
     {
         $this->components->twoColumnDetail('<fg=gray>Config</>', 'config/image.php');
         if (! self::isLegacy($project)) {
@@ -113,6 +128,20 @@ final class UpgradeCommand extends Command
         } else {
             foreach ($this->configChanges($project) as $key => $change) {
                 $this->components->twoColumnDetail($key, $change);
+            }
+
+            $this->newLine();
+            $this->components->twoColumnDetail('<fg=gray>Keys image:upgrade drops</>', 'not read by 2.x, or their default');
+            $dropped = $this->dropped($project, $this->convert($app, $project));
+            foreach ($dropped === [] ? ['none' => '<fg=green>ok</>'] : $dropped as $key => $value) {
+                $this->components->twoColumnDetail($key, $value);
+            }
+
+            $this->newLine();
+            $this->components->twoColumnDetail('<fg=gray>What would be lost</>', 'image:upgrade refuses without --force');
+            $losses = $this->losses($project, $file);
+            foreach ($losses === [] ? ['none' => '<fg=green>ok</>'] : array_map(fn (string $why) => "<fg=yellow>{$why}</>", $losses) as $what => $why) {
+                $this->components->twoColumnDetail($what, $why);
             }
         }
         $imageUrl = $app->make(Repository::class)->get('app.image_url');
@@ -218,8 +247,8 @@ final class UpgradeCommand extends Command
             $config['url'] = $url;
         }
 
-        if (($project['upscale'] ?? null) === true) {
-            $config['upscale'] = true;
+        if (is_bool($project['upscale'] ?? null)) {
+            $config['upscale'] = $project['upscale'];
         }
         $memoryLimit = $project['memory_limit'] ?? null;
         if (is_string($memoryLimit) && $memoryLimit !== '128M') {
@@ -240,7 +269,8 @@ final class UpgradeCommand extends Command
         if ($restrictions !== []) {
             $config['restrictions'] = [...LegacyConfig::RESTRICTIONS, ...$restrictions];
         }
-        $routes = LegacyConfig::options($project['routes'] ?? []);
+        // Without a routes key, 1.x loaded routes/images.php, or registered its default route.
+        $routes = array_key_exists('routes', $project) ? LegacyConfig::options($project['routes']) : ['map' => $app->basePath('routes/images.php')];
         if (is_string($routes['map'] ?? null)) {
             $config['routes'] = array_intersect_key($routes, array_flip(['map', 'domain', 'prefix', 'as', 'middleware']));
         }
@@ -309,15 +339,19 @@ final class UpgradeCommand extends Command
     }
 
     /**
-     * The routes file to rewrite: the one of `image.routes.map`, when it registers image routes.
+     * The routes file of `image.routes.map`, which image:upgrade rewrites, or writes when it is
+     * missing; `routes/images.php` when the config has no `routes` key, as in 1.x.
      *
      * @param  array<mixed>  $project
      */
-    private function routesFile(array $project): ?string
+    private function routesFile(Application $app, array $project): ?string
     {
-        $map = LegacyConfig::options($project['routes'] ?? [])['map'] ?? null;
+        if (! array_key_exists('routes', $project)) {
+            return $app->basePath('routes/images.php');
+        }
+        $map = LegacyConfig::options($project['routes'])['map'] ?? null;
 
-        return is_string($map) && is_file($map) && preg_match('/\$router->image\(/', (string) file_get_contents($map)) === 1 ? $map : null;
+        return is_string($map) ? $map : null;
     }
 
     /**
@@ -328,6 +362,10 @@ final class UpgradeCommand extends Command
      */
     private function recordRoutes(string $file): ?array
     {
+        if (! self::onlyImageRoutes((string) file_get_contents($file))) {
+            return null;
+        }
+
         $router = new class
         {
             /** @var list<array{string, array<string, mixed>}> */
@@ -393,23 +431,82 @@ final class UpgradeCommand extends Command
      */
     private function routeChecks(Application $app, array $project): array
     {
-        $checks = [];
-        $routes = $this->routesFile($project);
-        $calls = $routes === null ? [] : ($this->recordRoutes($routes) ?? []);
+        $routes = $this->routesFile($app, $project);
+        if ($routes === null) {
+            return ['image.routes.map' => 'null: 1.x registered no image route, and neither does 2.x'];
+        }
 
+        $checks = [];
+        if (! array_key_exists('routes', $project)) {
+            $checks['image.routes'] = '<fg=yellow>not set: 1.x loaded routes/images.php, or its default catch-all route; 2.x registers no route until image:upgrade sets image.routes.map</>';
+        }
+        if (! is_file($routes)) {
+            $checks[self::relative($app, $routes)] = 'missing: 1.x registered its default catch-all route, which image:upgrade writes in it';
+
+            return $checks;
+        }
+
+        $calls = $this->recordRoutes($routes);
+        if ($calls === null) {
+            $checks[self::relative($app, $routes)] = '<fg=yellow>does more than call $router->image(): image:upgrade leaves it as it is</>';
+
+            return $checks;
+        }
         foreach ($calls as [$path, $options]) {
             $cachePath = $options['cache_path'] ?? null;
             $public = ($options['cache'] ?? false) === true && (! is_string($cachePath) || str_starts_with($cachePath, $app->publicPath()));
             $checks[$path] = $public ? 'writes images under public/: the legacy route keeps doing it' : 'replaced by Route::imageLegacy()';
         }
-        if ($routes === null) {
-            $map = LegacyConfig::options($project['routes'] ?? [])['map'] ?? null;
-            $checks[is_string($map) ? self::relative($app, $map) : 'image.routes.map'] = is_string($map)
-                ? 'missing: 1.x registered its default catch-all route, which image:upgrade adds'
-                : '<fg=green>none</>';
-        }
 
         return $checks;
+    }
+
+    /**
+     * What converting the config would lose, by key or line: keys image:upgrade doesn't know,
+     * and values from env() or code, which would be written as they are on this machine.
+     *
+     * @param  array<mixed>  $project
+     * @return array<string, string>
+     */
+    private function losses(array $project, string $file): array
+    {
+        $losses = [];
+        $known = [...LegacyConfig::KEYS, ...self::KEYS_2X, 'url', 'upscale', 'quality', 'memory_limit'];
+        foreach (array_keys($project) as $key) {
+            if (! in_array($key, $known, true)) {
+                $losses["image.{$key}"] = 'a key image:upgrade doesn\'t know: it would be dropped';
+            }
+        }
+
+        foreach (self::code((string) file_get_contents($file)) as $line => $code) {
+            $losses["config/image.php:{$line}"] = $code === 'env'
+                ? 'env(): its value on this machine would be written instead'
+                : "{$code}: its value on this machine would be written instead";
+        }
+
+        return $losses;
+    }
+
+    /**
+     * The keys of the 1.x config that the 2.x one doesn't have, with their value.
+     *
+     * @param  array<mixed>  $project
+     * @param  array<string, mixed>  $converted
+     * @return array<string, string>
+     */
+    private function dropped(array $project, array $converted): array
+    {
+        $dropped = [];
+        $converted = self::flatten($converted);
+        foreach (self::flatten($project) as $key => $value) {
+            $root = explode('.', $key)[0];
+            $movedToPresets = in_array($root, ['sizes', 'filters'], true) && ! is_string($value);
+            if (! array_key_exists($key, $converted) && ! $movedToPresets && ! ($key === 'driver' && isset($converted['renderer.driver']))) {
+                $dropped["image.{$key}"] = is_scalar($value) || $value === null ? var_export($value, true) : get_debug_type($value);
+            }
+        }
+
+        return $dropped;
     }
 
     /**
@@ -444,6 +541,24 @@ final class UpgradeCommand extends Command
     }
 
     /**
+     * Writes a file, after keeping the original next to it, as `{file}.1x`.
+     */
+    private function write(Application $app, string $file, string $contents): void
+    {
+        if (is_file($file)) {
+            $backup = "{$file}.1x";
+            for ($i = 2; is_file($backup); $i++) {
+                $backup = "{$file}.1x.{$i}";
+            }
+            copy($file, $backup);
+        } elseif (! is_dir(dirname($file))) {
+            mkdir(dirname($file), 0755, true);
+        }
+
+        file_put_contents($file, $contents);
+    }
+
+    /**
      * @param  array<string, mixed>  $config
      */
     private function exportConfig(Application $app, array $config): string
@@ -475,16 +590,11 @@ final class UpgradeCommand extends Command
 
     /**
      * @param  list<array{string, array<string, mixed>}>  $calls
-     * @param  array<mixed>  $project
      */
-    private function exportRoutes(Application $app, array $calls, array $project): string
+    private function exportRoutes(Application $app, array $calls): string
     {
-        $upscale = $project['upscale'] ?? null;
         $routes = [];
         foreach ($calls as [$path, $options]) {
-            if (is_bool($upscale) && ! array_key_exists('upscale', $options)) {
-                $options['upscale'] = $upscale;
-            }
             $options = array_filter($options, fn ($value, $key) => ! in_array($key, ['domain', 'source', 'quality'], true) || $value !== null, ARRAY_FILTER_USE_BOTH);
             $routes[] = 'Route::imageLegacy('.var_export($path, true).', '.$this->export($app, LegacyConfig::options($options + ['cache' => false, 'expires' => null]), 0).');';
         }
@@ -589,6 +699,113 @@ final class UpgradeCommand extends Command
     private static function changed(array $values, array $defaults): array
     {
         return array_filter($values, fn (mixed $value, string $key) => ! array_key_exists($key, $defaults) || $defaults[$key] !== $value, ARRAY_FILTER_USE_BOTH);
+    }
+
+    /**
+     * Whether the statements of a routes file are only `$router->image(...)` calls.
+     */
+    private static function onlyImageRoutes(string $contents): bool
+    {
+        $tokens = array_values(array_filter(
+            token_get_all($contents),
+            fn ($token) => ! is_array($token) || ! in_array($token[0], [T_OPEN_TAG, T_CLOSE_TAG, T_WHITESPACE, T_COMMENT, T_DOC_COMMENT], true),
+        ));
+        $text = function (int $index) use ($tokens): string {
+            $token = $tokens[$index] ?? '';
+
+            return is_array($token) ? $token[1] : $token;
+        };
+
+        $i = 0;
+        // declare(strict_types=1);
+        if (strtolower($text(0)) === 'declare') {
+            while ($i < count($tokens) && $text($i) !== ';') {
+                $i++;
+            }
+            $i++;
+        }
+
+        $calls = 0;
+        while ($i < count($tokens)) {
+            if ($text($i) !== '$router' || $text($i + 1) !== '->' || strtolower($text($i + 2)) !== 'image' || $text($i + 3) !== '(') {
+                return false;
+            }
+            $depth = 0;
+            for ($i += 3; $i < count($tokens); $i++) {
+                $depth += match ($text($i)) {
+                    '(', '[', '{' => 1,
+                    ')', ']', '}' => -1,
+                    default => 0,
+                };
+                if ($depth === 0) {
+                    break;
+                }
+            }
+            if ($text($i + 1) !== ';') {
+                return false;
+            }
+            $i += 2;
+            $calls++;
+        }
+
+        return $calls > 0;
+    }
+
+    /**
+     * The lines of a config file whose values come from code: env(), function calls other than
+     * the path helpers, and closures. By line, the name of the function.
+     *
+     * @return array<int, string>
+     */
+    private static function code(string $contents): array
+    {
+        $helpers = ['public_path', 'storage_path', 'base_path', 'app_path', 'resource_path', 'config_path', 'database_path', 'array', 'declare'];
+        $tokens = array_values(array_filter(token_get_all($contents), fn ($token) => ! is_array($token) || ! in_array($token[0], [T_WHITESPACE, T_COMMENT, T_DOC_COMMENT], true)));
+        $found = [];
+
+        foreach ($tokens as $index => $token) {
+            if (! is_array($token)) {
+                continue;
+            }
+            if (in_array($token[0], [T_FUNCTION, T_FN], true)) {
+                $found[$token[2]] ??= 'a closure';
+
+                continue;
+            }
+            $next = $tokens[$index + 1] ?? null;
+            $previous = $tokens[$index - 1] ?? null;
+            $previousText = is_array($previous) ? $previous[1] : $previous;
+            if (! in_array($token[0], [T_STRING, T_NAME_FULLY_QUALIFIED, T_NAME_QUALIFIED], true) || $next !== '(' || in_array($previousText, ['->', '?->', '::', 'new', 'function'], true)) {
+                continue;
+            }
+
+            $name = strtolower(ltrim($token[1], '\\'));
+            if (! in_array($name, $helpers, true)) {
+                $found[$token[2]] ??= $name === 'env' ? 'env' : "{$name}()";
+            }
+        }
+
+        return $found;
+    }
+
+    /**
+     * An array as keys in dot notation; lists and empty arrays are values.
+     *
+     * @param  array<mixed>  $array
+     * @return array<string, mixed>
+     */
+    private static function flatten(array $array, string $prefix = ''): array
+    {
+        $flat = [];
+        foreach ($array as $key => $value) {
+            if (is_array($value) && $value !== [] && ! array_is_list($value)) {
+                $flat = [...$flat, ...self::flatten($value, "{$prefix}{$key}.")];
+            } else {
+                $flat["{$prefix}{$key}"] = $value;
+            }
+        }
+
+        return $flat;
     }
 
     private static function relative(Application $app, string $path): string

@@ -14,6 +14,8 @@ use Folklore\Image\Sources\ImageSource;
 use Folklore\Image\Specs\PresetRegistry;
 use Folklore\Image\Tests\Doubles\ArraySourceResolver;
 use Illuminate\Support\Arr;
+use Monolog\Handler\TestHandler;
+use Monolog\Logger;
 use PHPUnit\Framework\Attributes\DataProvider;
 
 /**
@@ -92,12 +94,34 @@ final class LegacyApiTest extends LegacyTestCase
         $presets = Image::presets();
         $source = new ImageSource('disk', 'photo.jpg');
 
-        $this->assertSame(['thumbnail', 'small', 'medium', 'large', 'bigthumbnail', 'facebook'], array_keys($presets->all()));
+        $this->assertSame(['thumbnail', 'small', 'medium', 'large', 'bigthumbnail', 'facebook', 'square'], array_keys($presets->all()));
         $this->assertSame(['width' => 200, 'height' => 200], $presets->get('thumbnail')->spec($source)->toArray());
         $this->assertSame(['width' => 400, 'height' => 400, 'fit' => 'inside'], $presets->get('small')->spec($source)->toArray());
-        $this->assertSame(['width' => 1080, 'height' => 1080], $presets->get('bigthumbnail')->spec($source)->toArray());
+        $this->assertSame(['width' => 1080, 'height' => 1080, 'fit' => 'inside'], $presets->get('bigthumbnail')->spec($source)->toArray(), 'The crop key of a size is ignored, as 1.x boot code ignored it.');
         $this->assertSame(['width' => 1200, 'height' => 630], $presets->get('facebook')->spec($source)->toArray());
+        $this->assertSame(['width' => 300, 'height' => 300], $presets->get('square')->spec($source)->toArray(), 'Exact sizes crop, whatever their crop key.');
         $this->assertFalse($presets->has('original'));
+    }
+
+    public function test_sizes_read_as_presets_render_as_the_filters_of_the_boot_code(): void
+    {
+        $log = $this->logToTestHandler();
+        $versions = array_map(fn ($preset) => $preset->version(), Image::presets()->all());
+
+        $this->bootSizesAs1xProjectsDo();
+
+        $this->assertSame($versions, array_map(fn ($preset) => $preset->version(), Image::presets()->all()));
+        $this->assertFalse($log->hasNoticeRecords(), 'The same definitions replace nothing.');
+    }
+
+    public function test_a_filter_that_replaces_a_preset_with_another_definition_is_logged(): void
+    {
+        $log = $this->logToTestHandler();
+
+        Image::filter('large', ['width' => 500]);
+
+        $this->assertTrue($log->hasNoticeThatContains("Image::filter('large') replaces the preset large"));
+        $this->assertSame(['width' => 500], Image::presets()->get('large')->spec(new ImageSource('disk', 'photo.jpg'))->toArray());
     }
 
     public function test_sizes_are_not_presets_when_image_presets_is_set(): void
@@ -176,7 +200,8 @@ final class LegacyApiTest extends LegacyTestCase
     }
 
     /**
-     * What a 1.x project's AppServiceProvider does at boot: each named size becomes a filter.
+     * What the AppServiceProvider of 1.x projects does at boot: each named size becomes a filter,
+     * cropped when it has a width and a height, whatever its crop key.
      */
     private function bootSizesAs1xProjectsDo(): void
     {
@@ -198,14 +223,25 @@ final class LegacyApiTest extends LegacyTestCase
             }
             if (isset($size['width'])) {
                 $filter['width'] = $size['width'];
-                $filter['crop'] = true;
             }
             if (isset($size['height'])) {
                 $filter['height'] = $size['height'];
             }
+            if (isset($size['width'], $size['height'])) {
+                $filter['crop'] = true;
+            }
             $this->assertIsString($size['id']);
             $this->imageKey()->filter($size['id'], $filter);
         }
+    }
+
+    private function logToTestHandler(): TestHandler
+    {
+        $handler = new TestHandler;
+        $this->config()->set('logging.default', 'test');
+        $this->config()->set('logging.channels.test', ['driver' => 'custom', 'via' => fn () => new Logger('test', [$handler])]);
+
+        return $handler;
     }
 
     /**

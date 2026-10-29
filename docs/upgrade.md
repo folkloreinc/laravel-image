@@ -16,10 +16,14 @@
 1. **Require the new version:** `composer require folklore/laravel-image:^2.0`. The project keeps working with its 1.x `config/image.php` and `routes/images.php`: its 1.x URLs, `Image::url()`, `image()->url()` and the `image` key of the container are the compatibility layer's.
 2. **Check the project:** `php artisan image:upgrade --check`. It changes nothing, and lists:
    - the config keys it will convert (`sizes`, `filters`, `source`, `sources`, `url`, `routes`, `restrictions`, `driver`…) and `app.image_url`;
+   - every key it drops, with its value: keys 2.x doesn't read, and values that are 1.x's defaults;
+   - what would be lost: keys it doesn't know, and values that come from `env()` or other code, which it would write as they are on this machine;
    - custom filters written against Imagine (closures and classes), in the config and in the code, which must be rewritten;
    - the lines of `app/`, `config/`, `routes/`, `resources/`, `database/` and `bootstrap/` that use the classes and container keys 2.0 removes;
-   - the image routes, and whether their cache writes under `public/`.
-3. **Upgrade:** `php artisan image:upgrade`. It rewrites `config/image.php` in the 2.x shape, with only the project's overrides: named sizes and array filters become presets, the 1.x URL template, sources and restrictions are kept for 1.x URLs, and `image.sizes` is kept while the code reads it. It replaces the `$router->image()` calls of `routes/images.php` with `Route::imageLegacy()`, so 1.x URLs and the files already written under `public/` keep being served. It never changes stored content or the images already written. Review both files with `git diff`.
+   - the image routes, whether their cache writes under `public/`, and a config without a `routes` key, which 1.x gave its default route and 2.x gives none until it is upgraded.
+3. **Upgrade:** `php artisan image:upgrade`. It rewrites `config/image.php` in the 2.x shape, with only the project's overrides: named sizes and array filters become presets, the 1.x URL template, sources, restrictions and `upscale` are kept for 1.x URLs, and `image.sizes` is kept while the code reads it. It replaces `routes/images.php` with `Route::imageLegacy()` when it only calls `$router->image()`, and leaves it as it is otherwise; a config without a `routes` key gets `routes/images.php` with the default route, as 1.x had. So 1.x URLs and the files already written under `public/` keep being served.
+   - It refuses when something would be lost (see `--check`): move it first, or run it with `--force` to write the values it has on this machine.
+   - It keeps each file it rewrites as `config/image.php.1x` and `routes/images.php.1x`, and never changes stored content or the images already written. Review the files with `git diff`.
 4. **Rewrite custom filters** as operations (see below).
 5. **Run the project's tests**, and open pages that show images, including old content and a converted format (`.jpg.webp`).
 6. **Fix the deprecations** at your own pace. They are logged on Laravel's `deprecations` channel (`LOG_DEPRECATIONS_CHANNEL`), once per call site.
@@ -38,7 +42,7 @@ Route::imageLegacy('{pattern}', [
     'allow_filters' => true,       // or the list of filters allowed
     'disallow_filters' => false,   // or the list of filters refused
     'restrictions' => [],          // over image.restrictions: 'log' (1.x's default) or 'enforce'
-    'upscale' => null,             // null: crops upscale and resizes don't, as 1.x; true or false
+    'upscale' => null,             // null: image.upscale; when it is null too, crops upscale and resizes don't, as 1.x
     'filters' => [],               // applied to every image of the route
     'quality' => null,
     'expires' => 2678400,          // the max-age of responses
@@ -54,7 +58,7 @@ Route::imageLegacy('{pattern}', [
 - `rotate` takes multiples of 90 degrees. `grayscale` and `negative` are operations; a URL with another filter, or a rotation 2.x can't do, answers 404, as 1.x did for a filter it didn't have.
 - Sources: `local` sources read a path, such as `public_path()`; `filesystem` sources read a Laravel disk, under a path.
 - Images are rendered on demand, without the 2.x derivatives store, and written under `cache_path` when `cache` is true. A route without `cache` renders each request, as in 1.x.
-- The 2.x limits and strict mode don't apply: the route keeps the project's 1.x restrictions.
+- The 2.x limits and strict mode don't apply: the route keeps the project's 1.x restrictions. A preset named in a URL is a size for `allow_size` and `allow_filters`, as the 1.x filter it was made from was.
 
 ## The 1.x config
 
@@ -66,9 +70,9 @@ These 1.x keys of `config/image.php` are read by the compatibility layer only, w
 | `source`, `sources` | The sources of the legacy route |
 | `restrictions` | The restrictions of the legacy route |
 | `filters` | Arrays of options are named filters; the 1.x filter classes are ignored |
-| `sizes` | Presets, when `image.presets` is not set: `width` and `height` crop unless `crop` is false, `maxWidth` and `maxHeight` fit inside unless `crop` is true |
-| `routes` | `routes.map` is loaded at boot, in a group of `domain`, `prefix`, `as` and `middleware` |
-| `upscale` | `null` is `false` on 2.x routes |
+| `sizes` | Presets, when `image.presets` is not set, as the boot code of 1.x projects registered them: `width` (or `maxWidth`) and `height` (or `maxHeight`), cropped only when both `width` and `height` are set. The `crop` key of a size is ignored, as that code ignored it |
+| `routes` | `routes.map` is loaded at boot, in a group of `domain`, `prefix`, `as` and `middleware`. Without a `routes` key, 2.x loads nothing: 1.x's default catch-all route comes back with `image:upgrade` |
+| `upscale` | The upscaling of legacy routes that don't set theirs: `null` (the default) is 1.x's, where crops upscale and resizes don't. On 2.x routes, `null` is `false` |
 | `bind_image` (2.x) | Whether `app('image')` is this package's manager, as in 1.x. It replaces Laravel 13's own `image` service. Null binds it for a 1.x config; `image:upgrade` writes it |
 
 ## What keeps working

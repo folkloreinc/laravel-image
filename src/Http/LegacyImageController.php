@@ -61,6 +61,7 @@ final readonly class LegacyImageController
             $parsed = $codec->parse($this->path($request, $route));
             $pathFilters = array_diff_key($parsed['filters'], array_flip(LegacyFilters::ROUTE_OPTIONS));
             $this->checkRestrictions($request, $options, $pathFilters);
+            $upscale = is_bool($options['upscale']) ? $options['upscale'] : $this->container->make(LegacyConfig::class)->upscale();
 
             $image = $resolver->resolve(ltrim($parsed['path'], '/'));
             $routeFilters = is_array($options['filters']) ? $options['filters'] : [];
@@ -77,7 +78,7 @@ final readonly class LegacyImageController
                 return $this->respond((string) file_get_contents($cached), $spec->format, $options);
             }
 
-            $rendered = $this->renderer($spec, $options['upscale'])->render($image, $spec);
+            $rendered = $this->renderer($spec, $upscale)->render($image, $spec);
             $store?->put($cachePath, $rendered);
         } catch (InvalidImageUrl|InvalidImageSpec|SourceNotFound $exception) {
             throw new NotFoundHttpException($exception->getMessage(), $exception);
@@ -89,15 +90,19 @@ final readonly class LegacyImageController
     }
 
     /**
-     * The raw path of the image: what the route's pattern parameter matched, percent-encoded.
+     * The path of the image, percent-encoded: the route's pattern parameter, whatever comes
+     * before it in the route.
      */
     private function path(Request $request, ?Route $route): string
     {
-        $uri = $route instanceof Route ? $route->uri() : '{image_pattern}';
-        $before = substr($uri, 0, (int) strpos($uri, '{'));
-        $prefixSegments = $before === '' ? 0 : count(explode('/', rtrim($before, '/')));
+        $parameter = $route?->getAction('image_parameter');
+        $value = $route !== null && is_string($parameter) ? $route->parameter($parameter) : null;
+        if (! is_string($value)) {
+            return ltrim($request->getPathInfo(), '/');
+        }
 
-        return implode('/', array_slice(explode('/', ltrim($request->getPathInfo(), '/')), $prefixSegments));
+        // The router decoded the parameter: the codec reads it encoded, as V2Codec does.
+        return implode('/', array_map(rawurlencode(...), explode('/', $value)));
     }
 
     /**
@@ -111,7 +116,9 @@ final readonly class LegacyImageController
     private function checkRestrictions(Request $request, array $options, array $filters): void
     {
         $restrictions = $this->container->make(LegacyRestrictions::class);
-        $violations = $restrictions->violations($options, $filters);
+        // A preset named in a URL is a size, as the 1.x filter it was made from expanded to one.
+        $presets = array_values(array_filter(array_keys($filters), fn (string $name) => $filters[$name] === true && $this->images->presets()->has($name)));
+        $violations = $restrictions->violations($options, $filters, $presets);
         if ($violations === []) {
             return;
         }
@@ -130,10 +137,10 @@ final readonly class LegacyImageController
     /**
      * The renderer, with the route's upscaling: null is 1.x's, where crops upscale and resizes don't.
      */
-    private function renderer(ImageSpec $spec, mixed $upscale): Renderer
+    private function renderer(ImageSpec $spec, ?bool $upscale): Renderer
     {
         $renderer = $this->images->renderer();
-        $upscale = is_bool($upscale) ? $upscale : $spec->hasBox() && $spec->fit === Fit::Cover;
+        $upscale ??= $spec->hasBox() && $spec->fit === Fit::Cover;
 
         return $renderer instanceof UpscalingPolicy ? $renderer->withUpscale($upscale) : $renderer;
     }

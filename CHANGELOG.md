@@ -22,14 +22,14 @@ The compatibility layer of 1.x ([decision 0007](docs/decisions/0007-compatibilit
 - `Route::imageLegacy($path, $options)` serves 1.x URLs with the 1.x route options: the 1.x sources (`local` and `filesystem`), `allow_size`, `allow_filters`, `disallow_filters` and the 1.x restrictions, logged or enforced, the route's filters, quality, expiry and headers, and 1.x's upscaling, where crops upscale and resizes don't. With `cache`, each image is written at its path under `cache_path` (`public_path()` by default), where the web server serves it statically, as 1.x did (#107).
 - The routes file of `image.routes.map` is loaded at boot, and `$router->image($path, $config)` registers the legacy route, deprecated (#107).
 - The deprecated 1.x API, logged on Laravel's `deprecations` channel once per call site: `Image::url()`, `image_url()`, `image()->url()` and `app('image')`, which return the same 1.x URLs; `Image::filter($name, [...])`, which registers a named filter and a preset; and `Folklore\Image\Facade` and `Folklore\Image\ServiceProvider`, the names 1.x projects list in `config/app.php`. Filters written against Imagine are ignored, with a deprecation (#107).
-- `image.sizes`, the named sizes of 1.x projects (`width`/`height`, `maxWidth`/`maxHeight`, `crop`), are presets when `image.presets` is not set (#107).
+- `image.sizes`, the named sizes of 1.x projects, are presets when `image.presets` is not set, as the boot code of 1.x projects registered them: `width` or `maxWidth`, `height` or `maxHeight`, cropped when both `width` and `height` are set (#107).
 - `app.image_url` is the host of URLs when `image.url.host` is not set (#107).
-- `php artisan image:upgrade --check` lists the 1.x config keys to convert, the filters written against Imagine, the code that uses what 2.x removes, and the image routes. `php artisan image:upgrade` rewrites `config/image.php` in the 2.x shape, with only the project's overrides and its sizes and array filters as presets, and replaces the `$router->image()` calls of the routes file with `Route::imageLegacy()` (#107).
+- `php artisan image:upgrade --check` lists the 1.x config keys to convert, the keys it drops, what would be lost (unknown keys, values from `env()` or code), the filters written against Imagine, the code that uses what 2.x removes, and the image routes. `php artisan image:upgrade` rewrites `config/image.php` in the 2.x shape, with only the project's overrides and its sizes and array filters as presets, and replaces a routes file that only calls `$router->image()` with `Route::imageLegacy()`. It refuses to lose anything without `--force`, and keeps the originals as `*.1x` (#107).
 - The `grayscale` and `negative` operations, built in, which the 1.x URLs of the README use (#107).
 
 ### Changed
 
-- `image.upscale` can be `null`, 1.x's default: 2.x routes read it as `false` (#107).
+- `image.upscale` is `null` by default: 2.x routes read it as `false`, as before, and the legacy route as 1.x's upscaling, where crops upscale and resizes don't (#107).
 
 ## [2.0.0-alpha.2] - 2026-10-26
 

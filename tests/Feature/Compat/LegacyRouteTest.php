@@ -172,6 +172,9 @@ final class LegacyRouteTest extends LegacyTestCase
         yield 'too many pixels' => [['restrictions' => ['max_pixels' => 10_000]], '/image-filters(200x200).jpg', false];
         yield 'too many filters' => [['restrictions' => ['max_filters' => 1]], '/image-filters(grayscale-negative).jpg', false];
         yield 'within the limits' => [['restrictions' => ['max_width' => 1000]], '/image-filters(300x_).jpg', true];
+        yield 'a preset is a size, as the filter it was' => [['allow_filters' => ['grayscale']], '/image-filters(large-grayscale).jpg', true];
+        yield 'a preset and a filter not allowed' => [['allow_filters' => ['grayscale']], '/image-filters(large-negative).jpg', false];
+        yield 'a preset, sizes not allowed' => [['allow_size' => false], '/image-filters(large).jpg', false];
     }
 
     /**
@@ -185,6 +188,20 @@ final class LegacyRouteTest extends LegacyTestCase
         self::routeImageLegacy('{pattern}', ['cache' => false, ...$options]);
 
         $this->get($url)->assertStatus($served ? 200 : 404);
+    }
+
+    public function test_a_route_with_a_parameter_before_the_pattern(): void
+    {
+        (new Filesystem)->makeDirectory("{$this->originals}/my photos");
+        copy(self::fixturePath('images/image.jpg'), "{$this->originals}/my photos/photo (1).jpg");
+        self::routeImageLegacy('{locale}/img/{pattern}', ['cache_path' => $this->cache]);
+
+        $this->get('/fr/img/uploads/photo-filters(400x400).jpg')->assertOk();
+        $this->get('/fr/img/my%20photos/photo%20(1)-filters(100x_).jpg')->assertOk();
+
+        Image::assertRendered(fn (ImageSpec $spec, ImageSource $source) => $source->key === 'uploads/photo.jpg' && $spec->key() === 'w400,h400,fit-inside.jpeg');
+        Image::assertRendered(fn (ImageSpec $spec, ImageSource $source) => $source->key === 'my photos/photo (1).jpg');
+        $this->assertFileExists("{$this->cache}/fr/img/my photos/photo (1)-filters(100x_).jpg");
     }
 
     public function test_the_1x_router_macro_registers_the_legacy_route_with_1x_defaults(): void

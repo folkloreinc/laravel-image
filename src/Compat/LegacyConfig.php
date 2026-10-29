@@ -118,6 +118,17 @@ final readonly class LegacyConfig
     }
 
     /**
+     * The upscaling of the legacy route when the route gives none: `image.upscale`, where null
+     * is 1.x's behaviour (crops upscale, resizes don't).
+     */
+    public function upscale(): ?bool
+    {
+        $upscale = $this->config->get('image.upscale');
+
+        return $upscale === null || is_bool($upscale) ? $upscale : throw new InvalidImageConfig('image.upscale is true, false or null.');
+    }
+
+    /**
      * The 1.x `image.filters` config.
      *
      * @return array<mixed>
@@ -145,11 +156,11 @@ final readonly class LegacyConfig
      *
      *     ['id' => 'thumbnail', 'width' => 200, 'height' => 200]            cropped to 200×200
      *     ['id' => 'large', 'maxWidth' => 1400, 'maxHeight' => 1400]        inside 1400×1400
-     *     ['id' => 'facebook', 'width' => 1200, 'height' => 630, 'crop' => true]
      *
-     * A list of sizes with an `id`, or sizes by name. `width` and `height` crop unless `crop` is
-     * false; `maxWidth` and `maxHeight` fit inside unless `crop` is true. Sizes without options,
-     * such as `original`, aren't presets.
+     * A list of sizes with an `id`, or sizes by name. They are read as the boot code of 1.x
+     * projects registered them with Image::filter(): `width` (or `maxWidth`) and `height` (or
+     * `maxHeight`), cropped only when both `width` and `height` are set. Their `crop` key is
+     * ignored, as that code ignored it. Sizes without options, such as `original`, aren't presets.
      *
      * @return array<string, array<string, mixed>>
      *
@@ -188,23 +199,22 @@ final readonly class LegacyConfig
     }
 
     /**
-     * The 1.x filter of a named size.
+     * The 1.x filter of a named size, as the boot code of 1.x projects made it.
      *
      * @param  array<mixed>  $size
      * @return array<string, mixed>
      */
     public static function sizeFilter(array $size): array
     {
-        $exact = isset($size['width']) || isset($size['height']);
         $width = $size['width'] ?? $size['maxWidth'] ?? null;
         $height = $size['height'] ?? $size['maxHeight'] ?? null;
         if ($width === null && $height === null) {
             return [];
         }
 
-        $crop = $size['crop'] ?? ($exact && $width !== null && $height !== null);
+        $crop = isset($size['width'], $size['height']) ? true : null;
 
-        return array_filter(['width' => $width, 'height' => $height, 'crop' => $crop === true ? true : null], fn ($value) => $value !== null);
+        return array_filter(['width' => $width, 'height' => $height, 'crop' => $crop], fn ($value) => $value !== null);
     }
 
     /**

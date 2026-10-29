@@ -111,6 +111,20 @@ final class LegacyRenderingTest extends LegacyTestCase
         $this->assertSame([500, 500, 'image/jpeg'], $this->describe($contents));
     }
 
+    #[DataProvider('drivers')]
+    public function test_the_global_upscale_of_a_1x_config_applies_to_the_legacy_route(string $driver): void
+    {
+        $this->useDriver($driver);
+
+        $this->config()->set('image.upscale', false);
+        $crop = (string) $this->get('/uploads/photo-filters(1000x1000-crop).jpg')->assertOk()->getContent();
+        $this->config()->set('image.upscale', true);
+        $resize = (string) $this->get('/uploads/photo-filters(1600x1600).jpg')->assertOk()->getContent();
+
+        $this->assertSame([500, 500, 'image/jpeg'], $this->describe($crop));
+        $this->assertSame([1600, 1000, 'image/jpeg'], $this->describe($resize));
+    }
+
     /**
      * @return array<string, array{string}>
      */

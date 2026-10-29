@@ -23,6 +23,7 @@ use Illuminate\Contracts\Routing\UrlGenerator;
 use Illuminate\Routing\Route;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Carbon;
+use Psr\Log\LoggerInterface;
 
 /**
  * The entry point behind the Image facade.
@@ -167,7 +168,16 @@ class ImageManager
         }
 
         Deprecations::report('Image::filter() is deprecated: configure presets in image.presets.');
+        $preset = $this->presets()->find($name);
         $this->container->make(LegacyFilters::class)->register($name, $filter);
+
+        $replacement = $this->presets()->find($name);
+        if ($preset !== null && $replacement !== null && $replacement->version() !== $preset->version()) {
+            $this->container->make(LoggerInterface::class)->notice("Image::filter('{$name}') replaces the preset {$name} of the config with another definition: its URLs change.", [
+                'preset' => $preset->version(),
+                'filter' => $replacement->version(),
+            ]);
+        }
 
         return $this;
     }
