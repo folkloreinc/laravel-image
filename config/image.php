@@ -215,4 +215,18 @@ return [
 
     'memory_limit' => '256M',
 
+    /*
+    |--------------------------------------------------------------------------
+    | 1.x compatibility
+    |--------------------------------------------------------------------------
+    |
+    | Whether the `image` key of the container is this package's manager, as
+    | in 1.x, for app('image') and $app['image'] (docs/upgrade.md). It
+    | replaces Laravel's own `image` service. Null binds it for a 1.x config,
+    | with keys such as sizes, filters, sources or routes.
+    |
+    */
+
+    'bind_image' => null,
+
 ];

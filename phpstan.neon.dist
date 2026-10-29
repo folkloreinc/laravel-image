@@ -8,4 +8,7 @@ parameters:
     paths:
         - src
         - tests
+    excludePaths:
+        # Files of 1.x projects, such as their routes/images.php
+        - tests/fixtures
     tmpDir: build/phpstan

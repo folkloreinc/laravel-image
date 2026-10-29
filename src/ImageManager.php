@@ -4,18 +4,24 @@ declare(strict_types=1);
 
 namespace Folklore\Image;
 
-use BadMethodCallException;
+use Folklore\Image\Compat\Deprecations;
+use Folklore\Image\Compat\LegacyConfig;
+use Folklore\Image\Compat\LegacyFilters;
 use Folklore\Image\Contracts\Renderer;
 use Folklore\Image\Contracts\Signer;
 use Folklore\Image\Contracts\SourceResolver;
 use Folklore\Image\Contracts\UrlCodec;
 use Folklore\Image\Exceptions\SourceNotFound;
 use Folklore\Image\Exceptions\UnsupportedReference;
+use Folklore\Image\Http\LegacyImageRoute;
 use Folklore\Image\Sources\SourceResolvers;
 use Folklore\Image\Specs\PresetRegistry;
 use Folklore\Image\Urls\ImageUrl;
+use Folklore\Image\Urls\V1Codec;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Contracts\Routing\UrlGenerator;
+use Illuminate\Routing\Route;
+use Illuminate\Routing\Router;
 use Illuminate\Support\Carbon;
 
 /**
@@ -46,17 +52,112 @@ class ImageManager
     }
 
     /**
-     * The 1.x image route, which comes back with the compatibility layer of the beta, deprecated
-     * (docs/decisions/0011-image-routes-is-the-1x-route.md). Until then it throws, so a 1.x
-     * project that updates doesn't get the 2.x route instead. The 2.x route is Route::image().
+     * Registers the 1.x image routes, as 1.x did: the routes file of `image.routes.map` (or of
+     * `$config`), in a group of the `domain`, `prefix`, `as`, `namespace` and `middleware` of
+     * `image.routes`, or the default legacy route when there is no such file. The file registers
+     * them with `$router->image('{pattern}', [...])`, which is the legacy route
+     * (docs/decisions/0011-image-routes-is-the-1x-route.md). The 2.x route is Route::image().
      *
-     * @param  array<string, mixed>|string  $config  the 1.x route options, or the path of a routes file
+     * @deprecated Register the legacy route with Route::imageLegacy(), and the 2.x route with Route::image().
      *
-     * @throws BadMethodCallException always, until the compatibility layer
+     * @param  array<string, mixed>|string  $config  options over `image.routes`, or the path of a routes file
      */
-    public function routes(array|string $config = []): never
+    public function routes(array|string $config = []): void
     {
-        throw new BadMethodCallException('Image::routes() registers the 1.x image route, which comes back with the compatibility layer in 2.0 beta. Register the 2.x image route with Route::image().');
+        Deprecations::report('Image::routes() is deprecated: register Route::imageLegacy() for 1.x URLs, and Route::image() for 2.x URLs.');
+
+        $config = [...$this->container->make(LegacyConfig::class)->routes(), ...(is_string($config) ? ['map' => $config] : $config)];
+        $group = array_intersect_key($config, array_flip(['domain', 'prefix', 'as', 'namespace', 'middleware']));
+        $map = $config['map'] ?? null;
+        $codec = $this->container->make(V1Codec::class);
+
+        $this->container->make(Router::class)->group($group, function (Router $router) use ($map, $codec): void {
+            if (is_string($map) && is_file($map)) {
+                require $map;
+            } else {
+                LegacyImageRoute::register($router, $codec, '{pattern}', [...LegacyImageRoute::DEFAULTS, 'as' => 'image']);
+            }
+        });
+    }
+
+    /**
+     * A 1.x URL, as 1.x made it: `/uploads/photo-filters(300x300-crop).jpg`, with the template
+     * of the 1.x `image.url` config. Filters are named filters (`['large']`) or options, in the
+     * order they are given; `host`, `pattern` (options of the template) and `route` (the name of
+     * a legacy route whose options and domain to use) are options of the URL.
+     *
+     *     Image::url('uploads/photo.jpg', 300, 300);
+     *     Image::url('uploads/photo.jpg', ['large', 'format' => 'webp']);
+     *
+     * @deprecated Use the builder: Image::for($path)->preset('large')->url().
+     *
+     * @param  int|array<int|string, mixed>|null  $width  the width, or the filters
+     * @param  array<int|string, mixed>  $filters
+     */
+    public function url(?string $src, int|array|null $width = null, ?int $height = null, array $filters = []): ?string
+    {
+        Deprecations::report('Image::url() and image_url() are deprecated: use Image::for($path)->preset($name)->url().');
+
+        if ($src === null || $src === '') {
+            return null;
+        }
+
+        if (is_array($width)) {
+            [$filters, $width, $height] = [$width, null, null];
+        }
+        if ($width !== null) {
+            $filters['width'] = $width;
+        }
+        if ($height !== null) {
+            $filters['height'] = $height;
+        }
+
+        $config = array_intersect_key($filters, array_flip(['route', 'pattern', 'host']));
+        $filters = array_diff_key($filters, $config);
+        $routeName = is_string($config['route'] ?? null) ? $config['route'] : null;
+        $route = $routeName === null ? null : $this->container->make(Router::class)->getRoutes()->getByName($routeName);
+        if ($route instanceof Route) {
+            $options = $route->getAction('image');
+            $options = is_array($options) ? $options : [];
+            $domain = $route->getDomain();
+            $config = [...$options, ...($domain === null ? [] : ['host' => $domain]), ...$config];
+        }
+
+        $pattern = $config['pattern'] ?? [];
+        $host = $config['host'] ?? null;
+        $url = $this->container->make(V1Codec::class)
+            ->withOptions(is_array($pattern) ? $pattern : [])
+            ->make($src, $filters, is_string($host) ? $host : null, relative: $route instanceof Route);
+
+        if ($route instanceof Route) {
+            return str_replace('__URL__', ltrim($url, '/'), $this->container->make(UrlGenerator::class)->route($routeName, ['__URL__']));
+        }
+
+        return $url;
+    }
+
+    /**
+     * Registers a 1.x filter. An array of options is a named filter, that 1.x URLs expand, and a
+     * preset of the same name. Filters written against Imagine, closures and classes, can't be
+     * applied by 2.x: rewrite them as operations (docs/upgrade.md). They are ignored, and URLs
+     * that use them answer 404.
+     *
+     *     Image::filter('thumbnail', ['width' => 300, 'height' => 300, 'crop' => true]);
+     *
+     * @deprecated Configure presets in image.presets, or register them with Image::presets()->register().
+     */
+    public function filter(string $name, mixed $filter): static
+    {
+        if (! is_array($filter)) {
+            Deprecations::report("The 1.x filter {$name} is written against Imagine, which 2.x doesn't use: rewrite it as an operation (docs/upgrade.md). URLs that use it answer 404.");
+
+            return $this;
+        }
+
+        Deprecations::report('Image::filter() is deprecated: configure presets in image.presets.');
+        $this->container->make(LegacyFilters::class)->register($name, $filter);
+
+        return $this;
     }
 
     /**
@@ -79,7 +180,7 @@ class ImageManager
     /**
      * The full URL of an image URL: the host, the prefix and the encoded path.
      */
-    public function url(ImageUrl $url, ?string $host = null): string
+    public function fullUrl(ImageUrl $url, ?string $host = null): string
     {
         $config = $this->config();
         $path = ltrim($config->prefix().'/'.$this->codec()->encode($url), '/');

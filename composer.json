@@ -58,7 +58,10 @@
     "autoload": {
         "psr-4": {
             "Folklore\\Image\\": "src/"
-        }
+        },
+        "files": [
+            "src/helpers.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {

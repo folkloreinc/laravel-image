@@ -21,16 +21,20 @@ final readonly class ImageConfig
     ) {}
 
     /**
-     * The host of image URLs, without a trailing slash, or null for the application's URL.
+     * The host of image URLs, without a trailing slash, or null for the application's URL. A
+     * 1.x project's `app.image_url` is the host when `image.url.host` is not set.
      */
     public function host(): ?string
     {
         $host = $this->config->get('image.url.host');
+        if ($host === null || $host === '') {
+            $host = $this->config->get('app.image_url');
+        }
 
         return match (true) {
             $host === null, $host === '' => null,
             is_string($host) => rtrim($host, '/'),
-            default => throw new InvalidImageConfig('image.url.host is a URL or null.'),
+            default => throw new InvalidImageConfig('image.url.host (or app.image_url) is a URL or null.'),
         };
     }
 
@@ -49,9 +53,13 @@ final readonly class ImageConfig
         return $this->bool('image.strict', true);
     }
 
+    /**
+     * Whether derivatives can be larger than their original. Null, 1.x's default, where crops
+     * upscale, is false: only the legacy route keeps 1.x's behaviour.
+     */
     public function upscale(): bool
     {
-        return $this->bool('image.upscale', false);
+        return $this->config->get('image.upscale') !== null && $this->bool('image.upscale', false);
     }
 
     /**

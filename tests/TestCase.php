@@ -51,6 +51,19 @@ abstract class TestCase extends BaseTestCase
     }
 
     /**
+     * Registers the legacy route as a project does, with `Route::imageLegacy($path, $config)`.
+     *
+     * @param  array<string, mixed>  $config
+     */
+    protected static function routeImageLegacy(string $path = '{pattern}', array $config = []): Route
+    {
+        $route = app(Router::class)->macroCall('imageLegacy', [$path, $config]);
+        assert($route instanceof Route);
+
+        return $route;
+    }
+
+    /**
      * The driver CI runs this job for (IMAGE_TEST_DRIVER), or null to test every
      * driver available on this machine.
      */

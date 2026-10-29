@@ -44,7 +44,7 @@ use League\Flysystem\Local\LocalFilesystemAdapter;
  * The driver is `auto` by default: libvips when `intervention/image-driver-vips` is installed
  * and libvips loads, otherwise Imagick, otherwise GD. Animated sources give their first frame.
  */
-final class InterventionRenderer implements Renderer
+final class InterventionRenderer implements Renderer, UpscalingPolicy
 {
     /** The drivers by name, in the order `auto` tries them. */
     public const array DRIVERS = [
@@ -75,6 +75,11 @@ final class InterventionRenderer implements Renderer
         private readonly ?string $memoryLimit = null,
         private readonly array $operations = [],
     ) {}
+
+    public function withUpscale(bool $upscale): self
+    {
+        return new self($this->filesystems, $this->resolvedDriver ?? $this->driver, $this->quality, $upscale, $this->memoryLimit, $this->operations);
+    }
 
     public function render(ImageSource $source, ImageSpec $spec): RenderedImage
     {
