@@ -8,6 +8,29 @@ All notable changes to `folklore/laravel-image` are documented in this file. The
 
 Changes to 1.x after 1.1.0 are in the changelog of the [`v1.x`](https://github.com/folkloreinc/laravel-image/blob/v1.x/CHANGELOG.md) branch.
 
+The compatibility layer of 1.x ([decision 0007](docs/decisions/0007-compatibility-layer.md), [docs/upgrade.md](docs/upgrade.md), #107): a 1.x project requires `^2.0` and keeps its URLs and its code.
+
+### Breaking changes
+
+- `ImageManager::url(ImageUrl $url, ?string $host)` is renamed `fullUrl()`. `url()` is the deprecated 1.x method again: `Image::url($path, $width, $height, $filters)` returns a 1.x URL (#107).
+- `Image::routes()` registers the 1.x route, `Route::imageLegacy()`, deprecated, instead of throwing ([decision 0011](docs/decisions/0011-image-routes-is-the-1x-route.md), #107).
+- A config with the 1.x keys `sizes`, `filters`, `source`, `sources` or `routes` binds the `image` key of the container to the package's manager, in place of Laravel 13's own `image` service, as 1.x did. `image.bind_image` turns it on or off (#107).
+
+### Added
+
+- `V1Codec` decodes the 1.x URLs with the project's 1.x template, its own (`{dirname}/{filters}{basename}.{extension}` with `filters/{filter}/`) or the default `-filters(...)`, and expands named filters from `Image::filter()` or the presets of the same name. Every case of `tests/fixtures/urls/v1.json` and of the 1.x README is decoded, generated and served (#107).
+- `Route::imageLegacy($path, $options)` serves 1.x URLs with the 1.x route options: the 1.x sources (`local` and `filesystem`), `allow_size`, `allow_filters`, `disallow_filters` and the 1.x restrictions, logged or enforced, the route's filters, quality, expiry and headers, and 1.x's upscaling, where crops upscale and resizes don't. With `cache`, each image is written at its path under `cache_path` (`public_path()` by default), where the web server serves it statically, as 1.x did (#107).
+- The routes file of `image.routes.map` is loaded at boot, and `$router->image($path, $config)` registers the legacy route, deprecated (#107).
+- The deprecated 1.x API, logged on Laravel's `deprecations` channel once per call site: `Image::url()`, `image_url()`, `image()->url()` and `app('image')`, which return the same 1.x URLs; `Image::filter($name, [...])`, which registers a named filter and a preset; and `Folklore\Image\Facade` and `Folklore\Image\ServiceProvider`, the names 1.x projects list in `config/app.php`. Filters written against Imagine are ignored, with a deprecation (#107).
+- `image.sizes`, the named sizes of 1.x projects (`width`/`height`, `maxWidth`/`maxHeight`, `crop`), are presets when `image.presets` is not set (#107).
+- `app.image_url` is the host of URLs when `image.url.host` is not set (#107).
+- `php artisan image:upgrade --check` lists the 1.x config keys to convert, the filters written against Imagine, the code that uses what 2.x removes, and the image routes. `php artisan image:upgrade` rewrites `config/image.php` in the 2.x shape, with only the project's overrides and its sizes and array filters as presets, and replaces the `$router->image()` calls of the routes file with `Route::imageLegacy()` (#107).
+- The `grayscale` and `negative` operations, built in, which the 1.x URLs of the README use (#107).
+
+### Changed
+
+- `image.upscale` can be `null`, 1.x's default: 2.x routes read it as `false` (#107).
+
 ## [2.0.0-alpha.2] - 2026-10-26
 
 The second alpha: fixes to alpha 1, and the non-destructive edits of Panneau 5 ([roadmap](docs/roadmap.md)). A media's transform and focal point, which the `media` resolver of `laravel-mediatheque` 2 passes from its next alpha (folkloreinc/laravel-mediatheque#112), render on every driver and give new URLs when they change; a use of the media can have its own edits, over the media's or instead of them. Require it with `^2.0@alpha`.

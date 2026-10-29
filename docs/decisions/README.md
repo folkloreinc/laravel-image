@@ -18,6 +18,7 @@ One file per decision. A decision is not edited once accepted: a later one repla
 | [0012](0012-earlier-preset-versions.md) | Earlier preset versions are served from a record of their spec | Accepted |
 | [0013](0013-transform-focal-point-and-metadata.md) | The transform, the focal point and the metadata of a media | Accepted |
 | [0014](0014-per-usage-transforms.md) | A transform for one use, over the media's own or from the original | Accepted |
+| [0015](0015-legacy-route-and-1x-config.md) | The legacy route renders on demand, and the 1.x config stays where it was | Proposed (#107) |
 
 Template:
 

@@ -1,6 +1,6 @@
 # Upgrading from 1.x
 
-> **Draft.** This guide is filled as 2.0 lands. The steps and the mapping below are the plan ([decisions/0007](decisions/0007-compatibility-layer.md)); the commands they mention don't exist yet.
+> **Beta.** The compatibility layer, `Route::imageLegacy()` and `image:upgrade` are in 2.0 ([#107](https://github.com/folkloreinc/laravel-image/issues/107)). The Rector rules, `Image::make()` and the 1.x filters `blur`, `gamma`, `colorize` and `interlace` are not there yet ([roadmap](roadmap.md)).
 
 2.0 keeps 1.x URLs working, forever, and a compatibility layer keeps the 1.x API working with deprecation notices until 3.0. A project can upgrade first, and move to the 2.x API afterwards.
 
@@ -13,31 +13,76 @@
 
 ## Steps
 
-1. **Require the new version:** `composer require folklore/laravel-image:^2.0`.
-2. **Check the project:** `php artisan image:upgrade --check`. It lists:
-   - the config keys it will convert (`sizes`, `filters`, `sources`, `url`, `routes`, `restrictions`) and `app.image_url`;
-   - custom filters written against Imagine (closures and classes), which must be rewritten;
-   - calls to classes and container keys that 2.0 removes;
+1. **Require the new version:** `composer require folklore/laravel-image:^2.0`. The project keeps working with its 1.x `config/image.php` and `routes/images.php`: its 1.x URLs, `Image::url()`, `image()->url()` and the `image` key of the container are the compatibility layer's.
+2. **Check the project:** `php artisan image:upgrade --check`. It changes nothing, and lists:
+   - the config keys it will convert (`sizes`, `filters`, `source`, `sources`, `url`, `routes`, `restrictions`, `driver`…) and `app.image_url`;
+   - custom filters written against Imagine (closures and classes), in the config and in the code, which must be rewritten;
+   - the lines of `app/`, `config/`, `routes/`, `resources/`, `database/` and `bootstrap/` that use the classes and container keys 2.0 removes;
    - the image routes, and whether their cache writes under `public/`.
-3. **Upgrade:** `php artisan image:upgrade`. It rewrites `config/image.php` in the 2.x shape with only the project's overrides, turns named sizes into presets, and replaces `routes/images.php` with the legacy route, so 1.x URLs and the files already cached under `public/` keep being served.
+3. **Upgrade:** `php artisan image:upgrade`. It rewrites `config/image.php` in the 2.x shape, with only the project's overrides: named sizes and array filters become presets, the 1.x URL template, sources and restrictions are kept for 1.x URLs, and `image.sizes` is kept while the code reads it. It replaces the `$router->image()` calls of `routes/images.php` with `Route::imageLegacy()`, so 1.x URLs and the files already written under `public/` keep being served. It never changes stored content or the images already written. Review both files with `git diff`.
 4. **Rewrite custom filters** as operations (see below).
-5. **Run the Rector rules** when you are ready to move to the builder: `vendor/bin/rector process --config vendor/folklore/laravel-image/rector.php`.
-6. **Run the project's tests**, and open pages that show images, including old content and a converted format (`.jpg.webp`).
-7. **Fix the deprecations** at your own pace. They are logged on the `deprecations` channel.
-8. **Later:** move templates to presets and `<x-image>`, put the image host behind a CDN with `Route::image()`, and remove the legacy route once no stored content links to 1.x URLs.
+5. **Run the project's tests**, and open pages that show images, including old content and a converted format (`.jpg.webp`).
+6. **Fix the deprecations** at your own pace. They are logged on Laravel's `deprecations` channel (`LOG_DEPRECATIONS_CHANNEL`), once per call site.
+7. **Later:** move templates to presets and `<x-image>`, put the image host behind a CDN with `Route::image()`, and remove the legacy route once no stored content links to 1.x URLs. The Rector rules will help move code to the builder (planned).
+
+## The legacy route
+
+`Route::imageLegacy()` serves 1.x URLs as 1.x did. `image:upgrade` writes it in `routes/images.php`, which `image.routes.map` keeps loading at boot; the 1.x `$router->image($path, $config)` and `Image::routes()` register it too, deprecated:
+
+```php
+Route::imageLegacy('{pattern}', [
+    'as' => 'image',
+    'source' => null,              // a source of image.sources, or image.source
+    'pattern' => [],               // the 1.x URL template, over image.url
+    'allow_size' => true,
+    'allow_filters' => true,       // or the list of filters allowed
+    'disallow_filters' => false,   // or the list of filters refused
+    'restrictions' => [],          // over image.restrictions: 'log' (1.x's default) or 'enforce'
+    'upscale' => null,             // null: crops upscale and resizes don't, as 1.x; true or false
+    'filters' => [],               // applied to every image of the route
+    'quality' => null,
+    'expires' => 2678400,          // the max-age of responses
+    'headers' => [],
+    'cache' => true,               // writes each image at its path under cache_path,
+    'cache_path' => public_path(), // where the web server serves it next time
+]);
+```
+
+- `V1Codec` decodes the URLs with the project's 1.x template: `-filters(...)` by default, or its own, such as `{dirname}/{filters}{basename}.{extension}` with `filters/{filter}/`. Every spelling 1.x accepted keeps working, and each is a URL of its own.
+- A named filter (`-filters(large)`) is the filter registered with `Image::filter()`, or else the preset of that name, so 1.x URLs keep working once named sizes are presets.
+- Sizes: `300x200` fits the image inside the box, `300x200-crop` crops it to the box, around a crop position (`crop(top_left)`) if there is one. A width or a height alone resizes proportionally; with `crop`, 1.x cropped the other dimension to the original's, 2.x doesn't.
+- `rotate` takes multiples of 90 degrees. `grayscale` and `negative` are operations; a URL with another filter, or a rotation 2.x can't do, answers 404, as 1.x did for a filter it didn't have.
+- Sources: `local` sources read a path, such as `public_path()`; `filesystem` sources read a Laravel disk, under a path.
+- Images are rendered on demand, without the 2.x derivatives store, and written under `cache_path` when `cache` is true. A route without `cache` renders each request, as in 1.x.
+- The 2.x limits and strict mode don't apply: the route keeps the project's 1.x restrictions.
+
+## The 1.x config
+
+These 1.x keys of `config/image.php` are read by the compatibility layer only, where 1.x had them, with 1.x's defaults:
+
+| Key | Read as |
+|---|---|
+| `url.format`, `url.filters_format`, `url.filter_format`, `url.filter_separator`, `url.placeholders_patterns` | The template of 1.x URLs, for `Image::url()` and the legacy route. They sit next to the 2.x `url.host` and `url.prefix` |
+| `source`, `sources` | The sources of the legacy route |
+| `restrictions` | The restrictions of the legacy route |
+| `filters` | Arrays of options are named filters; the 1.x filter classes are ignored |
+| `sizes` | Presets, when `image.presets` is not set: `width` and `height` crop unless `crop` is false, `maxWidth` and `maxHeight` fit inside unless `crop` is true |
+| `routes` | `routes.map` is loaded at boot, in a group of `domain`, `prefix`, `as` and `middleware` |
+| `upscale` | `null` is `false` on 2.x routes |
+| `bind_image` (2.x) | Whether `app('image')` is this package's manager, as in 1.x. It replaces Laravel 13's own `image` service. Null binds it for a 1.x config; `image:upgrade` writes it |
 
 ## What keeps working
 
 | 1.x | In 2.x |
 |---|---|
-| `-filters(...)` URLs | Decoded by `V1Codec`, served by `Route::imageLegacy()`, for every future version |
-| `Image::url($path, $width, $height, $filters)`, `image_url()` | Deprecated; return the same 1.x URLs |
-| `Image::filter('name', [...])` | Deprecated; registers a preset |
+| `-filters(...)` URLs, and URLs of a project's own template | Decoded by `V1Codec`, served by `Route::imageLegacy()`, for every future version |
+| `Image::url($path, $width, $height, $filters)`, `image_url()`, `image()->url()`, `app('image')->url()` | Deprecated; return the same 1.x URLs, without a host unless one is given |
+| `Image::filter('name', [...])` | Deprecated; registers a named filter for 1.x URLs, and a preset |
 | `image.sizes` | Read as presets when `image.presets` is not set |
-| `app.image_url` | Read as the host when `image.url.host` is not set |
-| `$router->image()`, `Image::routes()` | Deprecated; register a legacy route |
-| `Image::make($path, $options)`, `image($path, $options)` | Deprecated; return an Intervention image instead of an Imagine image |
-| The `Image` facade | Same name, new class (`Folklore\Image\Facades\Image`); the old alias still points to it |
+| `app.image_url` | Read as the host of 2.x URLs when `image.url.host` is not set. `Image::url()` returns 1.x URLs without it, as 1.x did |
+| `$router->image($path, $config)`, `Image::routes()`, `image.routes.map` | Register the legacy route; the first two are deprecated |
+| `Image::make($path, $options)`, `image($path, $options)` | Not yet: they throw, and will return an Intervention image instead of an Imagine image (planned) |
+| The `Image` facade | Same name, new class (`Folklore\Image\Facades\Image`); `Folklore\Image\Facade` and `Folklore\Image\ServiceProvider`, in `config/app.php`, are deprecated aliases |
 
 ## What changes
 
@@ -46,7 +91,7 @@
 | Imagine (GD, Imagick, Gmagick) | Intervention Image 4 (libvips, Imagick, GD); no Gmagick ([decisions/0002](decisions/0002-rendering-engine.md)) |
 | Filters receive an Imagine image | Operations receive an Intervention image |
 | Catch-all route registered by default | Routes are opt-in ([decisions/0005](decisions/0005-secure-by-default.md)) |
-| Restrictions in `log` mode | Strict mode and enforced limits on 2.x routes; the legacy route keeps the project's 1.x settings |
+| Restrictions in `log` mode | Strict mode and enforced limits on 2.x routes; the legacy route keeps the project's 1.x restrictions |
 | Derivatives under `public/` | Derivatives on any disk; `public/` through the legacy route ([decisions/0003](decisions/0003-delivery.md)) |
 | `upscale` `null` (crops upscale) | `upscale` `false` on 2.x routes; the legacy route keeps the 1.x behaviour |
 | `sources` (`local`, `filesystem`) | Resolvers (`disk`, `media`) ([decisions/0006](decisions/0006-sources-and-resolvers.md)) |
@@ -55,7 +100,7 @@
 
 ## What is removed
 
-- **Custom filters written against Imagine.** Rewrite them as operations:
+- **Custom filters written against Imagine.** `Image::filter()` ignores them, with a deprecation, and the URLs that use them answer 404. Rewrite them as operations:
 
   ```php
   // 1.x
