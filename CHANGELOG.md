@@ -8,6 +8,10 @@ All notable changes to `folklore/laravel-image` are documented in this file. The
 
 Changes to 1.x after 1.1.0 are in the changelog of the [`v1.x`](https://github.com/folkloreinc/laravel-image/blob/v1.x/CHANGELOG.md) branch.
 
+### Fixed
+
+- `php artisan image:upgrade --check` lists the 1.x container keys (`image.url`, `image.source`…) only where the container is asked for them (`app()`, `resolve()`, `make()`, `$app[...]`), not every string such as `data_get($item, 'image.url')`. It lists every use of `Folklore\Image\Utils`, which 2.x removes, not only `Utils::convertImage()`: its `use` statements and its calls, such as `Utils::isPng()`. And Imagine's `Autorotate` filter is to drop, not to rewrite, as 2.x always turns images upright: `image:upgrade` leaves it out of the presets (#112).
+
 ## [2.0.0-alpha.3] - 2026-10-29
 
 The third alpha: the compatibility layer of 1.x ([decision 0007](docs/decisions/0007-compatibility-layer.md), [docs/upgrade.md](docs/upgrade.md), #107). A 1.x project requires `^2.0@alpha` and keeps its URLs and its code.
