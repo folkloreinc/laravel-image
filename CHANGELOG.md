@@ -8,6 +8,10 @@ All notable changes to `folklore/laravel-image` are documented in this file. The
 
 Changes to 1.x after 1.1.0 are in the changelog of the [`v1.x`](https://github.com/folkloreinc/laravel-image/blob/v1.x/CHANGELOG.md) branch.
 
+## [2.0.0-alpha.4] - 2026-11-05
+
+Fixes for projects upgrading from 1.x (#112): `image:upgrade --check` reports the 1.x container keys and the removed `Utils` more precisely, and the legacy route ignores Imagine's `autorotate`, which 2.x applies to every image.
+
 ### Fixed
 
 - `php artisan image:upgrade --check` lists the 1.x container keys (`image.url`, `image.source`…) only where the container is asked for them (`app()`, `resolve()`, `make()`, `$app[...]`), not every string such as `data_get($item, 'image.url')`. It lists every use of `Folklore\Image\Utils`, which 2.x removes, not only `Utils::convertImage()`: its `use` statements and its calls, such as `Utils::isPng()`. And Imagine's `Autorotate` filter is to drop, not to rewrite, as 2.x always turns images upright: `image:upgrade` leaves it out of the presets (#112).
@@ -165,7 +169,8 @@ What sites will notice, and how to keep the previous behaviour where there is a 
 
 - Travis CI, Coveralls, `phpcs.xml` and the Prettier PHP plugin.
 
-[Unreleased]: https://github.com/folkloreinc/laravel-image/compare/v2.0.0-alpha.3...v2.x
+[Unreleased]: https://github.com/folkloreinc/laravel-image/compare/v2.0.0-alpha.4...v2.x
+[2.0.0-alpha.4]: https://github.com/folkloreinc/laravel-image/releases/tag/v2.0.0-alpha.4
 [2.0.0-alpha.3]: https://github.com/folkloreinc/laravel-image/releases/tag/v2.0.0-alpha.3
 [2.0.0-alpha.2]: https://github.com/folkloreinc/laravel-image/releases/tag/v2.0.0-alpha.2
 [2.0.0-alpha.1]: https://github.com/folkloreinc/laravel-image/releases/tag/v2.0.0-alpha.1
