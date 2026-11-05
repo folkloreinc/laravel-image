@@ -11,6 +11,7 @@ Changes to 1.x after 1.1.0 are in the changelog of the [`v1.x`](https://github.c
 ### Fixed
 
 - `php artisan image:upgrade --check` lists the 1.x container keys (`image.url`, `image.source`…) only where the container is asked for them (`app()`, `resolve()`, `make()`, `$app[...]`), not every string such as `data_get($item, 'image.url')`. It lists every use of `Folklore\Image\Utils`, which 2.x removes, not only `Utils::convertImage()`: its `use` statements and its calls, such as `Utils::isPng()`. And Imagine's `Autorotate` filter is to drop, not to rewrite, as 2.x always turns images upright: `image:upgrade` leaves it out of the presets (#112).
+- The legacy route ignores `autorotate`, the name 1.x projects gave Imagine's `Autorotate` filter, in 1.x URLs (`-filters(autorotate)`) and in named filters and sizes registered with `Image::filter()`, instead of answering 404 for an unknown operation: 2.x always turns images upright (#114).
 
 ## [2.0.0-alpha.3] - 2026-10-29
 

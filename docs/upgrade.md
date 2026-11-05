@@ -55,7 +55,7 @@ Route::imageLegacy('{pattern}', [
 - `V1Codec` decodes the URLs with the project's 1.x template: `-filters(...)` by default, or its own, such as `{dirname}/{filters}{basename}.{extension}` with `filters/{filter}/`. Every spelling 1.x accepted keeps working, and each is a URL of its own.
 - A named filter (`-filters(large)`) is the filter registered with `Image::filter()`, or else the preset of that name, so 1.x URLs keep working once named sizes are presets.
 - Sizes: `300x200` fits the image inside the box, `300x200-crop` crops it to the box, around a crop position (`crop(top_left)`) if there is one. A width or a height alone resizes proportionally; with `crop`, 1.x cropped the other dimension to the original's, 2.x doesn't.
-- `rotate` takes multiples of 90 degrees. `grayscale` and `negative` are operations; a URL with another filter, or a rotation 2.x can't do, answers 404, as 1.x did for a filter it didn't have.
+- `rotate` takes multiples of 90 degrees. `autorotate`, the name 1.x projects gave Imagine's `Autorotate`, is ignored, in URLs and in named filters: 2.x always turns images upright. `grayscale` and `negative` are operations; a URL with another filter, or a rotation 2.x can't do, answers 404, as 1.x did for a filter it didn't have.
 - Sources: `local` sources read a path, such as `public_path()`; `filesystem` sources read a Laravel disk, under a path.
 - Images are rendered on demand, without the 2.x derivatives store, and written under `cache_path` when `cache` is true. A route without `cache` renders each request, as in 1.x.
 - The 2.x limits and strict mode don't apply: the route keeps the project's 1.x restrictions. A preset named in a URL is a size for `allow_size` and `allow_filters`, as the 1.x filter it was made from was.
