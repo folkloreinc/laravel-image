@@ -25,7 +25,13 @@ final class LegacyRenderingTest extends LegacyTestCase
     {
         return [
             'routes' => ['map' => self::fixturePath('legacy/routes/images.php')],
-            'filters' => [...self::CONFIG['filters'], 'thumbnail' => ['width' => 300, 'height' => 300, 'crop' => true]],
+            'filters' => [
+                ...self::CONFIG['filters'],
+                'thumbnail' => ['width' => 300, 'height' => 300, 'crop' => true],
+                // Imagine's Autorotate, and a named filter that uses it, as 1.x projects had them.
+                'autorotate' => 'Imagine\Filter\Basic\Autorotate',
+                'upright' => ['width' => 300, 'height' => 300, 'crop' => true, 'autorotate' => true],
+            ],
         ];
     }
 
@@ -58,6 +64,9 @@ final class LegacyRenderingTest extends LegacyTestCase
             'a crop position and grayscale' => ['/image-filters(300x300-crop(top_left)-grayscale).jpg', 'image/jpeg', 300, 300],
             'a width and grayscale, as WebP' => ['/image-filters(200x_-grayscale).jpg.webp', 'image/webp', 200, 200],
             'a named filter' => ['/image-filters(thumbnail).jpg', 'image/jpeg', 300, 300],
+            // Imagine's Autorotate: 2.x always turns images upright.
+            'a named filter with autorotate' => ['/image-filters(upright).jpg', 'image/jpeg', 300, 300],
+            'autorotate' => ['/uploads/photo-filters(400x400-autorotate).jpg', 'image/jpeg', 400, 250],
             // The named sizes of a project, from an 800×500 photo.
             'a box: the image fits inside' => ['/uploads/photo-filters(400x400).jpg', 'image/jpeg', 400, 250],
             'a resize never upscales' => ['/uploads/photo-filters(large).jpg', 'image/jpeg', 800, 500],

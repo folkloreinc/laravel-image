@@ -25,11 +25,16 @@ use Folklore\Image\Urls\PresetReference;
  *   `blur(5)`. The renderer refuses operations it doesn't have.
  *
  * `upscale`, `auto_orient` and `memory_limit` are the route's, never the URL's: they are ignored.
+ * So is `autorotate`, the name 1.x projects gave Imagine's Autorotate filter: 2.x always turns
+ * images upright.
  */
 final class LegacyFilters
 {
     /** Options of a route or of the config in 1.x, which filters can't set. */
     public const array ROUTE_OPTIONS = ['upscale', 'auto_orient', 'memory_limit'];
+
+    /** Filters of 1.x projects that 2.x always applies: Imagine's Autorotate. */
+    private const array ALWAYS_APPLIED = ['autorotate'];
 
     /** The focal point of each 1.x crop position. */
     private const array POSITIONS = [
@@ -134,7 +139,7 @@ final class LegacyFilters
                 [$name, $value] = [is_string($value) ? $value : throw new InvalidImageSpec('A 1.x filter is a name.'), true];
             }
 
-            if (in_array($name, self::ROUTE_OPTIONS, true)) {
+            if (in_array($name, self::ROUTE_OPTIONS, true) || in_array(strtolower($name), self::ALWAYS_APPLIED, true)) {
                 continue;
             } elseif ($name === 'width' || $name === 'height') {
                 $options[$name] = self::dimension($value);
