@@ -42,9 +42,10 @@ final class UpgradeCommand extends Command
         '/Folklore\\\\Image\\\\(ImageHandler|ImageDataHandler|Imagine|ImagineManager|UrlGenerator|RouteRegistrar|RouteResolver|RouteRestrictions|SourceManager|CacheManager|Image)\b(?!\\\\)/' => 'removed in 2.x: use Folklore\Image\ImageManager',
         '/Folklore\\\\Image\\\\(Filters|Sources|Handlers|Jobs)\\\\\w+/' => 'removed in 2.x: filters are operations, sources are resolvers',
         '/Folklore\\\\Image\\\\Http\\\\(ImageResponse|CacheMiddleware)\b/' => 'removed in 2.x: the legacy route writes images under its cache_path',
-        '/Utils::convertImage/' => 'removed in 2.x: import remote images with laravel-mediatheque 2',
         '/image:create_url_cache|CreateUrlCache/' => 'removed in 2.x: use image:warm',
-        '/[\'"]image\.(url|source|imagine|imagine_manager|router|middleware\.cache)[\'"]/' => 'a 1.x container key, removed in 2.x',
+        // Lookups in the container, not the string anywhere: `data_get($item, 'image.url')` is a path.
+        '/(?:(?:\bapp|\bresolve|(?:->|::)(?:make|makeWith|bound|bind|singleton|instance|extend))\(\s*|(?:\$app|->app|\$container|\bapp\(\))\[\s*)[\'"]image\.(url|source|imagine|imagine_manager|router)[\'"]/' => 'a 1.x container key, removed in 2.x',
+        '/[\'"]image\.middleware\.cache[\'"]/' => 'the 1.x cache middleware is removed in 2.x: the legacy route writes images under its cache_path',
         '/response\(\)->image\(/' => 'the image response macro is removed in 2.x',
         '/(?<!->)(?<!::)\bimage\(\s*[\'"$]/' => 'image($path) no longer makes an Imagine image: render with Image::for($path)->render()',
         '/Folklore\\\\Image\\\\(Facade|ServiceProvider)\b/' => 'deprecated: use Folklore\Image\Facades\Image; package discovery registers the provider',
@@ -58,6 +59,15 @@ final class UpgradeCommand extends Command
 
     /** Calls that register a filter written against Imagine: a closure or a class. */
     private const string IMAGINE_FILTER = '/->filter\(\s*[\'"][^\'"]+[\'"]\s*,\s*(function\b|fn\b|static\s|[A-Z\\\\][\w\\\\]*::class|[\'"][A-Z\\\\])/';
+
+    /** Imagine's filter that turns images upright: 2.x always does, so it is dropped, not rewritten. */
+    private const string AUTOROTATE = 'Imagine\\Filter\\Basic\\Autorotate';
+
+    /** Calls that register Imagine's Autorotate filter, by its class or its name, with the filter's name. */
+    private const string AUTOROTATE_FILTER = '/->filter\(\s*[\'"]([^\'"]+)[\'"]\s*,\s*(?:[\'"]\\\\*|\\\\)?(?:Imagine\\\\+Filter\\\\+Basic\\\\+)?Autorotate(?:::class\b|[\'"])/';
+
+    /** The `use` statement of the 1.x `Folklore\Image\Utils` class, with its alias. */
+    private const string UTILS_IMPORT = '/^\s*use\s+\\\\?Folklore\\\\Image\\\\Utils(?:\s+as\s+(\w+))?\s*;/m';
 
     /** Uses of the `image` container key, which the compatibility layer keeps binding. */
     private const string IMAGE_KEY = '/app\(\s*[\'"]image[\'"]\s*\)|\[\s*[\'"]image[\'"]\s*\]|resolve\(\s*[\'"]image[\'"]\s*\)|\bimage\(\)\s*->/';
@@ -112,6 +122,9 @@ final class UpgradeCommand extends Command
         foreach ($this->imagineFilters($app, $project) as $filter) {
             $this->components->warn("A filter written against Imagine, {$filter}, must be rewritten as an operation (docs/upgrade.md).");
         }
+        foreach (array_keys($this->autorotateFilters($app, $project)) as $filter) {
+            $this->line("  Imagine's Autorotate filter, {$filter}, needs no rewrite: 2.x always turns images upright.");
+        }
         $this->line('  Run php artisan image:upgrade --check to list the code that uses what 2.x removes.');
 
         return self::SUCCESS;
@@ -151,15 +164,19 @@ final class UpgradeCommand extends Command
 
         $this->newLine();
         $this->components->twoColumnDetail('<fg=gray>Filters written against Imagine</>', 'rewrite them as operations');
-        $filters = $this->imagineFilters($app, $project);
-        foreach ($filters === [] ? ['none' => '<fg=green>ok</>'] : array_fill_keys($filters, '<fg=yellow>rewrite</>') as $name => $status) {
+        $filters = [
+            ...array_fill_keys($this->imagineFilters($app, $project), '<fg=yellow>rewrite</>'),
+            ...array_fill_keys(array_keys($this->autorotateFilters($app, $project)), '<fg=green>drop it: 2.x always turns images upright</>'),
+        ];
+        foreach ($filters === [] ? ['none' => '<fg=green>ok</>'] : $filters as $name => $status) {
             $this->components->twoColumnDetail((string) $name, $status);
         }
 
         $this->newLine();
         $this->components->twoColumnDetail('<fg=gray>Code that uses what 2.x removes</>');
         // config/image.php itself is converted.
-        $removed = array_filter($this->scan($app, self::REMOVED), fn (string $location) => ! str_starts_with($location, 'config/image.php:'), ARRAY_FILTER_USE_KEY);
+        $removed = array_filter([...$this->scan($app, self::REMOVED), ...$this->utilsUses($app)], fn (string $location) => ! str_starts_with($location, 'config/image.php:'), ARRAY_FILTER_USE_KEY);
+        uksort($removed, strnatcmp(...));
         foreach ($removed === [] ? ['none' => '<fg=green>ok</>'] : $removed as $location => $message) {
             $this->components->twoColumnDetail($location, $message);
         }
@@ -184,7 +201,7 @@ final class UpgradeCommand extends Command
         $changes = [];
         $describe = [
             'sizes' => 'named sizes, converted to presets (kept while the code reads image.sizes)',
-            'filters' => 'array filters converted to presets; built-in filters are operations; Imagine filters must be rewritten',
+            'filters' => 'array filters converted to presets; built-in filters are operations; Imagine filters must be rewritten, except Autorotate, which 2.x needs no more',
             'source' => 'the default source of the legacy route',
             'sources' => 'the sources of the legacy route (local and filesystem)',
             'url' => 'the 1.x URL template, kept for 1.x URLs only',
@@ -194,7 +211,7 @@ final class UpgradeCommand extends Command
             'upscale' => 'the legacy route keeps 1.x upscaling; 2.x routes never upscale unless it is true',
             'auto_orient' => 'removed: 2.x always turns images upright',
             'strip_metadata' => 'removed: 2.x always strips metadata',
-            'utils' => 'removed with Utils::convertImage()',
+            'utils' => 'removed with Folklore\Image\Utils',
             'memory_limit' => 'kept, unless it is 1.x\'s default (128M)',
             'quality' => 'kept, unless it is the default',
         ];
@@ -227,7 +244,7 @@ final class UpgradeCommand extends Command
             $config['quality'] = $quality;
         }
 
-        [$presets, $filters] = $this->presets($project);
+        [$presets, $filters] = $this->presets($project, array_values($this->autorotateFilters($app, $project)));
         if ($presets !== []) {
             $config['presets'] = $presets;
         }
@@ -283,12 +300,14 @@ final class UpgradeCommand extends Command
 
     /**
      * The presets of the named sizes, then of the array filters, and the array filters that
-     * can't be presets, which 1.x URLs keep expanding.
+     * can't be presets, which 1.x URLs keep expanding. The filters that are Imagine's Autorotate
+     * are left out of them: 2.x always turns images upright.
      *
      * @param  array<mixed>  $project
+     * @param  list<string>  $autorotate
      * @return array{array<string, array<string, mixed>>, array<string, array<mixed>>}
      */
-    private function presets(array $project): array
+    private function presets(array $project, array $autorotate): array
     {
         $presets = (new ConfigRepository(['image' => ['sizes' => $project['sizes'] ?? []]]));
         $presets = (new LegacyConfig($presets))->sizePresets();
@@ -298,6 +317,7 @@ final class UpgradeCommand extends Command
             if (! is_array($filter) || isset($presets[$name])) {
                 continue;
             }
+            $filter = array_filter($filter, fn (mixed $value, int|string $key) => ! in_array(is_int($key) ? $value : $key, $autorotate, true), ARRAY_FILTER_USE_BOTH);
             try {
                 if (! PresetReference::isValidName($name)) {
                     throw new InvalidImageSpec('its name has other characters than lowercase letters, digits, - and _.');
@@ -402,7 +422,8 @@ final class UpgradeCommand extends Command
     }
 
     /**
-     * The names of the filters written against Imagine: in the config, and registered in code.
+     * The names of the filters written against Imagine, which must be rewritten: in the config,
+     * and registered in code. Imagine's Autorotate isn't one of them.
      *
      * @param  array<mixed>  $project
      * @return list<string>
@@ -412,15 +433,73 @@ final class UpgradeCommand extends Command
         $filters = [];
         foreach (LegacyConfig::options($project['filters'] ?? []) as $name => $filter) {
             $builtIn = is_string($filter) && str_starts_with(ltrim($filter, '\\'), 'Folklore\\Image\\Filters\\') && in_array($name, self::BUILT_IN_FILTERS, true);
-            if (! is_array($filter) && ! $builtIn) {
+            if (! is_array($filter) && ! $builtIn && ! self::isAutorotate($filter)) {
                 $filters[] = "{$name} (config/image.php)";
             }
         }
+        $autorotate = $this->autorotateFilters($app, $project);
         foreach (array_keys($this->scan($app, [self::IMAGINE_FILTER => 'filter'])) as $location) {
-            $filters[] = $location;
+            if (! isset($autorotate[$location])) {
+                $filters[] = $location;
+            }
         }
 
         return $filters;
+    }
+
+    /**
+     * The filters that are Imagine's Autorotate, in the config and registered in code, by where
+     * they are, with their name. 2.x always turns images upright: they are dropped.
+     *
+     * @param  array<mixed>  $project
+     * @return array<string, string>
+     */
+    private function autorotateFilters(Application $app, array $project): array
+    {
+        $filters = [];
+        foreach (LegacyConfig::options($project['filters'] ?? []) as $name => $filter) {
+            if (self::isAutorotate($filter)) {
+                $filters["{$name} (config/image.php)"] = (string) $name;
+            }
+        }
+        foreach ($this->files($app) as $path => $contents) {
+            foreach (preg_split('/\R/', $contents) ?: [] as $index => $line) {
+                if (preg_match(self::AUTOROTATE_FILTER, $line, $match) === 1) {
+                    $filters[$path.':'.($index + 1)] = $match[1];
+                }
+            }
+        }
+
+        return $filters;
+    }
+
+    /**
+     * The uses of the 1.x `Folklore\Image\Utils` class, which 2.x removes, by `file:line`: its
+     * `use` statements, its fully qualified name, and its static calls in the files that import it.
+     *
+     * @return array<string, string>
+     */
+    private function utilsUses(Application $app): array
+    {
+        $found = [];
+        foreach ($this->files($app) as $path => $contents) {
+            $patterns = ['/\\\\?Folklore\\\\Image\\\\Utils\b/'];
+            if (preg_match(self::UTILS_IMPORT, $contents, $import) === 1) {
+                $patterns[] = '/(?<![\w\\\\$])'.preg_quote(($import[1] ?? '') !== '' ? $import[1] : 'Utils', '/').'::/';
+            }
+
+            foreach (preg_split('/\R/', $contents) ?: [] as $index => $line) {
+                foreach ($patterns as $pattern) {
+                    if (preg_match($pattern, $line) === 1) {
+                        $found[$path.':'.($index + 1)] = str_contains($line, 'convertImage(')
+                            ? 'Utils::convertImage() is removed in 2.x: import remote images with laravel-mediatheque 2'
+                            : 'Folklore\Image\Utils is removed in 2.x: keep the helpers the project uses in its own code';
+                    }
+                }
+            }
+        }
+
+        return $found;
     }
 
     /**
@@ -517,27 +596,38 @@ final class UpgradeCommand extends Command
      */
     private function scan(Application $app, array $patterns): array
     {
-        $directories = array_filter(
-            array_map(fn (string $directory) => $app->basePath($directory), ['app', 'bootstrap', 'config', 'database', 'resources', 'routes', 'src']),
-            is_dir(...),
-        );
-        if ($directories === []) {
-            return [];
-        }
-
         $found = [];
-        $finder = (new Finder)->files()->in($directories)->name('*.php')->exclude(['cache', 'vendor']);
-        foreach ($finder as $file) {
-            foreach (preg_split('/\R/', $file->getContents()) ?: [] as $index => $line) {
+        foreach ($this->files($app) as $path => $contents) {
+            foreach (preg_split('/\R/', $contents) ?: [] as $index => $line) {
                 foreach ($patterns as $pattern => $message) {
                     if (preg_match($pattern, $line) === 1) {
-                        $found[self::relative($app, $file->getPathname()).':'.($index + 1)] = $message;
+                        $found[$path.':'.($index + 1)] = $message;
                     }
                 }
             }
         }
 
         return $found;
+    }
+
+    /**
+     * The PHP files of the project's code, by path from its base path, with their contents.
+     *
+     * @return iterable<string, string>
+     */
+    private function files(Application $app): iterable
+    {
+        $directories = array_filter(
+            array_map(fn (string $directory) => $app->basePath($directory), ['app', 'bootstrap', 'config', 'database', 'resources', 'routes', 'src']),
+            is_dir(...),
+        );
+        if ($directories === []) {
+            return;
+        }
+
+        foreach ((new Finder)->files()->in($directories)->name('*.php')->exclude(['cache', 'vendor']) as $file) {
+            yield self::relative($app, $file->getPathname()) => $file->getContents();
+        }
     }
 
     /**
@@ -682,6 +772,14 @@ final class UpgradeCommand extends Command
         }
 
         return is_array($project['url'] ?? null) && array_intersect_key($project['url'], array_flip(LegacyConfig::URL_KEYS)) !== [];
+    }
+
+    /**
+     * Whether a filter of the 1.x config is Imagine's Autorotate.
+     */
+    private static function isAutorotate(mixed $filter): bool
+    {
+        return is_string($filter) && strcasecmp(ltrim($filter, '\\'), self::AUTOROTATE) === 0;
     }
 
     private static function defaultPatterns(mixed $patterns): bool

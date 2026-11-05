@@ -18,8 +18,8 @@
    - the config keys it will convert (`sizes`, `filters`, `source`, `sources`, `url`, `routes`, `restrictions`, `driver`…) and `app.image_url`;
    - every key it drops, with its value: keys 2.x doesn't read, and values that are 1.x's defaults;
    - what would be lost: keys it doesn't know, and values that come from `env()` or other code, which it would write as they are on this machine;
-   - custom filters written against Imagine (closures and classes), in the config and in the code, which must be rewritten;
-   - the lines of `app/`, `config/`, `routes/`, `resources/`, `database/` and `bootstrap/` that use the classes and container keys 2.0 removes;
+   - custom filters written against Imagine (closures and classes), in the config and in the code, which must be rewritten, and Imagine's `Autorotate`, which can be dropped;
+   - the lines of `app/`, `config/`, `routes/`, `resources/`, `database/` and `bootstrap/` that use the classes 2.0 removes, such as every use of `Folklore\Image\Utils`, and that ask the container for the keys it removes;
    - the image routes, whether their cache writes under `public/`, and a config without a `routes` key, which 1.x gave its default route and 2.x gives none until it is upgraded.
 3. **Upgrade:** `php artisan image:upgrade`. It rewrites `config/image.php` in the 2.x shape, with only the project's overrides: named sizes and array filters become presets, the 1.x URL template, sources, restrictions and `upscale` are kept for 1.x URLs, and `image.sizes` is kept while the code reads it. It replaces `routes/images.php` with `Route::imageLegacy()` when it only calls `$router->image()`, and leaves it as it is otherwise; a config without a `routes` key gets `routes/images.php` with the default route, as 1.x had. So 1.x URLs and the files already written under `public/` keep being served.
    - It refuses when something would be lost (see `--check`): move it first, or run it with `--force` to write the values it has on this machine.
@@ -126,7 +126,9 @@ These 1.x keys of `config/image.php` are read by the compatibility layer only, w
   Image::operation('sepia', Sepia::class);
   ```
 
-- `Utils::convertImage()`. Import remote images with `laravel-mediatheque` 2, which guards against SSRF.
+  Imagine's `Autorotate` filter (`Imagine\Filter\Basic\Autorotate`) needs no rewrite: 2.x always turns images upright, before any operation. Drop it: `image:upgrade` leaves it out of the config and of the presets it writes.
+
+- `Folklore\Image\Utils`, with all its helpers. Import remote images with `laravel-mediatheque` 2, which guards against SSRF, instead of `Utils::convertImage()`; keep the other helpers the project uses (`isPng()`, `hasTransparency()`, `getMimeFromExtension()`…) in its own code.
 - The `image:create_url_cache` command and job: use `image:warm`.
 - The container keys `image.url`, `image.source`, `image.imagine`, `image.imagine_manager` and `image.router`, and the 1.x contracts in `Folklore\Image\Contracts`. Resolve `Folklore\Image\ImageManager` or the 2.x contracts instead. The generic `image` key is only bound by the compatibility layer.
 - `guzzlehttp/guzzle`, `imagine/imagine` and `contao/imagine-svg` are no longer installed by this package.

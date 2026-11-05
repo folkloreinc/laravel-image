@@ -62,6 +62,115 @@ final class UpgradeCommandTest extends TestCase
         $this->assertSame($before, $this->contents(), '--check changes nothing.');
     }
 
+    public function test_check_lists_lookups_of_the_1x_container_keys_only(): void
+    {
+        $this->writeCode('app/Services/Snippets.php', <<<'PHP'
+            <?php
+
+            use Illuminate\Support\Facades\App;
+
+            $url = data_get($snippet, 'image.url');
+            $host = config('image.url.host');
+            $paths = ['image.url' => $snippet['image.url']];
+            $generator = app('image.url');
+            $source = app()->make('image.source');
+            $imagine = resolve('image.imagine');
+            $router = $this->app['image.router'];
+            $manager = App::make("image.imagine_manager");
+            Route::get('/', fn () => 'ok')->middleware('image.middleware.cache');
+            PHP);
+
+        $this->assertSame(0, Artisan::call('image:upgrade', ['--check' => true]));
+        $output = Artisan::output();
+
+        foreach ([5, 6, 7] as $line) {
+            $this->assertStringNotContainsString("app/Services/Snippets.php:{$line} ", $output, "Line {$line} is no container lookup.");
+        }
+        foreach ([8, 9, 10, 11, 12] as $line) {
+            $this->assertMatchesRegularExpression("/app\/Services\/Snippets\.php:{$line} .*a 1\.x container key/", $output);
+        }
+        $this->assertMatchesRegularExpression('/app\/Services\/Snippets\.php:13 .*cache middleware is removed/', $output);
+    }
+
+    public function test_check_lists_every_use_of_the_1x_utils(): void
+    {
+        $this->writeCode('app/Imports/WordPressImage.php', <<<'PHP'
+            <?php
+
+            namespace App\Imports;
+
+            use Folklore\Image\Utils;
+
+            class WordPressImage
+            {
+                public function mime(string $path): string
+                {
+                    return Utils::isPng($path) && Utils::hasTransparency($path) ? 'image/png' : Utils::getMimeFromExtension($path);
+                }
+
+                public function convert(string $path): ?string
+                {
+                    return Utils::convertImage($path);
+                }
+            }
+            PHP);
+        $this->writeCode('app/Imports/Aliased.php', <<<'PHP'
+            <?php
+
+            use Folklore\Image\Utils as ImageUtils;
+
+            $png = ImageUtils::isPng($path);
+            $qualified = \Folklore\Image\Utils::hasTransparency($path);
+            PHP);
+        $this->writeCode('app/Support/Other.php', <<<'PHP'
+            <?php
+
+            use App\Support\Utils;
+
+            $slug = Utils::slug($title);
+            PHP);
+
+        $this->assertSame(0, Artisan::call('image:upgrade', ['--check' => true]));
+        $output = Artisan::output();
+
+        foreach (['app/Imports/WordPressImage.php:5', 'app/Imports/WordPressImage.php:11', 'app/Imports/Aliased.php:3', 'app/Imports/Aliased.php:5', 'app/Imports/Aliased.php:6'] as $location) {
+            $this->assertMatchesRegularExpression('/'.preg_quote($location, '/').' .*Folklore\\\\Image\\\\Utils is removed in 2\.x/', $output);
+        }
+        $this->assertMatchesRegularExpression('/app\/Imports\/WordPressImage\.php:16 .*Utils::convertImage\(\) is removed in 2\.x/', $output);
+        $this->assertStringNotContainsString('app/Support/Other.php', $output, 'Another class named Utils is not listed.');
+    }
+
+    public function test_imagine_autorotate_is_dropped_not_rewritten(): void
+    {
+        $this->replaceInConfig("'square' => ['width' => 500, 'height' => 500, 'crop' => true],", "'square' => ['width' => 500, 'height' => 500, 'crop' => true, 'autorotate' => true],\n        'autorotate' => Imagine\\Filter\\Basic\\Autorotate::class,");
+        $this->writeCode('app/Providers/ImageServiceProvider.php', <<<'PHP'
+            <?php
+
+            use Imagine\Filter\Basic\Autorotate;
+
+            $this->app['image']->filter('upright', Autorotate::class);
+            PHP);
+
+        $this->assertSame(0, Artisan::call('image:upgrade', ['--check' => true]));
+        $check = Artisan::output();
+
+        $this->assertMatchesRegularExpression('/autorotate \(config\/image\.php\) .*drop it: 2\.x always turns images upright/', $check);
+        $this->assertMatchesRegularExpression('/app\/Providers\/ImageServiceProvider\.php:5 .*drop it/', $check);
+        $this->assertMatchesRegularExpression('/sepia \(config\/image\.php\) .*rewrite/', $check, 'Other Imagine filters are still to rewrite.');
+        $this->assertMatchesRegularExpression('/What would be lost .*\n\s+none/', $check);
+
+        $this->assertSame(0, Artisan::call('image:upgrade'));
+        $output = Artisan::output();
+
+        $this->assertStringNotContainsString('autorotate (config/image.php), must be rewritten', $output);
+        $this->assertStringNotContainsString('ImageServiceProvider.php:5, must be rewritten', $output);
+        $this->assertStringContainsString('sepia (config/image.php), must be rewritten', $output);
+        $config = require "{$this->project}/config/image.php";
+        $this->assertIsArray($config);
+        $this->assertIsArray($config['presets']);
+        $this->assertSame(['width' => 500, 'height' => 500], $config['presets']['square'], 'The preset has no autorotate operation.');
+    }
+
     public function test_it_converts_the_config_to_the_2x_shape(): void
     {
         $this->assertSame(0, Artisan::call('image:upgrade'));
@@ -224,6 +333,18 @@ final class UpgradeCommandTest extends TestCase
         $this->assertIsArray($options);
 
         return $options;
+    }
+
+    /**
+     * Adds a file to the project's code.
+     */
+    private function writeCode(string $path, string $contents): void
+    {
+        $file = "{$this->project}/{$path}";
+        if (! is_dir(dirname($file))) {
+            mkdir(dirname($file), 0755, true);
+        }
+        file_put_contents($file, $contents."\n");
     }
 
     private function replaceInConfig(string $search, string $replace): void
