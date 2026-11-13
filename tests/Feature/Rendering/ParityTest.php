@@ -28,7 +28,9 @@ use PHPUnit\Framework\Attributes\DataProvider;
  * - `heic/photo.heic` is a 120×80 iPhone photo;
  * - `metadata/adobe-rgb-large.jpg` is `adobe-rgb.jpg` enlarged 25 times (4000×1000), with its
  *   profile; `metadata/cmyk-large.jpg` is a 4000×1000 CMYK JPEG without a profile, Adobe
- *   RGB's two stored values on its left and right halves.
+ *   RGB's two stored values on its left and right halves;
+ * - `metadata/corrupt-icc.jpg` is an 80×40 sRGB JPEG whose embedded ICC profile is 512 bytes of
+ *   0xFF, which LittleCMS can't read (#117), with Adobe RGB's two stored values on its halves.
  */
 final class ParityTest extends TestCase
 {
@@ -171,6 +173,33 @@ final class ParityTest extends TestCase
                 foreach ($points as $half => [$x, $y]) {
                     $this->assertColorAt($expected[$half], $image, $x, $y, $delta, "{$path} {$spec->key()}");
                 }
+            }
+        }
+    }
+
+    /**
+     * A profile that can't be read costs the color conversion, not the image (#117): Imagick
+     * threw ColorspaceColorProfileMismatch, and the image answered 500 in every size.
+     */
+    #[DataProvider('drivers')]
+    public function test_a_corrupt_profile_is_dropped_and_the_stored_colors_kept(string $driver): void
+    {
+        [$left, $right] = array_column(self::ADOBE_RGB_PATCHES, 2);
+        // Specs, and the stored value expected at points of their output.
+        $specs = [
+            [new ImageSpec(format: Format::Png), [[20, 20, $left], [60, 20, $right]]],
+            [new ImageSpec(width: 40, format: Format::Png), [[10, 10, $left], [30, 10, $right]]],
+            // A crop draws the image onto a new canvas, and the profile is assigned again.
+            [ImageSpec::fromArray(['crop' => ['x' => 40, 'y' => 0, 'width' => 40, 'height' => 40], 'format' => 'png']), [[20, 20, $right]]],
+            [new ImageSpec(format: Format::Jpeg, quality: 100), [[20, 20, $left], [60, 20, $right]]],
+        ];
+
+        foreach ($specs as [$spec, $points]) {
+            $image = $this->render($driver, 'metadata/corrupt-icc.jpg', $spec);
+
+            $this->assertFalse($this->hasIccProfile($image), $spec->key());
+            foreach ($points as [$x, $y, $stored]) {
+                $this->assertColorAt($stored, $image, $x, $y, 6, $spec->key());
             }
         }
     }

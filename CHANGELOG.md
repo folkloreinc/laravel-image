@@ -8,6 +8,10 @@ All notable changes to `folklore/laravel-image` are documented in this file. The
 
 Changes to 1.x after 1.1.0 are in the changelog of the [`v1.x`](https://github.com/folkloreinc/laravel-image/blob/v1.x/CHANGELOG.md) branch.
 
+### Fixed
+
+- With Imagick, an image whose embedded ICC profile LittleCMS can't read (corrupt, or for another colorspace) renders with its stored values and without the profile, as with GD, instead of failing with `ColorspaceColorProfileMismatch`: every size of such an image answered 500, where 1.x rendered it. libvips already ignored such a profile (#117).
+
 ## [2.0.0-alpha.4] - 2026-11-05
 
 Fixes for projects upgrading from 1.x (#112): `image:upgrade --check` reports the 1.x container keys and the removed `Utils` more precisely, and the legacy route ignores Imagine's `autorotate`, which 2.x applies to every image.

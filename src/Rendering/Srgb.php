@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Folklore\Image\Rendering;
 
 use Imagick;
+use ImagickException;
 use Intervention\Image\Interfaces\ImageInterface;
 use Jcupitt\Vips\Image as VipsImage;
 use Jcupitt\Vips\Interpretation;
@@ -54,7 +55,11 @@ final class Srgb
         if ($native instanceof Imagick) {
             if ($profile !== null && $native->getImageProfiles('icc', false) === []) {
                 // Without a profile, setting one assigns it, without converting the pixels.
-                $native->profileImage('icc', $profile);
+                try {
+                    $native->profileImage('icc', $profile);
+                } catch (ImagickException) {
+                    // A profile LittleCMS can't read: the image keeps its stored values.
+                }
             }
             self::convertImagick($native);
         } elseif ($native instanceof VipsImage) {
@@ -64,14 +69,26 @@ final class Srgb
         return $image;
     }
 
+    /**
+     * An embedded profile that LittleCMS can't read (corrupt, or for another colorspace) is
+     * dropped, and the stored values are kept, as GD does: a bad profile costs the color
+     * conversion, not the image (#117).
+     */
     private static function convertImagick(Imagick $imagick): void
     {
         if ($imagick->getImageProfiles('icc', false) !== []) {
             $profile = file_get_contents(self::PROFILE);
             if ($profile !== false) {
-                $imagick->profileImage('icc', $profile);
+                try {
+                    $imagick->profileImage('icc', $profile);
+                } catch (ImagickException) {
+                    // Imagick leaves the pixels as they were: removing the profile keeps them.
+                }
             }
             $imagick->removeImageProfile('icc');
+            if ($imagick->getImageColorspace() === Imagick::COLORSPACE_CMYK) {
+                $imagick->transformImageColorspace(Imagick::COLORSPACE_SRGB);
+            }
         } elseif ($imagick->getImageColorspace() === Imagick::COLORSPACE_CMYK) {
             $imagick->transformImageColorspace(Imagick::COLORSPACE_SRGB);
         }
