@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Folklore\Image\Rendering;
 
+use FFI;
 use Folklore\Image\Contracts\Operation;
 use Folklore\Image\Contracts\Renderer;
 use Folklore\Image\Exceptions\InvalidImageSpec;
@@ -41,6 +42,7 @@ use Jcupitt\Vips\Exception as VipsException;
 use Jcupitt\Vips\Image as VipsImage;
 use League\Flysystem\FilesystemException;
 use League\Flysystem\Local\LocalFilesystemAdapter;
+use Throwable;
 
 /**
  * The default renderer, on Intervention Image 4 (docs/decisions/0002-rendering-engine.md).
@@ -63,6 +65,9 @@ final class InterventionRenderer implements Renderer, UpscalingPolicy
     private ?DriverInterface $resolvedDriver = null;
 
     private ?ImageManager $manager = null;
+
+    /** glibc, to call malloc_trim(), or false when it can't be called. */
+    private static FFI|false|null $mallocTrim = null;
 
     /**
      * @param  DriverInterface|string  $driver  `auto`, `vips`, `imagick` or `gd`, or a driver instance
@@ -128,11 +133,18 @@ final class InterventionRenderer implements Renderer, UpscalingPolicy
             }
 
             $contents = (string) $image->encode($this->encoder($format, $spec->quality));
+            $rendered = new RenderedImage($contents, $format, $image->width(), $image->height());
         } catch (InterventionException|VipsException $exception) {
             throw new RenderFailed("Could not render {$source->resolver}/{$source->key}: {$exception->getMessage()}", previous: $exception);
+        } finally {
+            // Frees the native images before the heaps are trimmed.
+            unset($image);
+            if ($this->resolvedDriver instanceof VipsDriver) {
+                self::trimNativeHeap();
+            }
         }
 
-        return new RenderedImage($contents, $format, $image->width(), $image->height());
+        return $rendered;
     }
 
     /**
@@ -201,6 +213,35 @@ final class InterventionRenderer implements Renderer, UpscalingPolicy
         VipsConfig::cacheSetMax(0);
         VipsConfig::cacheSetMaxMem(0);
         VipsConfig::cacheSetMaxFiles(0);
+    }
+
+    /**
+     * Gives the memory libvips freed back to the system, on Linux with glibc. libvips decodes
+     * in worker threads, whose glibc arenas keep the freed memory for later: a PHP-FPM worker
+     * stayed at the size of its largest render. It takes a few milliseconds.
+     */
+    private static function trimNativeHeap(): void
+    {
+        if (self::$mallocTrim === false || PHP_OS_FAMILY !== 'Linux') {
+            return;
+        }
+
+        try {
+            self::$mallocTrim ??= FFI::cdef('int malloc_trim(size_t pad);');
+            self::call(self::$mallocTrim, 'malloc_trim', 0);
+        } catch (Throwable) {
+            // FFI not enabled for cdef(), or a C library without malloc_trim() (musl).
+            self::$mallocTrim = false;
+        }
+    }
+
+    /**
+     * Calls a C function of a library loaded with FFI: they are declared at runtime, so PHP
+     * calls them by name.
+     */
+    private static function call(FFI $library, string $function, mixed ...$arguments): mixed
+    {
+        return $library->{$function}(...$arguments);
     }
 
     private function manager(): ImageManager
