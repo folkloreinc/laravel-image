@@ -35,6 +35,10 @@ use Intervention\Image\Interfaces\EncoderInterface;
 use Intervention\Image\Interfaces\ExceptionInterface as InterventionException;
 use Intervention\Image\Interfaces\ImageInterface;
 use InvalidArgumentException;
+use Jcupitt\Vips\Access;
+use Jcupitt\Vips\Config as VipsConfig;
+use Jcupitt\Vips\Exception as VipsException;
+use Jcupitt\Vips\Image as VipsImage;
 use League\Flysystem\FilesystemException;
 use League\Flysystem\Local\LocalFilesystemAdapter;
 
@@ -96,16 +100,16 @@ final class InterventionRenderer implements Renderer, UpscalingPolicy
 
         try {
             // Decoding turns the image upright from its EXIF orientation, and the encoders strip
-            // the metadata.
-            $image = $this->decode($source);
+            // the metadata. With libvips, the image can be smaller than the upright original
+            // (ShrinkOnLoad): sizes are computed on the original, and crops scaled to the image.
+            [$image, $upright] = $this->decode($source, $spec);
             $profile = Srgb::profile($image);
-            $upright = new Size($image->width(), $image->height());
             $output = $spec->outputSize($upright, $this->upscale);
 
             // The focal point is relative to the upright original: it follows the transform.
             $focus = $spec->focus ?? $source->focalPoint;
             if ($spec->transform !== null) {
-                $image = $this->transform($image, $spec->transform);
+                $image = $this->transform($image, $spec->transform, $upright);
                 $focus = $focus === null ? null : $spec->transform->focus($focus, $upright);
             }
             $image = $this->resize($image, $spec, $output, $focus ?? new Focus(0.5, 0.5));
@@ -124,7 +128,7 @@ final class InterventionRenderer implements Renderer, UpscalingPolicy
             }
 
             $contents = (string) $image->encode($this->encoder($format, $spec->quality));
-        } catch (InterventionException $exception) {
+        } catch (InterventionException|VipsException $exception) {
             throw new RenderFailed("Could not render {$source->resolver}/{$source->key}: {$exception->getMessage()}", previous: $exception);
         }
 
@@ -176,7 +180,27 @@ final class InterventionRenderer implements Renderer, UpscalingPolicy
 
     private function resolvedDriver(): DriverInterface
     {
-        return $this->resolvedDriver ??= is_string($this->driver) ? self::makeDriver($this->driver) : $this->driver;
+        if ($this->resolvedDriver === null) {
+            $this->resolvedDriver = is_string($this->driver) ? self::makeDriver($this->driver) : $this->driver;
+            if ($this->resolvedDriver instanceof VipsDriver) {
+                self::disableVipsCache();
+            }
+        }
+
+        return $this->resolvedDriver;
+    }
+
+    /**
+     * Turns off the libvips operation cache, for the whole process. By default it keeps up to
+     * 100 operations and 100 MB of their images after a render, outside PHP's memory_limit,
+     * in every PHP-FPM worker. A renderer doesn't run the same operation on the same image
+     * twice, so it gains nothing from it.
+     */
+    private static function disableVipsCache(): void
+    {
+        VipsConfig::cacheSetMax(0);
+        VipsConfig::cacheSetMaxMem(0);
+        VipsConfig::cacheSetMaxFiles(0);
     }
 
     private function manager(): ImageManager
@@ -185,9 +209,33 @@ final class InterventionRenderer implements Renderer, UpscalingPolicy
     }
 
     /**
-     * Reads the original from its disk, in place when the disk is local.
+     * Reads the original from its disk, in place when the disk is local, and gives it with the
+     * size of the upright original.
+     *
+     * @return array{ImageInterface, Size}
      */
-    private function decode(ImageSource $source): ImageInterface
+    private function decode(ImageSource $source, ImageSpec $spec): array
+    {
+        [$path, $contents] = $this->read($source);
+
+        if ($this->resolvedDriver() instanceof VipsDriver) {
+            $shrunk = $this->decodeShrunk($path, $contents, $spec);
+            if ($shrunk !== null) {
+                return $shrunk;
+            }
+        }
+
+        $image = $path !== null ? $this->manager()->decodePath($path) : $this->manager()->decodeBinary((string) $contents);
+
+        return [$image, new Size($image->width(), $image->height())];
+    }
+
+    /**
+     * The path of the original when its disk is local, or its contents.
+     *
+     * @return array{string, null}|array{null, string}
+     */
+    private function read(ImageSource $source): array
     {
         if ($source->disk === null || $source->path === null) {
             throw new SourceNotFound("The source {$source->resolver}/{$source->key} has no disk and path.");
@@ -201,7 +249,7 @@ final class InterventionRenderer implements Renderer, UpscalingPolicy
                 throw new SourceNotFound("The original of {$source->resolver}/{$source->key} is missing.");
             }
 
-            return $this->manager()->decodePath($path);
+            return [$path, null];
         }
 
         try {
@@ -213,17 +261,69 @@ final class InterventionRenderer implements Renderer, UpscalingPolicy
             throw new SourceNotFound("The original of {$source->resolver}/{$source->key} is missing.");
         }
 
-        return $this->manager()->decodeBinary($contents);
+        return [null, $contents];
     }
 
     /**
-     * Crops (in pixels of the upright original, clamped to it), rotates clockwise, then flips.
+     * Decodes a JPEG or WebP original with libvips at a fraction of its size, when the output
+     * is small enough (ShrinkOnLoad): the decoder skips the pixels the resize would drop, so a
+     * large original costs memory in proportion to the output, not to itself.
+     *
+     * Null when the original can't be shrunk on load, which leaves the usual decoding.
+     *
+     * @return array{ImageInterface, Size}|null
      */
-    private function transform(ImageInterface $image, Transform $transform): ImageInterface
+    private function decodeShrunk(?string $path, ?string $contents, ImageSpec $spec): ?array
     {
-        $crop = $transform->cropIn(new Size($image->width(), $image->height()));
+        $open = static fn (array $options): VipsImage => $path !== null
+            ? VipsImage::newFromFile($path, ['access' => Access::SEQUENTIAL] + $options)
+            : VipsImage::newFromBuffer((string) $contents, '', ['access' => Access::SEQUENTIAL] + $options);
+
+        try {
+            // Opening reads the header only.
+            $header = $open([]);
+            $loader = $header->get('vips-loader');
+            $orientation = $header->getType('orientation') !== 0 ? $header->get('orientation') : 1;
+        } catch (VipsException) {
+            // Not a file libvips reads: Intervention's decoder says why.
+            return null;
+        }
+
+        $upright = in_array($orientation, [5, 6, 7, 8], true)
+            ? new Size($header->height, $header->width)
+            : new Size($header->width, $header->height);
+        $factor = ShrinkOnLoad::factor($upright, $spec, $this->upscale);
+        $options = match (true) {
+            $factor === 1 || ! is_string($loader) => null,
+            str_starts_with($loader, 'jpegload') => ['shrink' => $factor],
+            str_starts_with($loader, 'webpload') => ['scale' => 1 / $factor],
+            default => null,
+        };
+        if ($options === null) {
+            return null;
+        }
+
+        // The native decoder turns the image upright and normalizes it as decodePath() does.
+        return [$this->manager()->decode($open($options)), $upright];
+    }
+
+    /**
+     * Crops (in pixels of the upright original, clamped to it, then scaled to the image when it
+     * was decoded smaller), rotates clockwise, then flips.
+     */
+    private function transform(ImageInterface $image, Transform $transform, Size $upright): ImageInterface
+    {
+        $crop = $transform->cropIn($upright);
         if ($crop !== null) {
-            $image = $image->crop($crop->width, $crop->height, $crop->x, $crop->y);
+            [$scaleX, $scaleY] = [$image->width() / $upright->width, $image->height() / $upright->height];
+            $x = min($image->width() - 1, (int) floor($crop->x * $scaleX));
+            $y = min($image->height() - 1, (int) floor($crop->y * $scaleY));
+            $image = $image->crop(
+                max(1, min($image->width() - $x, (int) round($crop->width * $scaleX))),
+                max(1, min($image->height() - $y, (int) round($crop->height * $scaleY))),
+                $x,
+                $y,
+            );
         }
         if ($transform->rotate !== 0) {
             $image = $image->rotate($transform->rotate);

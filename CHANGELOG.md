@@ -8,6 +8,11 @@ All notable changes to `folklore/laravel-image` are documented in this file. The
 
 Changes to 1.x after 1.1.0 are in the changelog of the [`v1.x`](https://github.com/folkloreinc/laravel-image/blob/v1.x/CHANGELOG.md) branch.
 
+### Fixed
+
+- With libvips, a JPEG or WebP original is decoded at 1/2, 1/4 or 1/8 of its size when the output is small enough, so rendering a small size of a large original no longer costs memory in proportion to the original. Before, only a plain resize of an unrotated image did, through Intervention: a crop (cover, or a transform) or an EXIF orientation decoded the whole original, 225 MB for 10,000 × 5,625 pixels. Orientation, color conversion, focal points, transforms and output sizes are unchanged (#123).
+- The libvips driver turns off libvips' operation cache, for the process: it kept up to 100 MB of images after each render, outside PHP's `memory_limit`, in every PHP-FPM worker (#123).
+
 ## [2.0.0-alpha.5] - 2026-11-12
 
 A fix for projects upgrading from 1.x (#117): with Imagick, an image with an unreadable color profile renders again. No breaking changes.
