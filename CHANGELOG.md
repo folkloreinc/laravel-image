@@ -8,6 +8,10 @@ All notable changes to `folklore/laravel-image` are documented in this file. The
 
 Changes to 1.x after 1.1.0 are in the changelog of the [`v1.x`](https://github.com/folkloreinc/laravel-image/blob/v1.x/CHANGELOG.md) branch.
 
+## [2.0.0-alpha.6] - 2026-11-24
+
+A fix for sites that render large originals with libvips (#123): a small size of a large JPEG or WebP no longer decodes the whole original, and the memory of each render goes back to the system. No breaking changes.
+
 ### Fixed
 
 - With libvips, a JPEG or WebP original is decoded at 1/2, 1/4 or 1/8 of its size when the output is small enough, so rendering a small size of a large original no longer costs memory in proportion to the original. Before, only a plain resize of an unrotated image did, through Intervention: a crop (cover, or a transform) or an EXIF orientation decoded the whole original, 225 MB for 10,000 × 5,625 pixels. The decoder's shrink leaves the resize after it at least 2× to do, as libvips' own thumbnails do, except for originals larger than 24 megapixels (`ShrinkOnLoad::LARGE_ORIGINAL`), which are shrunk as long as the output fits. Renders of such large originals change slightly: fine detail such as text can be a little softer, and the image can move by half a pixel. Orientation, color conversion, focal points, transforms and output sizes are unchanged (#123).
@@ -182,7 +186,8 @@ What sites will notice, and how to keep the previous behaviour where there is a 
 
 - Travis CI, Coveralls, `phpcs.xml` and the Prettier PHP plugin.
 
-[Unreleased]: https://github.com/folkloreinc/laravel-image/compare/v2.0.0-alpha.5...v2.x
+[Unreleased]: https://github.com/folkloreinc/laravel-image/compare/v2.0.0-alpha.6...v2.x
+[2.0.0-alpha.6]: https://github.com/folkloreinc/laravel-image/releases/tag/v2.0.0-alpha.6
 [2.0.0-alpha.5]: https://github.com/folkloreinc/laravel-image/releases/tag/v2.0.0-alpha.5
 [2.0.0-alpha.4]: https://github.com/folkloreinc/laravel-image/releases/tag/v2.0.0-alpha.4
 [2.0.0-alpha.3]: https://github.com/folkloreinc/laravel-image/releases/tag/v2.0.0-alpha.3
