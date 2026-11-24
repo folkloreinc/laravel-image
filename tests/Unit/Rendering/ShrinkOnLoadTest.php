@@ -20,7 +20,7 @@ final class ShrinkOnLoadTest extends TestCase
      */
     public static function specs(): iterable
     {
-        // A 10,000 × 5,625 original.
+        // A 10,000 × 5,625 original, a large one: the output only needs to fit.
         yield 'inside 3200: halved' => [new ImageSpec(width: 3200, height: 3200, fit: Fit::Inside), 2, false];
         yield 'inside 1200: by 8' => [new ImageSpec(width: 1200, height: 1200, fit: Fit::Inside), 8, false];
         yield 'a width of 1250: by 8, exactly' => [new ImageSpec(width: 1250), 8, false];
@@ -36,8 +36,38 @@ final class ShrinkOnLoadTest extends TestCase
     }
 
     #[DataProvider('specs')]
-    public function test_the_factor_keeps_the_rendered_part_at_least_as_large_as_the_output(ImageSpec $spec, int $factor, bool $upscale): void
+    public function test_a_large_original_is_shrunk_as_long_as_the_output_fits(ImageSpec $spec, int $factor, bool $upscale): void
     {
         $this->assertSame($factor, ShrinkOnLoad::factor(new Size(10000, 5625), $spec, $upscale));
+    }
+
+    /**
+     * @return iterable<string, array{ImageSpec, int}>
+     */
+    public static function smallerSpecs(): iterable
+    {
+        // A 4032 × 3024 original (12 megapixels): the resize after the shrink does 2× or more.
+        yield 'a width of 1008: halved, a 2× resize left' => [new ImageSpec(width: 1008), 2];
+        yield 'a width of 1009: not shrunk' => [new ImageSpec(width: 1009), 1];
+        yield 'a width of 504: by 4' => [new ImageSpec(width: 504), 4];
+        yield 'a width of 252: by 8' => [new ImageSpec(width: 252), 8];
+        yield 'cover 800×800: the height binds' => [new ImageSpec(width: 800, height: 800), 1];
+        yield 'cover 700×700: the height binds' => [new ImageSpec(width: 700, height: 700), 2];
+        yield 'a crop: relative to the crop' => [new ImageSpec(transform: new Transform(new Crop(0, 0, 2000, 2000)), width: 250), 4];
+    }
+
+    #[DataProvider('smallerSpecs')]
+    public function test_a_smaller_original_leaves_the_resize_at_least_2x(ImageSpec $spec, int $factor): void
+    {
+        $this->assertSame($factor, ShrinkOnLoad::factor(new Size(4032, 3024), $spec, false));
+    }
+
+    public function test_an_original_is_large_above_24_megapixels(): void
+    {
+        // 6000 × 4000 is 24 megapixels: at a width of 2000, halving would leave a 1.5× resize.
+        $spec = new ImageSpec(width: 2000);
+        $height = intdiv(ShrinkOnLoad::LARGE_ORIGINAL, 6000);
+        $this->assertSame(1, ShrinkOnLoad::factor(new Size(6000, $height), $spec, false));
+        $this->assertSame(2, ShrinkOnLoad::factor(new Size(6000, $height + 1), $spec, false));
     }
 }
